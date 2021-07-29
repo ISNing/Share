@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Share</string>
+    <string name="code_title">Auth code</string>
+    <string name="code_aspectRatio">1:1</string>
+    <string name="status_sending_progress">%s/%s</string>
+</resources>
