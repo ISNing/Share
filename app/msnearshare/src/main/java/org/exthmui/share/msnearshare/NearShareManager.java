@@ -72,7 +72,7 @@ public class NearShareManager implements SenderInfo {
         initializePlatform();
     }
 
-    /**
+    /**TODO:统一请求权限
      * Request COARSE_LOCATION permission required for nearshare functionality over bluetooth.
      */
     private void requestPermissions() {
