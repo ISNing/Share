@@ -1,0 +1,35 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/prefs_header_wifidirect">
+
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_wifidirect_timeout"
+            android:key="@string/prefs_key_wifidirect_timeout"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_wifidirect_timeout" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_wifidirect_server_port"
+            android:enabled="true"
+            android:key="@string/prefs_key_wifidirect_server_port"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_wifidirect_server_port" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_wifidirect_client_port"
+            android:key="@string/prefs_key_wifidirect_client_port"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_wifidirect_client_port" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_wifidirect_buffer_size"
+            android:enabled="false"
+            android:key="@string/prefs_key_wifidirect_buffer_size"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_wifidirect_buffer_size" />
+    </PreferenceCategory>
+</PreferenceScreen>

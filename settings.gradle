@@ -1,0 +1,6 @@
+include ':app:msnearshare'
+rootProject.name = "Share"
+include ':app'
+include ':app:web'
+include ':app:shared'
+include ':app:wifidirect'

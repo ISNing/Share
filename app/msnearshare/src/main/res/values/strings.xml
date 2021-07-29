@@ -1,0 +1,10 @@
+<resources>
+    <!-- Preference Header -->
+    <string name="prefs_header_msnearshare">Microsoft Nearshare</string>
+
+    <!-- Proximal mode Preferences -->
+    <string name="prefs_key_proximal_mode" translatable="false">msnearshare_proximal_mode</string>
+    <string name="prefs_title_msnearshare_proximal_mode">Use proximal mode</string>
+    <string name="prefs_summary_msnearshare_proximal_mode_on">Run in PROXIMAL mode</string>
+    <string name="prefs_summary_msnearshare_proximal_mode_off">Run in SPATIALLY_PROXIMAL mode</string>
+</resources>

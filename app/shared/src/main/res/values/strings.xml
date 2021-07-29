@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="content_uri_authority">org.exthmui.share.files</string>
+    <string name="connection_status_available">Available</string>
+    <string name="connection_status_unavailable">Unavailable</string>
+    <string name="connection_status_transmitting">Transmitting</string>
+    <string name="connection_status_unknown">Unknown</string>
+
+    <!-- Shared Preference Information -->
+    <string name="prefs_key_global_destination_directory" translatable="false">global_destination_directory</string>
+    <string name="prefs_title_global_destination_directory">Destination Directory</string>
+    <string name="prefs_default_global_destination_directory" translatable="false">@null</string>
+    <string name="prefs_summary_global_destination_directory_default" translatable="false">Download Directory</string>
+
+    <string name="prefs_key_global_default_file_name" translatable="false">global_default_file_name</string>
+    <string name="prefs_title_global_default_file_name">Default file name</string>
+    <string name="prefs_default_global_default_file_name" translatable="false">unknown</string>
+    <string name="prefs_summary_global_default_file_name_default" translatable="false">unknown</string>
+
+    <string name="prefs_key_global_device_name" translatable="false">global_device_name</string>
+    <string name="prefs_title_global_device_name">Device name</string>
+    <string name="prefs_default_global_device_name">@null</string>
+    <string name="prefs_summary_global_device_name_default">Your device name</string>
+
+    <string name="prefs_key_global_peer_id" translatable="false">global_peer_id</string>
+    <string name="prefs_title_global_peer_id">Device ID</string>
+    <string name="prefs_default_global_peer_id" translatable="false">@null</string>
+    <string name="prefs_summary_global_peer_id_hidden">Tap here to regenerate your identity</string>
+    <string name="prefs_summary_global_peer_id_show" formatted="true">%1$s (Tap here to regenerate)</string>
+    <string name="toast_global_peer_id_regenerated" formatted="true">Device ID regenerated</string>
+
+    <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for %1$s(Discover)</string>
+    <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
+    <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for %1$s(Receive)</string>
+    <string name="prefs_summary_global_permissions_not_granted_receive">Touch here to grant for permission for receiving</string>
+
+    <string name="notification_channel_group_progress_name">Progresses</string>
+    <string name="notification_channel_group_progress_description">Show you sending/receiving progresses</string>
+
+    <string name="notification_channel_group_service_name">Foreground Services</string>
+    <string name="notification_channel_group_service_description">Working needed foreground services</string>
+
+    <string name="notification_channel_group_request_name">Requests</string>
+    <string name="notification_channel_group_request_description">Show you request needing confirming</string>
+
+    <string name="notification_channel_request_name">Requests</string>
+    <string name="notification_channel_request_description">Show you receiving requests</string>
+
+    <string name="notification_channel_receive_name">Receive</string>
+    <string name="notification_channel_receive_description">Show you receiving progress</string>
+
+    <string name="notification_channel_receive_service_name">Receiving Services</string>
+    <string name="notification_channel_receive_service_description">Receiving related foreground service</string>
+
+    <string name="notification_title_receive_service">Receiver Service running</string>
+
+    <string name="notification_action_accept">Accept</string>
+    <string name="notification_action_reject">Reject</string>
+
+    <string name="notification_title_receive_request">Share Request</string>
+    <string name="notification_content_receive_request" formatted="true">\"%1$s\" want\'s to share \"%2$s\" with you\nSize: %3$s</string>
+
+    <string name="notification_channel_send_name">Send</string>
+    <string name="notification_channel_send_description">Show you sending progress</string>
+
+    <string name="notification_channel_send_service_name">Sending Services</string>
+    <string name="notification_channel_send_service_description">Sending related foreground service</string>
+
+    <string name="notification_title_send_service">Discover/Sender Service running</string>
+
+    <string name="notification_title_sending" formatted="true">Sending file \"%1$s\" to %2$s</string>
+    <string name="notification_title_sending_two" formatted="true">Sending \"%1$s\", \"%2$s\" to %3$s</string>
+    <string name="notification_title_sending_multi" formatted="true" tools:ignore="PluralsCandidate">Sending \"%1$s\", \"%2$s\" and %3$d more files to %4$s</string>
+    <string name="notification_action_cancel">Cancel</string>
+
+    <string name="dialog_title_accept_or_reject_request" formatted="true">%1$s request to send you file \"%2$s\"</string>
+    <string name="dialog_accept_or_reject_request_size" formatted="true">Size: %1$s</string>
+    <string name="dialog_action_accept">Accept</string>
+    <string name="dialog_action_reject">Reject</string>
+    <string name="notification_title_receive_waiting">Ready for receive</string>
+    <string name="notification_title_receive_receiving" formatted="true">Receiving file \"%1$s\" from %2$s</string>
+    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"%1$s\", \"%2$s\" to %3$s</string>
+    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"%1$s\", \"%2$s\" and %3$d more files to %4$s</string>
+    <string name="notification_placeholder_unknown">Unknown</string>
+
+    <!-- Transmission Status Friendly -->
+    <string name="transmission_status_unknown">Unknown</string>
+    <string name="transmission_status_waiting_for_request">Waiting for request</string>
+    <string name="transmission_status_waiting_for_acceptation">Waiting for acceptation</string>
+    <string name="transmission_status_rejected">Rejected</string>
+    <string name="transmission_status_connection_established">Connection established</string>
+    <string name="transmission_status_in_progress">In progress</string>
+    <string name="transmission_status_completed">Completed</string>
+
+    <string name="transmission_status_unknown_error">Unknown error</string>
+    <string name="transmission_status_network_error">Network error</string>
+    <string name="transmission_status_timed_out">Timed out</string>
+    <string name="transmission_status_sender_cancelled">Sender cancelled</string>
+    <string name="transmission_status_receiver_cancelled">Receiver cancelled</string>
+    <string name="transmission_status_file_io_error">File IO error</string>
+    <string name="transmission_status_no_enough_space">No enough disk space</string>
+    <string name="transmission_status_remote_error">Remote unknown error</string>
+    <string name="transmission_status_peer_disappeared">Peer disappeared</string>
+</resources>
