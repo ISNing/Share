@@ -20,7 +20,7 @@
             android:id="@+id/iconView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:src="@drawable/ic_smartphone"
+            android:src="@drawable/ic_phone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

@@ -1,7 +1,6 @@
 package org.exthmui.share;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.os.Build;
 import android.text.format.Formatter;
 import android.util.ArrayMap;
@@ -47,7 +46,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
         holder.nameView.setText(peer.getDisplayName());
         holder.itemView.setSelected(selected);
         int tStatus = peer.getTransmissionStatus();
-        if (tStatus == Constants.TransmissionStatus.TRANSMITTNG.getNumVal()){
+        if (tStatus == Constants.TransmissionStatus.TRANSMITTING.getNumVal()){
             holder.detailView.setVisibility(View.VISIBLE);
             holder.detailView.setText(holder.context.getString(R.string.status_sending_progress,
                     Formatter.formatFileSize(holder.context, bytesSent),

@@ -2,6 +2,7 @@ package org.exthmui.share.msnearshare;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.util.Log;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.preference.PreferenceManager;
 import com.microsoft.connecteddevices.AsyncOperation;
 import com.microsoft.connecteddevices.CancellationToken;
 import com.microsoft.connecteddevices.ConnectedDevicesAccount;
@@ -142,7 +144,9 @@ public class NearShareManager implements SenderInfo {
      */
     private void startOrRestartRemoteSystemWatcher() {
         ArrayList<RemoteSystemFilter> filters = new ArrayList<>();
-        if (mProximalDiscoveryCheckbox.isChecked()) {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        boolean proximalMode = preferences.getBoolean("proximal_mode" , false);
+        if (proximalMode) {
             filters.add(new RemoteSystemDiscoveryTypeFilter(RemoteSystemDiscoveryType.PROXIMAL));
         } else {
             filters.add(new RemoteSystemDiscoveryTypeFilter(RemoteSystemDiscoveryType.SPATIALLY_PROXIMAL));
@@ -158,10 +162,10 @@ public class NearShareManager implements SenderInfo {
         weakRemoteSystemWatcher.get().remoteSystemRemoved().subscribe(new RemoteSystemRemovedListener());
         weakRemoteSystemWatcher.get().errorOccurred().subscribe(new RemoteSystemWatcherErrorOccurredListener());
 
-        // Everytime user toggles checkboc Proximal discovery
-        // we restart the watcher with approriate filters to wither do a
+        // Everytime user toggles checkbox Proximal discovery
+        // we restart the watcher with appropriate filters to whiter do a
         // Proximal or Spatially Proximal discovery. this check is to see if watcher has been previously started
-        // if was startetd, we stop it and restart with the new set of filters
+        // if was started, we stop it and restart with the new set of filters
         if (mWatcherStarted) {
             weakRemoteSystemWatcher.get().stop();
             mWatcherStarted = false;
@@ -324,30 +328,25 @@ public class NearShareManager implements SenderInfo {
     }
 
     // region HelperClasses
-    private class RemoteSystemAddedListener implements EventListener<RemoteSystemWatcher, RemoteSystemAddedEventArgs> {
+    private static class RemoteSystemAddedListener implements EventListener<RemoteSystemWatcher, RemoteSystemAddedEventArgs> {
         @Override
         public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemAddedEventArgs args) {
             final RemoteSystem remoteSystemParam = args.getRemoteSystem();
             // Calls from the OneSDK are not guaranteed to come back on the given (UI) thread
             // hence explicitly call runOnUiThread
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
                     mRemoteDeviceListAdapter.addDevice(remoteSystemParam);
                     mRemoteDeviceListAdapter.notifyDataSetChanged();
-                }
-            });
         }
     }
 
-    private class RemoteSystemUpdatedListener implements EventListener<RemoteSystemWatcher, RemoteSystemUpdatedEventArgs> {
+    private static class RemoteSystemUpdatedListener implements EventListener<RemoteSystemWatcher, RemoteSystemUpdatedEventArgs> {
         @Override
         public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemUpdatedEventArgs args) {
             LOG.log(Level.INFO, String.format("Updating system: %1$s", args.getRemoteSystem().getDisplayName()));
         }
     }
 
-    private class RemoteSystemRemovedListener implements EventListener<RemoteSystemWatcher, RemoteSystemRemovedEventArgs> {
+    private static class RemoteSystemRemovedListener implements EventListener<RemoteSystemWatcher, RemoteSystemRemovedEventArgs> {
         @Override
         public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemRemovedEventArgs args) {
             final RemoteSystem remoteSystemParam = args.getRemoteSystem();
@@ -363,7 +362,7 @@ public class NearShareManager implements SenderInfo {
         }
     }
 
-    private class RemoteSystemWatcherErrorOccurredListener implements EventListener<RemoteSystemWatcher, RemoteSystemWatcherErrorOccurredEventArgs> {
+    private static class RemoteSystemWatcherErrorOccurredListener implements EventListener<RemoteSystemWatcher, RemoteSystemWatcherErrorOccurredEventArgs> {
         @Override
         public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemWatcherErrorOccurredEventArgs args) {
             LOG.log(Level.SEVERE, String.format("Discovery error: %1$s", args.getError().toString()));

@@ -15,7 +15,6 @@ public class Peer implements PeerInfo{
         return id;
     }
 
-    @Override
     public void setId(String id) {
         this.id = id;
     }
@@ -25,7 +24,6 @@ public class Peer implements PeerInfo{
         return displayName;
     }
 
-    @Override
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
     }
@@ -35,7 +33,6 @@ public class Peer implements PeerInfo{
         return deviceType;
     }
 
-    @Override
     public void setDeviceType(int deviceType) {
         this.deviceType = deviceType;
     }
@@ -45,7 +42,6 @@ public class Peer implements PeerInfo{
         return connectionType;
     }
 
-    @Override
     public void setConnectionType(String connectionType) {
         this.connectionType = connectionType;
     }
@@ -55,7 +51,6 @@ public class Peer implements PeerInfo{
         return trusted;
     }
 
-    @Override
     public void setTrusted(boolean trusted) {
         this.trusted = trusted;
     }
@@ -65,7 +60,6 @@ public class Peer implements PeerInfo{
         return connectionStatus;
     }
 
-    @Override
     public void setConnectionStatus(int connectionStatus) {
         this.connectionStatus = connectionStatus;
     }
@@ -75,7 +69,6 @@ public class Peer implements PeerInfo{
         return transmissionStatus;
     }
 
-    @Override
     public void setTransmissionStatus(int transmissionStatus) {
         this.transmissionStatus = transmissionStatus;
     }
@@ -85,7 +78,6 @@ public class Peer implements PeerInfo{
         return detailMessage;
     }
 
-    @Override
     public void setDetailMessage(String detailMessage) {
         this.detailMessage = detailMessage;
     }

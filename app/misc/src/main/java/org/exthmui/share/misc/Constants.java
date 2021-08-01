@@ -11,12 +11,32 @@ public class Constants {
     public static int COMPRESS_QUALITY=40;
 
     public enum DeviceTypes{
-        COMPUTER(1),
-        PHONE(2),TABLET(3),
+        DESKTOP(1, R.drawable.ic_desktop),LAPTOP(2, R.drawable.ic_laptop),
+        PHONE(3, R.drawable.ic_phone),TABLET(4, R.drawable.ic_tablet),
+        UNKNOWN(0, R.drawable.ic_device_unknown);
+        private final int numVal;
+        private final int imgRes;
+
+        DeviceTypes(int numVal, int imgRes) {
+            this.numVal = numVal;
+            this.imgRes = imgRes;
+        }
+
+        public int getNumVal() {
+            return numVal;
+        }
+        public int getImgRes(){
+            return imgRes;
+        }
+    }
+
+    public enum ConnectionStatus{
+        AVAILABLE(1),
+        UNAVAILABLE(2),
         UNKNOWN(0);
         private final int numVal;
 
-        DeviceTypes(int numVal) {
+        ConnectionStatus(int numVal) {
             this.numVal = numVal;
         }
 
@@ -26,9 +46,9 @@ public class Constants {
     }
 
     public enum TransmissionStatus{
-        TRANSMITTNG(1),
+        TRANSMITTING(1),
         FAILED(2),
-        UNAVALIBLE(0);
+        UNAVAILABLE(0);
         private final int numVal;
 
         TransmissionStatus(int numVal) {

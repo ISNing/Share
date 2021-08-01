@@ -1,0 +1,11 @@
+<resources>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <!-- Preference Titles -->
+    <string name="msnearshare_header">Microsoft Nearshare</string>
+
+    <!-- Proximal mode Preferences -->
+    <string name="proximal_title">Use proximal mode</string>
+    <string name="proximal_summary_on">Run in PROXIMAL mode</string>
+    <string name="proximal_summary_off">Run in SPATIALLY_PROXIMAL mode</string>
+</resources>
