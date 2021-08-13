@@ -3,8 +3,7 @@ package org.exthmui.share.msnearshare;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemKinds;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
-import org.exthmui.share.beans.Peer;
-import org.exthmui.share.beans.PeerInfo;
+import org.exthmui.share.base.PeerInfo;
 import org.exthmui.share.misc.Constants;
 
 public class NearSharePeer implements PeerInfo {

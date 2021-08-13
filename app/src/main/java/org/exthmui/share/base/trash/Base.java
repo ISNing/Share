@@ -1,4 +1,4 @@
-package org.exthmui.share.beans.trash;
+package org.exthmui.share.base.trash;
 
 import android.database.Cursor;
 import android.provider.BaseColumns;

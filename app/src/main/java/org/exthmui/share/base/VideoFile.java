@@ -1,4 +1,4 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 import android.database.Cursor;
 import android.os.Build;

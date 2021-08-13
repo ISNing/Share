@@ -1,12 +1,8 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.provider.MediaStore;
-import androidx.annotation.NonNull;
-import org.jetbrains.annotations.NotNull;
-
-import java.io.Serializable;
 
 public class FileBean implements FileInfo {
     private Bitmap filePic;

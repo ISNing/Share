@@ -1,10 +1,8 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.provider.MediaStore;
-import org.exthmui.share.beans.trash.Audio;
 
 public class AudioFile extends FileBean implements FileInfo {
 

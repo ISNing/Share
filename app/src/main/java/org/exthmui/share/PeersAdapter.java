@@ -14,8 +14,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.exthmui.share.beans.Peer;
-import org.exthmui.share.beans.PeerInfo;
+import org.exthmui.share.base.Peer;
+import org.exthmui.share.base.PeerInfo;
 import org.exthmui.share.misc.Constants;
 
 public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> {

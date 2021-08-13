@@ -1,4 +1,4 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 public class ImgFolderBean {
     /**当前文件夹的路径*/

@@ -11,9 +11,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.provider.MediaStore;
 
-import org.exthmui.share.beans.*;
-import org.exthmui.share.beans.trash.Audio;
-import org.exthmui.share.beans.trash.Video;
+import org.exthmui.share.base.*;
 import org.exthmui.share.misc.FileUtils;
 
 import java.io.FilenameFilter;

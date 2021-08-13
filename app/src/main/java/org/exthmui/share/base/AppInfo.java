@@ -1,4 +1,4 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 import android.content.pm.ApplicationInfo;
 import android.graphics.drawable.Drawable;

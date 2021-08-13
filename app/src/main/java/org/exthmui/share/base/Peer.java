@@ -1,4 +1,4 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
 public class Peer implements PeerInfo{
     private String id;

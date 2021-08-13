@@ -1,14 +1,6 @@
-package org.exthmui.share.beans;
+package org.exthmui.share.base;
 
-import android.annotation.TargetApi;
 import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.util.Base64;
-
-import java.io.ByteArrayOutputStream;
-import java.io.Serializable;
 
 public interface FileInfo {
     public Bitmap getFilePic();

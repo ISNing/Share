@@ -8,22 +8,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
-import com.microsoft.connecteddevices.AsyncOperation;
-import com.microsoft.connecteddevices.CancellationToken;
-import com.microsoft.connecteddevices.ConnectedDevicesAccount;
-import com.microsoft.connecteddevices.ConnectedDevicesAccountManager;
-import com.microsoft.connecteddevices.ConnectedDevicesAccessTokenInvalidatedEventArgs;
-import com.microsoft.connecteddevices.ConnectedDevicesAccessTokenRequestedEventArgs;
-import com.microsoft.connecteddevices.ConnectedDevicesAddAccountResult;
-import com.microsoft.connecteddevices.ConnectedDevicesNotificationRegistrationManager;
-import com.microsoft.connecteddevices.ConnectedDevicesNotificationRegistrationStateChangedEventArgs;
+import com.microsoft.connecteddevices.*;
 import com.microsoft.connecteddevices.EventListener;
 import com.microsoft.connecteddevices.remotesystems.commanding.RemoteSystemConnectionRequest;
-import com.microsoft.connecteddevices.ConnectedDevicesPlatform;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAddedEventArgs;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAuthorizationKind;
@@ -37,16 +27,16 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatusTypeFilter
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemUpdatedEventArgs;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcher;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcherErrorOccurredEventArgs;
-import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareFileProvider;
-import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareHelper;
-import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareSender;
-import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareStatus;
+import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.*;
 import android.net.Uri;
+import org.exthmui.share.base.PeerInfo;
+import org.exthmui.share.base.events.AcceptedOrRefusedEvent;
+import org.exthmui.share.base.listeners.OnAcceptedOrRefusedListener;
+import org.exthmui.share.base.listeners.OnProgressUpdatedListener;
 import org.exthmui.share.controller.SenderInfo;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Level;
 
 import static android.content.Intent.ACTION_SEND;
@@ -56,7 +46,10 @@ public class NearShareManager implements SenderInfo {
 
     private static final String TAG = "NearShareManager";
 
-    private Context mContext;
+    private static final Class<? extends java.util.EventListener>[] LISTENER_TYPES_ALLOWED = {OnAcceptedOrRefusedListener.class, OnProgressUpdatedListener.class};
+
+    private final Context mContext;
+    private Collection<java.util.EventListener> mListeners;
 
     private ConnectedDevicesPlatform mPlatform;
     private RemoteSystemWatcher mRemoteSystemWatcher;
@@ -67,6 +60,25 @@ public class NearShareManager implements SenderInfo {
 
     public NearShareManager(Context context){
         this.mContext = context;
+    }
+
+    public void addListener(java.util.EventListener listener){
+        if(mListeners == null) mListeners = new HashSet<>();
+        for(Class<? extends java.util.EventListener> t:LISTENER_TYPES_ALLOWED){
+            if(listener.getClass() = t){
+                mListeners.add(listener);
+                break;
+            }
+        }
+    }
+
+    private void notifyListeners(EventObject event) {
+        for (java.util.EventListener listener:mListeners) {
+            requestedTypes = listener. 
+        }
+        if(event instanceof AcceptedOrRefusedEvent){
+
+        }
     }
 
     @Override
@@ -142,7 +154,7 @@ public class NearShareManager implements SenderInfo {
      * to ensure that only spatially proximal devices are listed. It also sets up listeners
      * for important events, such as device added, device updated, and device removed
      */
-    private void startOrRestartRemoteSystemWatcher() {
+    private void startRemoteSystemWatcher() {
         ArrayList<RemoteSystemFilter> filters = new ArrayList<>();
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
         boolean proximalMode = preferences.getBoolean("proximal_mode" , false);
@@ -203,9 +215,7 @@ public class NearShareManager implements SenderInfo {
     /**
      * Send URI to the target device using nearshare
      */
-    private void sendUri() {
-        String uriText = ((EditText) findViewById(R.id.txtUri)).getText().toString();
-        if (mSelectedRemoteSystem != null) {
+    private void sendUri(PeerInfo t, String uriText) {
             RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
 
             if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
@@ -215,16 +225,21 @@ public class NearShareManager implements SenderInfo {
             {
                 Log.d(TAG, "NearShare is not supported in this device");
             }
-        } else {
-            LOG.log(Level.SEVERE, "Please Select a Remote System to SendUri");
-        }
     }
 
     /**
      * Pick Files and Send using NearShare, helper function to pick files and send.
      */
-    private AsyncOperation<NearShareStatus> setupAndBeginSendFileAsync() {
-        AsyncOperation<NearShareStatus> asyncFileTransferOperation = null;
+    private AsyncOperationWithProgress<NearShareStatus, NearShareProgress> setupAndBeginSendFileAsync() {
+        AsyncOperationWithProgress<NearShareStatus, NearShareProgress> asyncFileTransferOperation = null;
+        asyncFileTransferOperation.progress().subscribe((op, progress) -> {
+            if (progress.filesSent != 0 || progress.totalFilesToSend != 0) {
+                if (accepted.compareAndSet(false, true)) {
+                    mHandler.post(listener::onAccepted);
+                }
+                mHandler.post() -> listener.onProgress(progress.bytesSent, progress.totalBytesToSend));
+            }
+        })
         if ((null != mFiles) && (null != mSelectedRemoteSystem)) {
             RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
 
