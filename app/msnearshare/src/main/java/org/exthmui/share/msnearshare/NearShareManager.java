@@ -11,6 +11,7 @@ import android.widget.Button;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
+import androidx.work.OneTimeWorkRequest;
 import com.microsoft.connecteddevices.*;
 import com.microsoft.connecteddevices.EventListener;
 import com.microsoft.connecteddevices.remotesystems.commanding.RemoteSystemConnectionRequest;
@@ -30,26 +31,39 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcherErrorOccu
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.*;
 import android.net.Uri;
 import org.exthmui.share.base.PeerInfo;
-import org.exthmui.share.base.events.AcceptedOrRefusedEvent;
-import org.exthmui.share.base.listeners.OnAcceptedOrRefusedListener;
+import org.exthmui.share.base.SendingWorker;
+import org.exthmui.share.base.listeners.BaseEventListener;
+import org.exthmui.share.base.listeners.OnAcceptedOrRejectedListener;
 import org.exthmui.share.base.listeners.OnProgressUpdatedListener;
-import org.exthmui.share.controller.SenderInfo;
+import org.exthmui.share.base.SenderInfo;
 
 import java.lang.ref.WeakReference;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
 import static android.content.Intent.ACTION_SEND;
 import static android.content.Intent.ACTION_SEND_MULTIPLE;
 
-public class NearShareManager implements SenderInfo {
+@SuppressWarnings("unchecked")
+public class NearShareManager implements SenderInfo<NearSharePeer> {
 
     private static final String TAG = "NearShareManager";
 
-    private static final Class<? extends java.util.EventListener>[] LISTENER_TYPES_ALLOWED = {OnAcceptedOrRefusedListener.class, OnProgressUpdatedListener.class};
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+
+    static {
+        LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+                {
+                        OnAcceptedOrRejectedListener.class,
+                        OnProgressUpdatedListener.class
+                };
+    }
 
     private final Context mContext;
-    private Collection<java.util.EventListener> mListeners;
+    private Collection<BaseEventListener> mListeners;
 
     private ConnectedDevicesPlatform mPlatform;
     private RemoteSystemWatcher mRemoteSystemWatcher;
@@ -58,26 +72,30 @@ public class NearShareManager implements SenderInfo {
     private Uri[] mFiles;
     private boolean mWatcherStarted;
 
-    public NearShareManager(Context context){
+    public NearShareManager(Context context) {
         this.mContext = context;
     }
 
-    public void addListener(java.util.EventListener listener){
-        if(mListeners == null) mListeners = new HashSet<>();
-        for(Class<? extends java.util.EventListener> t:LISTENER_TYPES_ALLOWED){
-            if(listener.getClass() = t){
+    public void addListener(BaseEventListener listener) {
+        if (mListeners == null) mListeners = new HashSet<>();
+        for (Class<? extends BaseEventListener> t : LISTENER_TYPES_ALLOWED) {
+            if (listener.getClass().isAssignableFrom(t)) {
                 mListeners.add(listener);
                 break;
             }
         }
     }
 
-    private void notifyListeners(EventObject event) {
-        for (java.util.EventListener listener:mListeners) {
-            requestedTypes = listener. 
+    private void notifyListeners(EventObject event) throws InvocationTargetException, IllegalAccessException {
+        List<Method> methodsToPerform = new ArrayList<>();
+        for (BaseEventListener listener : mListeners) {
+            for (Class<? extends EventObject> t: listener.getEventTMethodMap().keySet()) {
+                if (t.isAssignableFrom(event.getClass()))
+                    Collections.addAll(methodsToPerform, Objects.requireNonNull(listener.getEventTMethodMap().get(t)));
+            }
         }
-        if(event instanceof AcceptedOrRefusedEvent){
-
+        for(Method m:methodsToPerform) {
+            m.invoke(event);
         }
     }
 
@@ -86,7 +104,8 @@ public class NearShareManager implements SenderInfo {
         initializePlatform();
     }
 
-    /**TODO:统一请求权限
+    /**
+     * TODO:统一请求权限
      * Request COARSE_LOCATION permission required for nearshare functionality over bluetooth.
      */
     private void requestPermissions() {
@@ -157,7 +176,7 @@ public class NearShareManager implements SenderInfo {
     private void startRemoteSystemWatcher() {
         ArrayList<RemoteSystemFilter> filters = new ArrayList<>();
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
-        boolean proximalMode = preferences.getBoolean("proximal_mode" , false);
+        boolean proximalMode = preferences.getBoolean("proximal_mode", false);
         if (proximalMode) {
             filters.add(new RemoteSystemDiscoveryTypeFilter(RemoteSystemDiscoveryType.PROXIMAL));
         } else {
@@ -216,15 +235,13 @@ public class NearShareManager implements SenderInfo {
      * Send URI to the target device using nearshare
      */
     private void sendUri(PeerInfo t, String uriText) {
-            RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
+        RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
 
-            if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
-                mNearShareSender.sendUriAsync(remoteSystemConnectionRequest, uriText);
-            }
-            else
-            {
-                Log.d(TAG, "NearShare is not supported in this device");
-            }
+        if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
+            mNearShareSender.sendUriAsync(remoteSystemConnectionRequest, uriText);
+        } else {
+            Log.d(TAG, "NearShare is not supported in this device");
+        }
     }
 
     /**
@@ -237,7 +254,7 @@ public class NearShareManager implements SenderInfo {
                 if (accepted.compareAndSet(false, true)) {
                     mHandler.post(listener::onAccepted);
                 }
-                mHandler.post() -> listener.onProgress(progress.bytesSent, progress.totalBytesToSend));
+                mHandler.post() ->listener.onProgress(progress.bytesSent, progress.totalBytesToSend));
             }
         })
         if ((null != mFiles) && (null != mSelectedRemoteSystem)) {
@@ -279,42 +296,13 @@ public class NearShareManager implements SenderInfo {
     private void sendFile() {
         AsyncOperation<NearShareStatus> asyncFileTransferOperation = setupAndBeginSendFileAsync();
         if ((null != mFiles) && (null != mSelectedRemoteSystem)) {
-            ((Button) findViewById(R.id.btnCancel))
-                    .setOnClickListener(new View.OnClickListener() {
-                        private AsyncOperation<NearShareStatus> mAsyncOperation;
 
-                        private View.OnClickListener init(AsyncOperation<NearShareStatus> asyncOperation) {
-                            mAsyncOperation = asyncOperation;
-                            return this;
-                        }
-
-                        /**
-                         * Called when a view has been clicked.
-                         *
-                         * @param v The view that was clicked.
-                         */
-                        @Override
-                        public void onClick(View v) {
-                            mAsyncOperation.cancel(true);
-                        }
-                    }.init(asyncFileTransferOperation));
-
-            asyncFileTransferOperation.whenCompleteAsync(new AsyncOperation.ResultBiConsumer<NearShareStatus, Throwable>() {
-                @Override
-                public void accept(NearShareStatus nearShareStatus, Throwable throwable) throws Throwable {
-                    findViewById(R.id.btnCancel).setEnabled(false);
-                    if (null != throwable) {
-                        LOG.log(Level.SEVERE, String.format("Exception during file transfer: %1$s", throwable.getMessage()));
-                    } else {
-                        if (nearShareStatus == NearShareStatus.COMPLETED) {
-                            LOG.log(Level.INFO, "File transfer completed");
-                        } else {
-                            LOG.log(Level.SEVERE, "File transfer failed");
-                        }
-                    }
-                }
-            });
         }
+    }
+
+    @Override
+    public SendingWorker send(NearSharePeer peer, List<Entity> entities) {
+        OneTimeWorkRequest.from(NearShareSendingWorker.class)
     }
 
     /**
@@ -332,7 +320,7 @@ public class NearShareManager implements SenderInfo {
      */
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mSelectedRemoteSystem = (RemoteSystem)mRemoteDeviceListAdapter.getItem(position);
+        mSelectedRemoteSystem = (RemoteSystem) mRemoteDeviceListAdapter.getItem(position);
         mRemoteDeviceListAdapter.setSelectedView(view);
     }
 
@@ -349,8 +337,8 @@ public class NearShareManager implements SenderInfo {
             final RemoteSystem remoteSystemParam = args.getRemoteSystem();
             // Calls from the OneSDK are not guaranteed to come back on the given (UI) thread
             // hence explicitly call runOnUiThread
-                    mRemoteDeviceListAdapter.addDevice(remoteSystemParam);
-                    mRemoteDeviceListAdapter.notifyDataSetChanged();
+            mRemoteDeviceListAdapter.addDevice(remoteSystemParam);
+            mRemoteDeviceListAdapter.notifyDataSetChanged();
         }
     }
 

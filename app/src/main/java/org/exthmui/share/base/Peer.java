@@ -1,5 +1,7 @@
 package org.exthmui.share.base;
 
+import androidx.work.WorkManager;
+
 public class Peer implements PeerInfo{
     private String id;
     private String displayName;
@@ -9,6 +11,7 @@ public class Peer implements PeerInfo{
     private int connectionStatus;
     private int transmissionStatus;
     private String detailMessage;
+
 
     @Override
     public String getId() {

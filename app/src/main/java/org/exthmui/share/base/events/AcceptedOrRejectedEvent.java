@@ -2,11 +2,11 @@ package org.exthmui.share.base.events;
 
 import java.util.EventObject;
 
-public class AcceptedOrRefusedEvent extends EventObject {
+public class AcceptedOrRejectedEvent extends EventObject {
 
     private final boolean accepted;
 
-    public AcceptedOrRefusedEvent(Object source, boolean accepted) {
+    public AcceptedOrRejectedEvent(Object source, boolean accepted) {
         super(source);
         this.accepted = accepted;
     }

@@ -46,9 +46,15 @@ public class Constants {
     }
 
     public enum TransmissionStatus{
-        TRANSMITTING(1),
-        FAILED(2),
-        UNAVAILABLE(0);
+        UNKNOWN(0),
+        COMPLETED(1),
+        IN_PROGRESS(2),
+        TIMED_OUT(3),
+        CANCELLED(4),
+        DENIED_BY_REMOTE_SYSTEM(5),
+        CONNECTION_ESTABLISHED(6),
+        NETWORK_ERROR(7),
+        UNKNOWN_ERROR(9);
         private final int numVal;
 
         TransmissionStatus(int numVal) {
@@ -59,4 +65,5 @@ public class Constants {
             return numVal;
         }
     }
+
 }
