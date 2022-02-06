@@ -1,3 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="avatar_margin_top">8dp</dimen>
+    <dimen name="avatar_margin_end">8dp</dimen>
+    <dimen name="avatar_length">32dp</dimen>
+    <dimen name="account_enter_icon_length">16dp</dimen>
+    <dimen name="code_auth_margin">16dp</dimen>
 </resources>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="content_uri_authority">org.exthmui.share.files</string>
+    <string name="connection_status_available">Available</string>
+    <string name="connection_status_unavailable">Unavailable</string>
+    <string name="connection_status_transmitting">Transmitting</string>
+    <string name="connection_status_unknown">Unknown</string>
+
+    <!-- Shared Preference Information -->
+    <string name="prefs_key_global_destination_directory" translatable="false">global_destination_directory</string>
+    <string name="prefs_title_global_destination_directory">Destination Directory</string>
+    <string name="prefs_default_global_destination_directory" translatable="false">@null</string>
+    <string name="prefs_summary_global_destination_directory_default" translatable="false">Download</string>
+
+    <string name="notification_channel_receive_name">Receive Share request</string>
+    <string name="notification_channel_receive_description">Will notify request in this channel</string>
+    <string name="notification_action_accept">Accept</string>
+    <string name="notification_action_reject">Reject</string>
+
+    <string name="notification_title_receive_request">Share Request</string>
+    <string name="notification_content_receive_request">\"%s\" want\'s to share \"%s\" with you\rSize: %s</string>
+
+    <string name="notification_title_sending">Sending file \"%s\" to %s</string>
+    <string name="notification_action_cancel">Cancel</string>
+
+    <string name="dialog_title_accept_or_reject_request">%s request to send you file \"%s\"</string>
+    <string name="dialog_accept_or_reject_request_size">Size: %s</string>
+    <string name="dialog_action_accept">Accept</string>
+    <string name="dialog_action_reject">Reject</string>
+    <string name="notification_title_receive_waiting">Ready for receive</string>
+    <string name="notification_title_receive_receiving">Receiving file \"%s\" from %s</string>
+    <string name="notification_placeholder_unknown">Unknown</string>
+
+</resources>

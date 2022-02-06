@@ -1,6 +1,31 @@
 <resources>
     <string name="app_name">Share</string>
-    <string name="code_title">Auth code</string>
-    <string name="code_aspectRatio">1:1</string>
     <string name="status_sending_progress">%s/%s</string>
+    <string name="title_send_file">Send file \"%s\" to:</string>
+    <string name="title_send_files">Send \"%s\" and %d more files to:</string>
+    <string name="toast_no_file">No file was selected</string>
+
+    <string name="tile_scanning_default">Scanning</string>
+    <string name="tile_scanning_enabled">Scanning</string>
+    <string name="tile_scanning_disabled">Not scanning</string>
+    <string name="tile_scanning_unavailable">Unavailable</string>
+
+    <string name="tile_discoverable_default">Discoverability</string>
+    <string name="tile_discoverable_enabled">Discoverable</string>
+    <string name="tile_discoverable_disabled">Not Discoverable</string>
+    <string name="tile_discoverable_unavailable">Unavailable</string>
+
+    <string name="hint_scanning_peers">Scanning peers available, please ensure remote peers are detectable.\nNo available peers found so far. </string>
+    <!-- Settings Activity Title -->
+    <string name="title_activity_settings">Settings</string>
+
+    <string name="prefs_key_global_plugins_enabled" translatable="false">global_plugins_enabled</string>
+    <string name="prefs_title_global_plugins_enabled">Plugins Enabled</string>
+    <string name="prefs_summary_global_plugins_enabled_prefix">Enabled</string>
+    <string name="prefs_summary_global_plugins_enabled_suffix" />
+    <string name="prefs_summary_global_plugins_enabled_none">No plugins enabled</string>
+
+    <string name="prefs_title_global_permissions_not_granted">Grant permissions for %s</string>
+    <string name="prefs_summary_global_permissions_not_granted">Touch here to grant for permission</string>
+
 </resources>

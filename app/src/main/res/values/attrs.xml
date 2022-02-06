@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="WaveView">
+        <attr name="waveNumber" format="integer"/>
+        <attr name="minRadius" format="dimension"/>
+        <attr name="maxRadius" format="dimension"/>
+        <attr name="waveInterval" format="float"/>
+        <attr name="gravity">
+            <flag name="center" value="0x03" />
+            <flag name="center_vertical" value="0x01" />
+            <flag name="center_horizontal" value="0x02" />
+            <flag name="inner_top" value="0x04" />
+            <flag name="inner_bottom" value="0x08" />
+            <flag name="inner_start" value="0x10" />
+            <flag name="inner_end" value="0x20" />
+            <flag name="inner_left" value="0x40" />
+            <flag name="inner_right" value="0x80" />
+            <flag name="outer_top" value="0x100" />
+            <flag name="outer_bottom" value="0x200" />
+            <flag name="outer_start" value="0x400" />
+            <flag name="outer_end" value="0x800" />
+            <flag name="outer_left" value="0x1000" />
+            <flag name="outer_right" value="0x2000" />
+        </attr>
+        <attr name="wavingMode">
+            <enum name="limited" value="0x01"/>
+            <enum name="non_limited" value="0x02"/>
+        </attr>
+        <attr name="android:color" format="color"/>
+        <attr name="innerCircleAlpha" format="integer"/>
+        <attr name="waveAlpha" format="integer"/>
+        <attr name="innerCircleScale" format="fraction"/>
+        <attr name="waveCenterImageSrc" format="reference"/>
+        <attr name="waveCenterImageTint" format="color"/>
+        <attr name="waveCenterImageTintMode">
+            <!-- The tint is drawn on top of the drawable.
+                 [Sa + (1 - Sa)*Da, Rc = Sc + (1 - Sa)*Dc] -->
+            <enum name="src_over" value="3" />
+            <!-- The tint is masked by the alpha channel of the drawable. The drawable’s
+                 color channels are thrown out. [Sa * Da, Sc * Da] -->
+            <enum name="src_in" value="5" />
+            <!-- The tint is drawn above the drawable, but with the drawable’s alpha
+                 channel masking the result. [Da, Sc * Da + (1 - Sa) * Dc] -->
+            <enum name="src_atop" value="9" />
+            <!-- Multiplies the color and alpha channels of the drawable with those of
+                 the tint. [Sa * Da, Sc * Dc] -->
+            <enum name="multiply" value="14" />
+            <!-- [Sa + Da - Sa * Da, Sc + Dc - Sc * Dc] -->
+            <enum name="screen" value="15" />
+            <!-- Combines the tint and drawable color and alpha channels, clamping the
+                 result to valid color values. Saturate(S + D) -->
+            <enum name="add" value="16" />
+        </attr>
+        <attr name="millisecondsPerFrame" format="integer"/>
+        <attr name="distancePerFrame" format="float"/>
+    </declare-styleable>
+</resources>

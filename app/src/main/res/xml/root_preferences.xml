@@ -1,0 +1,8 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:defaultValue="@string/prefs_default_global_destination_directory"
+        android:key="@string/prefs_key_global_destination_directory"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/prefs_title_global_destination_directory" />
+</PreferenceScreen>

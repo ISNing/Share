@@ -11,8 +11,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.provider.MediaStore;
 
-import org.exthmui.share.base.*;
-import org.exthmui.share.misc.FileUtils;
+import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.base.*;
+import org.exthmui.share.shared.FileUtils;
 
 import java.io.FilenameFilter;
 import java.util.ArrayList;
@@ -21,9 +22,9 @@ import java.util.List;
 public class FileManager {
 
     private static FileManager mInstance;
-    private Context mContext;
+    private final Context mContext;
     private static ContentResolver mContentResolver;
-    private static Object mLock = new Object();
+    private static final Object mLock = new Object();
 
     public static FileManager getInstance(Context context){
         if (mInstance == null){
@@ -112,29 +113,22 @@ public class FileManager {
     /**
      * 通过文件类型得到相应文件的集合
      **/
-    public List<FileBean> getFilesByType(int fileType) {
-        List<FileBean> files = new ArrayList<FileBean>();
+    public List<File> getFilesByType(int fileType) {
+        List<File> files = new ArrayList<File>();
         // 扫描files文件库
-        Cursor c = null;
-        try {
-            c = mContentResolver.query(MediaStore.Files.getContentUri("external"), null, null, null, null);
-
+        try (Cursor c = mContentResolver.query(MediaStore.Files.getContentUri("external"), null, null, null, null)) {
             while (c.moveToNext()) {
-                FileBean fileBean = new FileBean(c);
+                File file = new File(c);
 
-                if (FileUtils.getFileType(fileBean.getFilePath(), false) == fileType) {
-                    if (!FileUtils.isExists(fileBean.getFilePath())) {
+                if (FileUtils.getFileType(file.getFilePath()).getNumVal() == fileType) {
+                    if (!FileUtils.isExists(file.getFilePath())) {
                         continue;
                     }
-                    files.add(fileBean);
+                    files.add(file);
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (c != null) {
-                c.close();
-            }
         }
         return files;
     }
@@ -145,11 +139,9 @@ public class FileManager {
     public List<ImgFolderBean> getImageFolders() {
         List<ImgFolderBean> folders = new ArrayList<>();
         // 扫描图片
-        Cursor c = null;
-        try {
-            c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
-                    MediaStore.Images.Media.MIME_TYPE + "= ? or " + MediaStore.Images.Media.MIME_TYPE + "= ?",
-                    new String[]{"image/jpeg", "image/png"}, MediaStore.Images.Media.DATE_MODIFIED);
+        try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
+                MediaStore.Images.Media.MIME_TYPE + "= ? or " + MediaStore.Images.Media.MIME_TYPE + "= ?",
+                new String[]{"image/jpeg", "image/png"}, MediaStore.Images.Media.DATE_MODIFIED)) {
             List<String> mDirs = new ArrayList<String>();//用于保存已经添加过的文件夹目录
             while (c.moveToNext()) {
                 String path = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));// 路径
@@ -167,14 +159,8 @@ public class FileManager {
                 folderBean.setFistImgPath(path);
                 if (parentFile.list() == null)
                     continue;
-                int count = parentFile.list(new FilenameFilter() {
-                    @Override
-                    public boolean accept(java.io.File dir, String filename) {
-                        if (filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".png")) {
-                            return true;
-                        }
-                        return false;
-                    }
+                int count = parentFile.list((dir1, filename) -> {
+                    return filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".png");
                 }).length;
 
                 folderBean.setCount(count);
@@ -182,10 +168,6 @@ public class FileManager {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (c != null) {
-                c.close();
-            }
         }
 
         return folders;
@@ -204,7 +186,7 @@ public class FileManager {
         if (files != null) {
             for (java.io.File file : files) {
                 String path = file.getAbsolutePath();
-                if (FileUtils.getFileType(path, false) == FileUtils.IMAGE) {
+                if (FileUtils.getFileType(path) == Constants.FileTypes.IMAGE) {
                     imgPaths.add(path);
                 }
             }
@@ -217,7 +199,7 @@ public class FileManager {
      */
     public List<AppInfo> getAppInfos(Context ctx) {
 
-        ArrayList<AppInfo> appInfos = new ArrayList<AppInfo>();
+        ArrayList<AppInfo> appInfos = new ArrayList<>();
         PackageManager packageManager = ctx.getPackageManager();
         List<PackageInfo> installedPackages = packageManager.getInstalledPackages(0);
 
@@ -257,21 +239,13 @@ public class FileManager {
             //获取到安装应用程序的标记
             int flags = packageInfo.applicationInfo.flags;
 
-            if ((flags & ApplicationInfo.FLAG_SYSTEM) != 0) {
-                //表示系统app
-                appInfo.setIsUserApp(false);
-            } else {
-                //表示用户app
-                appInfo.setIsUserApp(true);
-            }
+            //表示系统app
+            //表示用户app
+            appInfo.setIsUserApp((flags & ApplicationInfo.FLAG_SYSTEM) == 0);
 
-            if ((flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) != 0) {
-                //表示在sd卡
-                appInfo.setIsRom(false);
-            } else {
-                //表示内存
-                appInfo.setIsRom(true);
-            }
+            //表示在sd卡
+            //表示内存
+            appInfo.setIsRom((flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == 0);
             appInfos.add(appInfo);
         }
         return appInfos;

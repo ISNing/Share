@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="code_title">Share - Auth Code</string>
+    <string name="code_aspectRatio">1:1</string>
 </resources>

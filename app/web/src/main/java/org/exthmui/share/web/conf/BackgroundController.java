@@ -3,12 +3,7 @@ package org.exthmui.share.web.conf;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.view.Gravity;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.gson.annotations.SerializedName;
 import com.yanzhenjie.andserver.annotation.GetMapping;
@@ -21,8 +16,8 @@ import com.yanzhenjie.andserver.annotation.RestController;
 import org.exthmui.share.web.R;
 import org.exthmui.share.web.WebServerService;
 import org.exthmui.share.web.exceptions.InvalidRequestException;
-import org.exthmui.share.misc.Constants;
-import org.exthmui.share.misc.Utils;
+import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.Utils;
 
 @RestController
 @RequestMapping(path = "/media")
@@ -43,7 +38,7 @@ public class BackgroundController {
         String pattern = "^[0-9]{6}$";
         if(data.deviceId.isEmpty() | data.authCode.isEmpty() | !data.authCode.matches(pattern)) throw new InvalidRequestException();
         if(data.displayName.isEmpty()) data.displayName = "Unknown device";
-        if(!Utils.isInclude(Constants.DeviceTypes.class, data.deviceType)) data.deviceType = Constants.DeviceTypes.UNKNOWN.getNumVal();
+        if(!Utils.isInclude(Constants.DeviceType.class, data.deviceType)) data.deviceType = Constants.DeviceType.UNKNOWN.getNumVal();
         Dialog dialog = generateCodeDialog(data.authCode);
         dialog.show();
         return "true";

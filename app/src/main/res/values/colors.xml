@@ -8,4 +8,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="code_bg">@android:color/darker_gray</color>
+    <color name="transmission_failed_badge_background">#EF5350</color>
+    <color name="transmission_succeeded_badge_background">#66BB6A</color>
+    <color name="transmission_waiting_badge_background">#212121</color>
 </resources>

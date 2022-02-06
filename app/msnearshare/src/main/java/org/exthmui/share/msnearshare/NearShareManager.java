@@ -1,151 +1,131 @@
 package org.exthmui.share.msnearshare;
 
+import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import androidx.core.app.ActivityCompat;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkManager;
+
 import com.microsoft.connecteddevices.*;
-import com.microsoft.connecteddevices.EventListener;
-import com.microsoft.connecteddevices.remotesystems.commanding.RemoteSystemConnectionRequest;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
-import com.microsoft.connecteddevices.remotesystems.RemoteSystemAddedEventArgs;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAuthorizationKind;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAuthorizationKindFilter;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemDiscoveryType;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemDiscoveryTypeFilter;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemFilter;
-import com.microsoft.connecteddevices.remotesystems.RemoteSystemRemovedEventArgs;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatusType;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatusTypeFilter;
-import com.microsoft.connecteddevices.remotesystems.RemoteSystemUpdatedEventArgs;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcher;
-import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcherErrorOccurredEventArgs;
-import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.*;
-import android.net.Uri;
-import org.exthmui.share.base.PeerInfo;
-import org.exthmui.share.base.SendingWorker;
-import org.exthmui.share.base.listeners.BaseEventListener;
-import org.exthmui.share.base.listeners.OnAcceptedOrRejectedListener;
-import org.exthmui.share.base.listeners.OnProgressUpdatedListener;
-import org.exthmui.share.base.SenderInfo;
+
+import org.exthmui.share.shared.BaseEventListenersUtils;
+import org.exthmui.share.shared.base.Discoverer;
+import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
+import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
+import org.exthmui.share.shared.base.events.PeerAddedEvent;
+import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
+import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
+import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
+import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
+import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.base.Sender;
+import org.exthmui.share.shared.Constants;
 
 import java.lang.ref.WeakReference;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-
-import static android.content.Intent.ACTION_SEND;
-import static android.content.Intent.ACTION_SEND_MULTIPLE;
 
 @SuppressWarnings("unchecked")
-public class NearShareManager implements SenderInfo<NearSharePeer> {
+public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     private static final String TAG = "NearShareManager";
 
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
 
+    private final Collection<BaseEventListener> mListeners = new HashSet<>();
+
     static {
         LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
                 {
-                        OnAcceptedOrRejectedListener.class,
-                        OnProgressUpdatedListener.class
+                        OnDiscovererStartedListener.class,
+                        OnDiscovererStoppedListener.class,
+                        OnPeerAddedListener.class,
+                        OnPeerUpdatedListener.class,
+                        OnPeerRemovedListener.class
                 };
     }
 
+
+    private static NearShareManager instance;
     private final Context mContext;
-    private Collection<BaseEventListener> mListeners;
+    private final Map<String, PeerInfo> mPeers = new HashMap<>();
+    private boolean mDiscovererStarted;
+    private boolean mInitialized;
+
 
     private ConnectedDevicesPlatform mPlatform;
-    private RemoteSystemWatcher mRemoteSystemWatcher;
-    private RemoteSystem mSelectedRemoteSystem;
-    private NearShareSender mNearShareSender;
-    private Uri[] mFiles;
-    private boolean mWatcherStarted;
-
-    public NearShareManager(Context context) {
-        this.mContext = context;
-    }
-
-    public void addListener(BaseEventListener listener) {
-        if (mListeners == null) mListeners = new HashSet<>();
-        for (Class<? extends BaseEventListener> t : LISTENER_TYPES_ALLOWED) {
-            if (listener.getClass().isAssignableFrom(t)) {
-                mListeners.add(listener);
-                break;
-            }
-        }
-    }
-
-    private void notifyListeners(EventObject event) throws InvocationTargetException, IllegalAccessException {
-        List<Method> methodsToPerform = new ArrayList<>();
-        for (BaseEventListener listener : mListeners) {
-            for (Class<? extends EventObject> t: listener.getEventTMethodMap().keySet()) {
-                if (t.isAssignableFrom(event.getClass()))
-                    Collections.addAll(methodsToPerform, Objects.requireNonNull(listener.getEventTMethodMap().get(t)));
-            }
-        }
-        for(Method m:methodsToPerform) {
-            m.invoke(event);
-        }
-    }
+    @Nullable private RemoteSystemWatcher mRemoteSystemWatcher;
 
     @Override
-    public void initialize() {
+    public void registerListener(BaseEventListener listener) {
+        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+            mListeners.add(listener);
+    }
+    @Override
+    public void unregisterListener(BaseEventListener listener) {
+        mListeners.remove(listener);
+    }
+
+    private void notifyListeners(EventObject event){
+        BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    public static NearShareManager getInstance(Context context){
+        if(instance == null) instance = new NearShareManager(context);
+        return instance;
+    }
+
+    private NearShareManager(Context context) {
+        this.mContext = context.getApplicationContext();
         initializePlatform();
+        initialize();
     }
 
-    /**
-     * TODO:统一请求权限
-     * Request COARSE_LOCATION permission required for nearshare functionality over bluetooth.
-     */
-    private void requestPermissions() {
-        // Request user permission for app to use location services, which is a requirement for Bluetooth.
-        Random rng = new Random();
-        int permissionRequestCode = rng.nextInt(128);
-
-        int permissionCheck =
-                ContextCompat.checkSelfPermission(mContext, android.Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (permissionCheck == PackageManager.PERMISSION_DENIED) {
-            ActivityCompat.requestPermissions(
-                    this, new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION}, permissionRequestCode);
-        } else {
-            Log.d(TAG, "Requested User Permission To Enable NearShare Prerequisites");
-        }
-    }
-
-    /**
-     * Initialize the platform. This is required before we attempt to use CDP SDK.
-     * Steps to start platform:
-     * 1. Initialize platform
-     * 2. Request Access Token
-     * 3. Start Platform
-     */
     private void initializePlatform() {
         mPlatform = new ConnectedDevicesPlatform(mContext);
 
-        // Subscribe to NotificationRegistrationStateChanged event
-        mPlatform.getNotificationRegistrationManager().notificationRegistrationStateChanged().subscribe((notificationRegistrationManager, args) -> onNotificationRegistrationStateChanged(notificationRegistrationManager, args));
+        final ConnectedDevicesAccountManager accountManager = mPlatform.getAccountManager();
+
+        accountManager.accessTokenRequested().subscribe((manager, args) -> {
+        });
+
+        accountManager.accessTokenInvalidated().subscribe((manager, args) -> {
+        });
+
+        final ConnectedDevicesNotificationRegistrationManager registrationManager
+                = mPlatform.getNotificationRegistrationManager();
+
+        registrationManager.notificationRegistrationStateChanged().subscribe((manager, args) -> {
+        });
+
         mPlatform.start();
 
-        // After platform start, before we can start remotesystem discovery, need to addaccount,
-        // NearShare only requires anonymous account, other CDP scenarios may require adding signed in
-        // accounts.
         createAndAddAnonymousAccount(mPlatform);
     }
 
     /**
-     * NearShare just works with anonymous account, signed in accounts are needed when using other CDP
-     * features.
+     * NearShare just works with anonymous account.
      */
     private void createAndAddAnonymousAccount(ConnectedDevicesPlatform platform) {
         ConnectedDevicesAccount account = ConnectedDevicesAccount.getAnonymousAccount();
@@ -158,24 +138,42 @@ public class NearShareManager implements SenderInfo<NearSharePeer> {
         });
     }
 
-    /**
-     * Event for when the registration state changes for a given account.
-     *
-     * @param sender ConnectedDevicesNotificationRegistrationManager which is making the request
-     * @param args   Contains arguments for the event
-     */
-    private void onNotificationRegistrationStateChanged(ConnectedDevicesNotificationRegistrationManager sender, ConnectedDevicesNotificationRegistrationStateChangedEventArgs args) {
-        Log.i(TAG, "NotificationRegistrationStateChanged for account");
+    @NonNull
+    @Override
+    public Set<String> getPermissionNotGranted() {
+        Set<String> permissions = new HashSet<>();
+        for (String permission: getPermissionsRequired())
+            if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED) permissions.add(permission);
+        return permissions;
     }
 
-    /**
-     * This method starts the RemoteSystem discovery process. It sets the corresponding filters
-     * to ensure that only spatially proximal devices are listed. It also sets up listeners
-     * for important events, such as device added, device updated, and device removed
-     */
-    private void startRemoteSystemWatcher() {
+    @NonNull
+    @Override
+    public Set<String> getPermissionsRequired() {
+        Set<String> permissions = new HashSet<>();
+        permissions.add(Manifest.permission.INTERNET);
+        permissions.add(Manifest.permission.BLUETOOTH);
+        permissions.add(Manifest.permission.BLUETOOTH_ADMIN);
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        permissions.add(Manifest.permission.ACCESS_NETWORK_STATE);
+        return permissions;
+    }
+
+    @Override
+    public void initialize() {
+        this.mInitialized = true;
+    }
+
+    @Override
+    public boolean isDiscovererStarted() {
+        return mDiscovererStarted;
+    }
+
+    @Override
+    public void startDiscover() {
         ArrayList<RemoteSystemFilter> filters = new ArrayList<>();
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+        // Config filters
         boolean proximalMode = preferences.getBoolean("proximal_mode", false);
         if (proximalMode) {
             filters.add(new RemoteSystemDiscoveryTypeFilter(RemoteSystemDiscoveryType.PROXIMAL));
@@ -188,188 +186,98 @@ public class NearShareManager implements SenderInfo<NearSharePeer> {
 
         mRemoteSystemWatcher = new RemoteSystemWatcher(filters);
         final WeakReference<RemoteSystemWatcher> weakRemoteSystemWatcher = new WeakReference<>(mRemoteSystemWatcher);
-        weakRemoteSystemWatcher.get().remoteSystemAdded().subscribe(new RemoteSystemAddedListener());
-        weakRemoteSystemWatcher.get().remoteSystemUpdated().subscribe(new RemoteSystemUpdatedListener());
-        weakRemoteSystemWatcher.get().remoteSystemRemoved().subscribe(new RemoteSystemRemovedListener());
-        weakRemoteSystemWatcher.get().errorOccurred().subscribe(new RemoteSystemWatcherErrorOccurredListener());
+        // Add Listeners
+        weakRemoteSystemWatcher.get().remoteSystemAdded().subscribe((remoteSystemWatcher, args) -> {
+            final RemoteSystem remoteSystem = args.getRemoteSystem();
+            NearSharePeer peer = new NearSharePeer(remoteSystem);
+            notifyListeners(new PeerAddedEvent(this, peer));
+            mPeers.put(peer.getId(), peer);
+            Log.d(TAG, String.format("Peer added: %s", peer.getDisplayName()));
+        });
+        weakRemoteSystemWatcher.get().remoteSystemUpdated().subscribe((remoteSystemWatcher, args) -> {
+            final RemoteSystem remoteSystem = args.getRemoteSystem();
+            PeerInfo peer = new NearSharePeer(remoteSystem);
+            mPeers.remove(peer.getId());
+            mPeers.put(peer.getId(), peer);
+            notifyListeners(new PeerUpdatedEvent(this, peer));
+            Log.d(TAG, String.format("Peer updated: %s", peer.getDisplayName()));
+        });
+        weakRemoteSystemWatcher.get().remoteSystemRemoved().subscribe((remoteSystemWatcher, args) -> {
+            final RemoteSystem remoteSystemParam = args.getRemoteSystem();
+            NearSharePeer peer = new NearSharePeer(remoteSystemParam);
+            mPeers.remove(peer.getId());
+            Log.d(TAG, String.format("Peer removed: %s", peer.getDisplayName()));
+        });
+        weakRemoteSystemWatcher.get().errorOccurred().subscribe((remoteSystemWatcher, args) -> Log.e(TAG, String.format("Discovery error: %1$s", args.getError())));
 
-        // Everytime user toggles checkbox Proximal discovery
-        // we restart the watcher with appropriate filters to whiter do a
-        // Proximal or Spatially Proximal discovery. this check is to see if watcher has been previously started
-        // if was started, we stop it and restart with the new set of filters
-        if (mWatcherStarted) {
+        // Stop watcher if it has already started
+        if (mDiscovererStarted) {
             weakRemoteSystemWatcher.get().stop();
-            mWatcherStarted = false;
-            mRemoteDeviceListAdapter.clear();
-            mRemoteDeviceListAdapter.notifyDataSetChanged();
+            mDiscovererStarted = false;
         }
 
         weakRemoteSystemWatcher.get().start();
-        mWatcherStarted = true;
+        mDiscovererStarted = true;
+        notifyListeners(new DiscovererStartedEvent(this));
     }
 
-    /**
-     * Helper Function to initialize the files based on whether user is trying to share
-     * single file or multiple files.
-     */
-    private void initFiles() {
-        Intent launchIntent = getIntent();
-
-        if ((ACTION_SEND == launchIntent.getAction()) || (ACTION_SEND_MULTIPLE == launchIntent.getAction())) {
-            switch (launchIntent.getAction()) {
-                case ACTION_SEND: {
-                    mFiles = new Uri[]{launchIntent.getParcelableExtra(Intent.EXTRA_STREAM)};
-                    break;
-                }
-                case ACTION_SEND_MULTIPLE: {
-                    ArrayList<Uri> files = launchIntent.getParcelableArrayListExtra(Intent.EXTRA_STREAM);
-                    mFiles = new Uri[files.size()];
-                    files.toArray(mFiles);
-                    break;
-                }
-            }
-        }
+    @Override
+    public void stopDiscover() {
+        if (mRemoteSystemWatcher != null)
+            mRemoteSystemWatcher.stop();
+        mDiscovererStarted = false;
+        notifyListeners(new DiscovererStoppedEvent(this));
     }
 
-    /**
+    @Override
+    public Map<String, PeerInfo> getPeers() {
+        return mPeers;
+    }
+
+    /**TODO:Make use of it
      * Send URI to the target device using nearshare
      */
-    private void sendUri(PeerInfo t, String uriText) {
-        RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
+//    private void sendUri(PeerInfo t, String uriText) {
+//        RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
+//
+//        if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
+//            mNearShareSender.sendUriAsync(remoteSystemConnectionRequest, uriText);
+//        } else {
+//            Log.d(TAG, "NearShare is not supported in this device");
+//        }
+//    }
 
-        if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
-            mNearShareSender.sendUriAsync(remoteSystemConnectionRequest, uriText);
-        } else {
-            Log.d(TAG, "NearShare is not supported in this device");
-        }
-    }
-
-    /**
-     * Pick Files and Send using NearShare, helper function to pick files and send.
-     */
-    private AsyncOperationWithProgress<NearShareStatus, NearShareProgress> setupAndBeginSendFileAsync() {
-        AsyncOperationWithProgress<NearShareStatus, NearShareProgress> asyncFileTransferOperation = null;
-        asyncFileTransferOperation.progress().subscribe((op, progress) -> {
-            if (progress.filesSent != 0 || progress.totalFilesToSend != 0) {
-                if (accepted.compareAndSet(false, true)) {
-                    mHandler.post(listener::onAccepted);
-                }
-                mHandler.post() ->listener.onProgress(progress.bytesSent, progress.totalBytesToSend));
-            }
-        })
-        if ((null != mFiles) && (null != mSelectedRemoteSystem)) {
-            RemoteSystemConnectionRequest remoteSystemConnectionRequest = new RemoteSystemConnectionRequest(mSelectedRemoteSystem);
-
-            if (mNearShareSender.isNearShareSupported(remoteSystemConnectionRequest)) {
-
-                CancellationToken cancellationToken = null;
-
-                findViewById(R.id.btnCancel).setEnabled(true);
-
-                // Call the appropriate api based on the number of files shared to the app.
-                if (1 == mFiles.length) {
-                    NearShareFileProvider nearShareFileProvider =
-                            NearShareHelper.createNearShareFileFromContentUri(mFiles[0], mContext);
-
-                    asyncFileTransferOperation =
-                            mNearShareSender.sendFileAsync(remoteSystemConnectionRequest, nearShareFileProvider);
-                } else {
-                    NearShareFileProvider[] nearShareFileProviderArray = new NearShareFileProvider[mFiles.length];
-
-                    for (int index = 0; index < mFiles.length; ++index) {
-                        nearShareFileProviderArray[index] =
-                                NearShareHelper.createNearShareFileFromContentUri(mFiles[index], mContext);
-                    }
-
-                    asyncFileTransferOperation =
-                            mNearShareSender.sendFilesAsync(remoteSystemConnectionRequest, nearShareFileProviderArray);
-
-                }
-            }
-        }
-        return asyncFileTransferOperation;
-    }
-
-    /**
-     * Send file(s) to the target device using nearshare. Select a photo or file and share to the nearshare app.
-     */
-    private void sendFile() {
-        AsyncOperation<NearShareStatus> asyncFileTransferOperation = setupAndBeginSendFileAsync();
-        if ((null != mFiles) && (null != mSelectedRemoteSystem)) {
-
-        }
+    @Override
+    public UUID send(NearSharePeer peer, Entity entity) {
+        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareSendingWorker.class)
+                .setInputData(genSendingInputData(peer, entity))
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build();
+        WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
+        return work.getId();
     }
 
     @Override
-    public SendingWorker send(NearSharePeer peer, List<Entity> entities) {
-        OneTimeWorkRequest.from(NearShareSendingWorker.class)
-    }
-
-    /**
-     * Callback method to be invoked when an item in this AdapterView has
-     * been clicked.
-     * <p>
-     * Implementers can call getItemAtPosition(position) if they need
-     * to access the data associated with the selected item.
-     *
-     * @param parent   The AdapterView where the click happened.
-     * @param view     The view within the AdapterView that was clicked (this
-     *                 will be a view provided by the adapter)
-     * @param position The position of the view in the adapter.
-     * @param id       The row id of the item that was clicked.
-     */
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        mSelectedRemoteSystem = (RemoteSystem) mRemoteDeviceListAdapter.getItem(position);
-        mRemoteDeviceListAdapter.setSelectedView(view);
+    public UUID[] send(NearSharePeer peer, List<Entity> entities) {
+        UUID[] uuids = new UUID[entities.size()];
+        int i = 0;
+        for (Entity entity :entities) {
+            uuids[i] = send(peer, entity);
+            i++;
+        }
+        return uuids;
     }
 
     @Override
-    public boolean isAvailable() {
+    public boolean isFeatureAvailable() {
         //TODO:Add test on feature dependencies
         return true;
     }
 
-    // region HelperClasses
-    private static class RemoteSystemAddedListener implements EventListener<RemoteSystemWatcher, RemoteSystemAddedEventArgs> {
-        @Override
-        public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemAddedEventArgs args) {
-            final RemoteSystem remoteSystemParam = args.getRemoteSystem();
-            // Calls from the OneSDK are not guaranteed to come back on the given (UI) thread
-            // hence explicitly call runOnUiThread
-            mRemoteDeviceListAdapter.addDevice(remoteSystemParam);
-            mRemoteDeviceListAdapter.notifyDataSetChanged();
-        }
+    @Override
+    public boolean isInitialized() {
+        return mInitialized;
     }
 
-    private static class RemoteSystemUpdatedListener implements EventListener<RemoteSystemWatcher, RemoteSystemUpdatedEventArgs> {
-        @Override
-        public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemUpdatedEventArgs args) {
-            LOG.log(Level.INFO, String.format("Updating system: %1$s", args.getRemoteSystem().getDisplayName()));
-        }
-    }
 
-    private static class RemoteSystemRemovedListener implements EventListener<RemoteSystemWatcher, RemoteSystemRemovedEventArgs> {
-        @Override
-        public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemRemovedEventArgs args) {
-            final RemoteSystem remoteSystemParam = args.getRemoteSystem();
-            // Calls from the OneSDK are not guaranteed to come back on the given (UI) thread
-            // hence explicitly call runOnUiThread
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    mRemoteDeviceListAdapter.removeDevice(remoteSystemParam);
-                    mRemoteDeviceListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-    }
-
-    private static class RemoteSystemWatcherErrorOccurredListener implements EventListener<RemoteSystemWatcher, RemoteSystemWatcherErrorOccurredEventArgs> {
-        @Override
-        public void onEvent(RemoteSystemWatcher remoteSystemWatcher, RemoteSystemWatcherErrorOccurredEventArgs args) {
-            LOG.log(Level.SEVERE, String.format("Discovery error: %1$s", args.getError().toString()));
-        }
-    }
-    // endregion HelperClasses
 }

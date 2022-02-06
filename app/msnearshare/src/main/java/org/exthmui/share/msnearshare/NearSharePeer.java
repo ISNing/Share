@@ -3,19 +3,31 @@ package org.exthmui.share.msnearshare;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemKinds;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
-import org.exthmui.share.base.PeerInfo;
-import org.exthmui.share.misc.Constants;
 
-public class NearSharePeer implements PeerInfo {
-    public static final String CONNECTION_CODE = "msnearshare";
+import org.exthmui.share.shared.base.Peer;
+import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+
+public class NearSharePeer extends Peer {
+    public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_MSNEARSHARE;
     RemoteSystem remoteSystem;
     public NearSharePeer(RemoteSystem remoteSystem){
         this.remoteSystem = remoteSystem;
     }
 
     @Override
+    public void registerOnPeerUpdatedListener(OnPeerUpdatedListener listener) {
+
+    }
+
+    @Override
+    public void notifyPeerUpdated() {
+
+    }
+
+    @Override
     public String getId() {
-        return remoteSystem.getId();
+        return String.format(Constants.PEER_ID_STRING, getConnectionType(), remoteSystem.getId());
     }
 
     @Override
@@ -26,11 +38,11 @@ public class NearSharePeer implements PeerInfo {
     @Override
     public int getDeviceType() {
         String kind = remoteSystem.getKind();
-        int deviceType = Constants.DeviceTypes.UNKNOWN.getNumVal();
-        if(kind.equals(RemoteSystemKinds.Desktop())) deviceType = Constants.DeviceTypes.DESKTOP.getNumVal();
-        else if(kind.equals(RemoteSystemKinds.Laptop())) deviceType = Constants.DeviceTypes.LAPTOP.getNumVal();
-        else if(kind.equals(RemoteSystemKinds.Phone())) deviceType = Constants.DeviceTypes.PHONE.getNumVal();
-        else if(kind.equals(RemoteSystemKinds.Tablet())) deviceType = Constants.DeviceTypes.DESKTOP.getNumVal();
+        int deviceType = Constants.DeviceType.UNKNOWN.getNumVal();
+        if(kind.equals(RemoteSystemKinds.Desktop())) deviceType = Constants.DeviceType.DESKTOP.getNumVal();
+        else if(kind.equals(RemoteSystemKinds.Laptop())) deviceType = Constants.DeviceType.LAPTOP.getNumVal();
+        else if(kind.equals(RemoteSystemKinds.Phone())) deviceType = Constants.DeviceType.PHONE.getNumVal();
+        else if(kind.equals(RemoteSystemKinds.Tablet())) deviceType = Constants.DeviceType.TABLET.getNumVal();
         return deviceType;
     }
 
@@ -48,7 +60,7 @@ public class NearSharePeer implements PeerInfo {
     public int getConnectionStatus() {
         int stat = Constants.ConnectionStatus.UNKNOWN.getNumVal();
         if (remoteSystem.getStatus().equals(RemoteSystemStatus.AVAILABLE)) stat = Constants.ConnectionStatus.AVAILABLE.getNumVal();
-        if(remoteSystem.getStatus().equals(RemoteSystemStatus.UNAVAILABLE)) stat = Constants.ConnectionStatus.UNAVAILABLE.getNumVal();
+        if (remoteSystem.getStatus().equals(RemoteSystemStatus.UNAVAILABLE)) stat = Constants.ConnectionStatus.UNAVAILABLE.getNumVal();
         return stat;
     }
 
