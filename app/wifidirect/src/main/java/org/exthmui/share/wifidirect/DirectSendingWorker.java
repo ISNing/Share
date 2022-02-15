@@ -13,6 +13,10 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 import androidx.work.Data;
+import androidx.work.ExistingWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkManager;
 import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.base.Entity;
@@ -36,8 +40,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class DirectSendingWorker extends SendingWorker {
 
     private static final String TAG = "DirectSendingWorker";
-
-    public static final String I_SERVER_IP = "SERVER_IP";
 
     public DirectSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -73,7 +75,7 @@ public class DirectSendingWorker extends SendingWorker {
 
     @NonNull
     @Override
-    @SuppressWarnings("WrongThread")
+//    @SuppressWarnings("WrongThread")
     public Result doWork() {
         Data input = getInputData();
         Uri uri = Uri.parse(input.getString(Entity.FILE_URI));
@@ -177,6 +179,7 @@ public class DirectSendingWorker extends SendingWorker {
             long bytesSent = 0;
             byte[] buf = new byte[bufferSize];
             int len;
+
             while ((len = inputStream.read(buf)) != -1) {
                 outputStream.write(buf, 0, len);
                 bytesSent += len;
@@ -193,37 +196,11 @@ public class DirectSendingWorker extends SendingWorker {
         } catch (Exception e) {
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } finally {
-            if (outputStream != null) {
-                try {
-                    outputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (objectOutputStream != null) {
-                try {
-                    objectOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (inputStream != null) {
-                try {
-                    inputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
+            //TODO: close streams
         }
         // TODO: wait for success response
         result.set(Result.success(getInputData()));
         return result.get();
+
     }
 }

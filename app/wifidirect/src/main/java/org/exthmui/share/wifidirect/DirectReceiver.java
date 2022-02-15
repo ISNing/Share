@@ -10,15 +10,19 @@ import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.BaseEventListenersUtils;
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Receiver;
+import org.exthmui.share.shared.base.ReceivingWorker;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
 import org.exthmui.share.shared.base.events.PeerRemovedEvent;
 import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
@@ -43,6 +47,8 @@ public class DirectReceiver implements Receiver {
     private static final String TAG = "DirectReceiver";
 
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+
+    private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + new DirectPeer(null).getConnectionType();
 
     private static DirectReceiver instance;
 
@@ -148,10 +154,8 @@ public class DirectReceiver implements Receiver {
             // register BroadcastReceiver
             mContext.registerReceiver(mBroadcastReceiver, DirectBroadcastReceiver.getIntentFilter());
 
-            OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
-                    .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                    .build();
-            WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_RECEIVE + new DirectPeer(null).getConnectionType(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
+            startWork();
+
             mReceiverStarted = true;
         } catch (SecurityException e) {
             e.printStackTrace();
@@ -159,9 +163,31 @@ public class DirectReceiver implements Receiver {
         // Here shouldn't cause any exception, we should only register BroadcastReceiver after permissions are granted.
     }
 
+    private void startWork(){
+        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .build();
+        WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.KEEP, work);
+        WorkManager.getInstance(mContext).getWorkInfoByIdLiveData(work.getId()).observe(ProcessLifecycleOwner.get(), workInfo -> {
+            if (workInfo.getState().isFinished() && isReceiverStarted()) {
+                startWork();
+            }
+        });
+    }
+
     @Override
     public void stopReceive() {
         mContext.unregisterReceiver(mBroadcastReceiver);
+        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observe(ProcessLifecycleOwner.get(), workInfo -> {
+            for (WorkInfo info : workInfo) {
+                if (!info.getState().isFinished()) {
+                    if (info.getProgress().getBoolean(ReceivingWorker.P_WAITING, true)) {
+                        WorkManager.getInstance(mContext).cancelUniqueWork(WORK_UNIQUE_NAME);
+                    }
+                }
+            }
+        });
+        mReceiverStarted = false;
     }
 
     @Override

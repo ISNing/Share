@@ -92,6 +92,7 @@ public class ReceiverUtils {
                         buildAcceptPendingIntent(context, pluginCode, requestId))
                 .addAction(R.drawable.ic_action_reject, context.getString(R.string.notification_action_reject),
                         buildRejectPendingIntent(context, pluginCode, requestId));
+        builder.build();
     }
 
     public static void buildRequestDialog(Context context, String pluginCode, String requestId, String peerName, String fileName, long fileSize) {

@@ -11,6 +11,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.FileUtils;
 import org.exthmui.share.shared.ReceiverUtils;
 import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.ReceivingWorker;
@@ -20,6 +21,8 @@ import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -43,11 +46,11 @@ public class DirectReceivingWorker extends ReceivingWorker {
 
         InputStream inputStream;
         ObjectInputStream objectInputStream;
-        OutputStream outputStream = null;
-        ObjectOutputStream objectOutputStream = null;
-        Socket socket = null;
+        OutputStream outputStream;
+        ObjectOutputStream objectOutputStream;
+        Socket socket;
         ServerSocket serverSocket;
-        File file = null;
+        File file;
         FileOutputStream fileOutputStream;
         int timeout = DirectUtils.getTimeout(getApplicationContext());
         int serverPort = DirectUtils.getServerPort(getApplicationContext());
@@ -119,6 +122,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No enough free disk space");
             }
             file = new File(Utils.getDestinationDirectory(getApplicationContext()).getPath() + "/" + fileTransfer.getFileName());
+
             fileOutputStream = new FileOutputStream(file);
             byte[] buf = new byte[bufferSize];
             int len;
@@ -136,9 +140,22 @@ public class DirectReceivingWorker extends ReceivingWorker {
             inputStream = null;
             objectInputStream = null;
             fileOutputStream = null;
-            // TODO: validate MD5
+
+            // Validate md5
+            try {
+                inputStream = new FileInputStream(file);
+            } catch (FileNotFoundException e) {
+                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "Failed calculating MD5");
+            }
+            String md5 = FileUtils.getMD5(inputStream);
+            if (!fileTransfer.getMd5().equals(md5)) {
+                //noinspection ResultOfMethodCallIgnored
+                file.delete();
+                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "File validation failed");
+            }
         } catch (Exception e) {
-            Log.e(TAG, "文件接收 Exception: " + e.getMessage());
+            //TODO: close streams
+            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         }
         return Result.failure();
     }

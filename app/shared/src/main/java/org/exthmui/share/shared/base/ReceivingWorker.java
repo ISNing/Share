@@ -17,6 +17,7 @@ public abstract class ReceivingWorker extends Worker {
     public static final String P_ACCEPTED = "ACCEPTED";
     public static final String P_BYTES_TOTAL = "BYTES_TOTAL";
     public static final String P_BYTES_RECEIVED = "BYTES_SENT";
+    public static final String P_WAITING = "IN_PROGRESS";
     public static final String F_STATUS_CODE = "STATUS_CODE";
     public static final String F_MESSAGE = "MESSAGE";
 
@@ -24,8 +25,17 @@ public abstract class ReceivingWorker extends Worker {
         super(context, workerParams);
     }
 
+    /**
+     * Update progress
+     *
+     * Note: (fileName == null && senderName == null) == true => means ready for receiving file, but no acceptation received.
+     * @param totalBytesToSend As name
+     * @param bytesReceived As name
+     * @param fileName File name
+     * @param senderName Sender's display name
+     */
     protected void updateProgress(long totalBytesToSend, long bytesReceived, String fileName, String senderName) {
-        setProgressAsync(genProgressData(totalBytesToSend, bytesReceived));
+        setProgressAsync(genProgressData((fileName == null && senderName == null), totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
         setForegroundAsync(createForegroundInfo((Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileName, senderName, indeterminate));
     }
@@ -34,9 +44,10 @@ public abstract class ReceivingWorker extends Worker {
         return Result.failure(genFailureData(errCode, message));
     }
 
-    private Data genProgressData(long totalBytesToSend, long bytesReceived) {
+    private Data genProgressData(boolean waiting, long totalBytesToSend, long bytesReceived) {
         return new Data.Builder()
                 .putAll(getInputData())
+                .putBoolean(P_WAITING, waiting)
                 .putLong(P_BYTES_TOTAL, totalBytesToSend)
                 .putLong(P_BYTES_RECEIVED, bytesReceived)
                 .putInt(P_PROGRESS, (int) (bytesReceived / totalBytesToSend) * 100)
