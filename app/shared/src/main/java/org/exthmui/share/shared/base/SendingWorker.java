@@ -1,24 +1,19 @@
 package org.exthmui.share.shared.base;
 
 import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.Context;
+
 import androidx.annotation.NonNull;
-import androidx.core.app.NotificationCompat;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
-import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.SenderUtils;
 
 public abstract class SendingWorker extends Worker {
     public static final String P_STATUS_CODE = "STATUS_CODE";
-    public static final String P_PROGRESS = "PROGRESS";
-    public static final String P_ACCEPTED = "ACCEPTED";
     public static final String P_BYTES_TOTAL = "BYTES_TOTAL";
     public static final String P_BYTES_SENT = "BYTES_SENT";
     public static final String F_STATUS_CODE = "STATUS_CODE";
@@ -30,7 +25,7 @@ public abstract class SendingWorker extends Worker {
     protected void updateProgress(int statusCode, long totalBytesToSend, long bytesSent, String fileName, String targetName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesSent));
         boolean indeterminate = bytesSent == 0;
-        setForegroundAsync(createForegroundInfo((Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), bytesSent, totalBytesToSend, fileName, targetName, indeterminate));
+        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), bytesSent, totalBytesToSend, fileName, targetName, indeterminate));
     }
     protected Result genFailureResult(int errCode, String message) {
         return Result.failure(genFailureData(errCode, message));
@@ -41,7 +36,6 @@ public abstract class SendingWorker extends Worker {
                 .putInt(P_STATUS_CODE, statusCode)
                 .putLong(P_BYTES_TOTAL, totalBytesToSend)
                 .putLong(P_BYTES_SENT, bytesSent)
-                .putInt(P_PROGRESS, (int) (bytesSent / totalBytesToSend) * 100)
                 .build();
     }
 
@@ -82,8 +76,8 @@ public abstract class SendingWorker extends Worker {
     public abstract Result doWork();
 
     @NonNull
-    protected ForegroundInfo createForegroundInfo(int notificationId, long totalBytesToSend, long bytesSent, String fileName, String targetName, boolean indeterminate) {
-        Notification notification = SenderUtils.buildSendingNotification(getApplicationContext(), getId(), totalBytesToSend, bytesSent, fileName, targetName, indeterminate);
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesSent, String fileName, String targetName, boolean indeterminate) {
+        Notification notification = SenderUtils.buildSendingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesSent, fileName, targetName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
     }
 }

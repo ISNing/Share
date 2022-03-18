@@ -97,15 +97,22 @@ public class Constants {
 
     public enum TransmissionStatus{
         UNKNOWN(0),
-        WAITING_FOR_ACCEPTATION(1),
-        REJECTED(2),
-        CONNECTION_ESTABLISHED(3),
-        IN_PROGRESS(4),
-        TIMED_OUT(5),
-        COMPLETED(6),
-        CANCELLED(7),
-        NETWORK_ERROR(8),
-        UNKNOWN_ERROR(9);
+        WAITING_FOR_REQUEST(6),
+        WAITING_FOR_ACCEPTATION(5),
+        REJECTED(3),
+        CONNECTION_ESTABLISHED(4),
+        IN_PROGRESS(2),
+        COMPLETED(1),
+
+        UNKNOWN_ERROR(10),
+        NETWORK_ERROR(11),
+        TIMED_OUT(111),
+        SENDER_CANCELLED(121),
+        RECEIVER_CANCELLED(122),
+        FILE_IO_ERROR(13),
+        NO_ENOUGH_SPACE(131),
+        REMOTE_ERROR(14),
+        PEER_DISAPPEARED(15);
         private final int numVal;
 
         TransmissionStatus(int numVal) {

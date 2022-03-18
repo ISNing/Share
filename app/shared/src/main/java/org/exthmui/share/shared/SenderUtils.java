@@ -6,15 +6,9 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Build;
-import android.text.format.Formatter;
-import android.widget.TextView;
 
 import androidx.core.app.NotificationCompat;
 import androidx.work.WorkManager;
-import androidx.work.Worker;
-
-import com.google.android.material.bottomsheet.BottomSheetDialog;
-import com.google.android.material.button.MaterialButton;
 
 import java.util.UUID;
 
@@ -33,8 +27,8 @@ public class SenderUtils {
         }
     }
 
-    public static Notification buildSendingNotification(Context context, UUID workerId, long totalBytesToSend, long bytesSent, String fileName, String targetName, boolean indeterminate) {
-        createNotificationChannel(context);
+    public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, String fileName, String targetName, boolean indeterminate) {
+        createNotificationChannel(context);//TODO: make use of statuscode
 
         String title = String.format(context.getString(R.string.notification_title_sending), fileName, targetName);
         String cancel = context.getString(R.string.notification_action_cancel);

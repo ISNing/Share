@@ -1,7 +1,6 @@
 package org.exthmui.share.shared;
 
 import static androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID;
-
 import static org.exthmui.share.shared.ShareBroadcastReceiver.ACTION_ACCEPT;
 import static org.exthmui.share.shared.ShareBroadcastReceiver.ACTION_ACCEPTATION_DIALOG;
 import static org.exthmui.share.shared.ShareBroadcastReceiver.ACTION_REJECT;
@@ -17,7 +16,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.drawable.Icon;
 import android.os.Build;
 import android.text.format.Formatter;
 import android.widget.TextView;
@@ -130,14 +128,16 @@ public class ReceiverUtils {
         dialog.show();
     }
 
-    public static Notification buildSendingNotification(Context context, UUID workerId, long totalBytesToSend, long bytesReceived, String fileName, String senderName, boolean indeterminate) {
+    public static Notification buildReceivingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, String fileName, String senderName, boolean indeterminate) {
         createNotificationChannel(context);
 
         String title;
-        if (fileName == null) {
-            if (senderName == null) title = context.getString(R.string.notification_title_receive_waiting);
-            else title = String.format(context.getString(R.string.notification_title_receive_receiving), context.getString(R.string.notification_placeholder_unknown), senderName);
-        }
+        if (fileName == null)
+            fileName = context.getString(R.string.notification_placeholder_unknown);
+        if (senderName == null)
+            senderName = context.getString(R.string.notification_placeholder_unknown);
+        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            title = context.getString(R.string.notification_title_receive_waiting);
         else title = String.format(context.getString(R.string.notification_title_receive_receiving), fileName, senderName);
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
@@ -145,9 +145,9 @@ public class ReceiverUtils {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_CHANNEL_ID).setContentTitle(title)
                 .setTicker(title)
                 .setSmallIcon(R.drawable.ic_notification_receive)
-                .setOngoing(true)
-                .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
-        if (fileName != null) builder.setProgress((int)totalBytesToSend, (int)bytesReceived, indeterminate);
+                .setOngoing(true);
+        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) builder.addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
+        if (statusCode != Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) builder.setProgress((int)totalBytesToSend, (int)bytesReceived, indeterminate);
         return builder.build();
     }
 }

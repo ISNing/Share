@@ -12,6 +12,16 @@
     <string name="prefs_default_global_destination_directory" translatable="false">@null</string>
     <string name="prefs_summary_global_destination_directory_default" translatable="false">Download</string>
 
+    <string name="prefs_key_global_default_file_name" translatable="false">global_default_file_name</string>
+    <string name="prefs_title_global_default_file_name">Default file name</string>
+    <string name="prefs_default_global_default_file_name" translatable="false">unknown</string>
+    <string name="prefs_summary_global_default_file_name" translatable="false">unknown</string>
+
+    <string name="prefs_title_global_permissions_not_granted_discover">Grant permissions for %s(Discover)</string>
+    <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
+    <string name="prefs_title_global_permissions_not_granted_receive">Grant permissions for %s(Receive)</string>
+    <string name="prefs_summary_global_permissions_not_granted_receive">Touch here to grant for permission for receiving</string>
+
     <string name="notification_channel_receive_name">Receive Share request</string>
     <string name="notification_channel_receive_description">Will notify request in this channel</string>
     <string name="notification_action_accept">Accept</string>

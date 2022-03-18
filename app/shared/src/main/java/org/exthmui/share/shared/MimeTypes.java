@@ -2,6 +2,8 @@ package org.exthmui.share.shared;
 
 import android.webkit.MimeTypeMap;
 
+import androidx.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -98,17 +100,16 @@ public final class MimeTypes {
 
     /**
      * Get Mime Type of a file
-     * @param path the file of which mime type to get
+     * @param fileName the file of which mime type to get
      * @return Mime type in form of String
      */
-    public static String getMimeType(String path) {
+    public static String getMimeType(String fileName) {
         String type = ALL_MIME_TYPES;
-        final String extension = getExtension(path);
+        final String extension = getExtension(fileName);
 
         // mapping extension to system mime types
-        if (extension != null && !extension.isEmpty()) {
-            final String extensionLowerCase = extension.toLowerCase(Locale
-                    .getDefault());
+        if (!extension.isEmpty()) {
+            final String extensionLowerCase = extension.toLowerCase(Locale.getDefault());
             final MimeTypeMap mime = MimeTypeMap.getSingleton();
             type = mime.getMimeTypeFromExtension(extensionLowerCase);
             if (type == null) {
@@ -127,12 +128,21 @@ public final class MimeTypes {
     /**
      * Helper method for {@link #getMimeType(String)}
      * to calculate the last '.' extension of files
-     * @param path the path of file
+     * @param fileName the name of file
      * @return extension extracted from name in lowercase
      */
-    public static String getExtension(String path) {
-        if(path.contains(".")) return path.substring(path.lastIndexOf(".") + 1).toLowerCase();
+    public static String getExtension(@NonNull String fileName) {
+        if(fileName.contains(".")) return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         else return "";
     }
 
+    /**
+     * Calculate the display name part of files
+     * @param fileName the name of file
+     * @return extension extracted from name in lowercase
+     */
+    public static String getDisplayName(@NonNull String fileName) {
+        if(fileName.contains(".")) return fileName.substring(0, fileName.lastIndexOf(".") - 1);
+        else return fileName;
+    }
 }

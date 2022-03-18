@@ -25,6 +25,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme" >
+
         <service
             android:name=".services.DiscoveringTileService"
             android:enabled="true"
@@ -70,7 +71,7 @@
             android:name=".SettingsActivity"
             android:exported="true"
             android:label="@string/title_activity_settings"
-            android:theme="@style/AppTheme.Settings"/>
+            android:theme="@style/AppTheme.Settings" />
         <activity
             android:name=".ShareActivity"
             android:exported="true"
@@ -93,26 +94,13 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.Main">
+            android:theme="@style/AppTheme.Main" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
-        <receiver android:name=".shared.ShareBroadcastReceiver"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="org.exthmui.share.intent.action.ACCEPTATION_DIALOG" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="org.exthmui.share.intent.action.ACCEPT_SHARE" />
-            </intent-filter>
-            <intent-filter>
-                <action android:name="org.exthmui.share.intent.action.REJECT_SHARE" />
-            </intent-filter>
-        </receiver>
     </application>
 
 </manifest>

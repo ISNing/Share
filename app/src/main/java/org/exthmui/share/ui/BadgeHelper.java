@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
+import androidx.annotation.ColorInt;
 import androidx.annotation.IntDef;
 
 import com.google.android.material.tabs.TabLayout;
@@ -22,7 +23,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 
-public class BadgeHelper extends View {
+public class BadgeHelper extends View {// TODO: fix needed. Not working.
     private static final String TAG = "BadgeHelper";
     private float density;
     private Paint mTextPaint;
@@ -34,6 +35,7 @@ public class BadgeHelper extends View {
     private int type = Type.TYPE_POINT;
     private boolean isOverlap;
     private final RectF rect = new RectF();
+    @ColorInt
     private int badgeColor = 0xFFD3321B; //默认的小红点颜色
     private int textColor = 0xFFFFFFff;
     private float textSize;
@@ -57,7 +59,6 @@ public class BadgeHelper extends View {
 
     public BadgeHelper(Context context) {
         super(context);
-
     }
 
 

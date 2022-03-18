@@ -13,11 +13,9 @@ import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.ReceiverUtils;
 
 public abstract class ReceivingWorker extends Worker {
-    public static final String P_PROGRESS = "PROGRESS";
-    public static final String P_ACCEPTED = "ACCEPTED";
     public static final String P_BYTES_TOTAL = "BYTES_TOTAL";
     public static final String P_BYTES_RECEIVED = "BYTES_SENT";
-    public static final String P_WAITING = "IN_PROGRESS";
+    public static final String P_STATUS_CODE = "STATUS_CODE";
     public static final String F_STATUS_CODE = "STATUS_CODE";
     public static final String F_MESSAGE = "MESSAGE";
 
@@ -34,23 +32,28 @@ public abstract class ReceivingWorker extends Worker {
      * @param fileName File name
      * @param senderName Sender's display name
      */
-    protected void updateProgress(long totalBytesToSend, long bytesReceived, String fileName, String senderName) {
-        setProgressAsync(genProgressData((fileName == null && senderName == null), totalBytesToSend, bytesReceived));
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, String fileName, String senderName) {
+        setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundAsync(createForegroundInfo((Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileName, senderName, indeterminate));
+        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileName, senderName, indeterminate));
     }
 
     protected Result genFailureResult(int errCode, String message) {
         return Result.failure(genFailureData(errCode, message));
     }
+    protected Result genSenderCancelledResult() {
+        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Sender cancelled");
+    }
+    protected Result genReceiverCancelledResult() {
+        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Receiver cancelled");
+    }
 
-    private Data genProgressData(boolean waiting, long totalBytesToSend, long bytesReceived) {
+    private Data genProgressData(int statusCode, long totalBytesToSend, long bytesReceived) {
         return new Data.Builder()
                 .putAll(getInputData())
-                .putBoolean(P_WAITING, waiting)
+                .putInt(P_STATUS_CODE, statusCode)
                 .putLong(P_BYTES_TOTAL, totalBytesToSend)
                 .putLong(P_BYTES_RECEIVED, bytesReceived)
-                .putInt(P_PROGRESS, (int) (bytesReceived / totalBytesToSend) * 100)
                 .build();
     }
 
@@ -84,8 +87,8 @@ public abstract class ReceivingWorker extends Worker {
     public abstract Result doWork();
 
     @NonNull
-    protected ForegroundInfo createForegroundInfo(int notificationId, long totalBytesToSend, long bytesReceived, String fileName, String targetName, boolean indeterminate) {
-        Notification notification = ReceiverUtils.buildSendingNotification(getApplicationContext(), getId(), totalBytesToSend, bytesReceived, fileName, targetName, indeterminate);
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, String fileName, String targetName, boolean indeterminate) {
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileName, targetName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
     }
 }

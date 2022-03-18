@@ -1,5 +1,7 @@
 package org.exthmui.share.shared.base;
 
+import android.util.Log;
+
 import androidx.work.Data;
 
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
@@ -11,6 +13,7 @@ import java.util.UUID;
  * IMPORTANT: Should have a static method "getInstance({@link android.content.Context} context)"
  */
 public interface Sender<T extends PeerInfo > {
+    String TAG = "Sender";
     String TARGET_PEER_ID="TARGET_PEER_ID";
 
     /**
@@ -22,6 +25,27 @@ public interface Sender<T extends PeerInfo > {
      */
     UUID send(T peer, Entity entity);
     UUID[] send(T peer, List<Entity> entities);
+
+    @SuppressWarnings("unchecked")
+    default UUID sendToPeerInfo(PeerInfo peer, Entity entity) {
+        try {
+            return send((T) peer, entity);
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Failed casting peer");
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    default UUID[] sendToPeerInfo(PeerInfo peer, List<Entity> entities) {
+        try {
+            return send((T) peer, entities);
+        } catch (ClassCastException e) {
+            Log.e(TAG, "Failed casting peer");
+        }
+        return null;
+    }
+
     void registerListener(BaseEventListener listener);
     void unregisterListener(BaseEventListener listener);
     void initialize();

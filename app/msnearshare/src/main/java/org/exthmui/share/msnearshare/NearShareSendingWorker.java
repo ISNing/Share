@@ -8,7 +8,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.work.Data;
-import androidx.work.Operation;
 import androidx.work.WorkerParameters;
 
 import com.microsoft.connecteddevices.AsyncOperationWithProgress;
@@ -19,15 +18,15 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareSender;
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareStatus;
 
+import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
-import org.exthmui.share.shared.Constants;
 
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class NearShareSendingWorker extends SendingWorker {
@@ -60,7 +59,7 @@ public class NearShareSendingWorker extends SendingWorker {
                 uri, getApplicationContext());
 
         AtomicReference<Result> result = new AtomicReference<>(null);
-        CountDownLatch latch = new CountDownLatch(1);
+        AtomicBoolean finished = new AtomicBoolean(false);
 
         operation = mNearShareSender.sendFileAsync(connectionRequest, fileProvider);
 
@@ -79,7 +78,7 @@ public class NearShareSendingWorker extends SendingWorker {
                     put(NearShareStatus.COMPLETED, Constants.TransmissionStatus.COMPLETED);
                     put(NearShareStatus.IN_PROGRESS, Constants.TransmissionStatus.IN_PROGRESS);
                     put(NearShareStatus.TIMED_OUT, Constants.TransmissionStatus.TIMED_OUT);
-                    put(NearShareStatus.CANCELLED, Constants.TransmissionStatus.CANCELLED);
+                    put(NearShareStatus.CANCELLED, Constants.TransmissionStatus.RECEIVER_CANCELLED);
                     put(NearShareStatus.DENIED_BY_REMOTE_SYSTEM, Constants.TransmissionStatus.REJECTED);
                 }
 
@@ -101,13 +100,20 @@ public class NearShareSendingWorker extends SendingWorker {
                 Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
                 result.set(genFailureResult(Objects.requireNonNull(m.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), null));
             }
-            latch.countDown();
+            finished.set(true);
         });
-        try {
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        while (finished.get()) {
+            if (getForegroundInfoAsync().isCancelled()) {
+                operation.cancel(true);
+                return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+            }
         }
         return result.get();
+    }
+
+    @Override
+    public void onStopped() {
+        super.onStopped();
+        getForegroundInfoAsync().cancel(true);
     }
 }

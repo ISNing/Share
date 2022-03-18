@@ -1,9 +1,18 @@
 package org.exthmui.share.shared;
 
+import android.content.Context;
+import android.os.ParcelFileDescriptor;
+import android.system.ErrnoException;
+import android.system.Os;
+import android.system.StructStatVfs;
+
+import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
+
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -209,7 +218,7 @@ public class FileUtils {
         return mime != null && mime.contains("/") && check.equals(mime.substring(0, mime.indexOf("/")));
     }
 
-    public static String getMD5(InputStream inputStream) throws IOException {
+    public static String getMD5(@NonNull InputStream inputStream) throws IOException {
         try {
             MessageDigest MD5 = MessageDigest.getInstance("MD5");
             byte[] buffer = new byte[1024];
@@ -222,5 +231,12 @@ public class FileUtils {
         } catch (NoSuchAlgorithmException ignored) {
             return null;
         }
+    }
+
+    public static long getSpaceAvailable(@NonNull Context context, @NonNull DocumentFile documentFile) throws ErrnoException, FileNotFoundException {
+        ParcelFileDescriptor pfd = context.getApplicationContext().getContentResolver().openFileDescriptor(documentFile.getUri(), "r");
+        assert pfd != null;
+        StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
+        return stats.f_bavail * stats.f_bsize;
     }
 }

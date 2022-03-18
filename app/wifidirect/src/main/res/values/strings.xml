@@ -5,12 +5,16 @@
     <!-- Port Preference -->
     <string name="prefs_key_wifidirect_server_port" translatable="false">wifidirect_server_port</string>
     <string name="prefs_title_wifidirect_server_port">Server Port (Must be same with target device)</string>
+    <string name="prefs_tip_wifidirect_server_port_invalid">Invalid value</string>
     <string name="prefs_key_wifidirect_buffer_size" translatable="false">wifidirect_buffer_size</string>
     <string name="prefs_title_wifidirect_buffer_size">Buffer size (Must be same with target device)</string><!-- TODO: is this description precise?-->
+    <string name="prefs_tip_wifidirect_buffer_size_invalid">Invalid value</string>
     <string name="prefs_key_wifidirect_client_port" translatable="false">wifidirect_client_port</string>
     <string name="prefs_title_wifidirect_client_port">Client Port (From 5001 to 6535, -1 for dynamically generate)</string>
+    <string name="prefs_tip_wifidirect_client_port_invalid">Invalid value</string>
 
     <!-- Timeout Preference -->
     <string name="prefs_key_wifidirect_timeout" translatable="false">wifidirect_timeout</string>
     <string name="prefs_title_wifidirect_timeout">Timeout (ms)</string>
+    <string name="prefs_tip_wifidirect_timeout_invalid">Invalid value</string>
 </resources>

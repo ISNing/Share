@@ -25,7 +25,4 @@
     <string name="prefs_summary_global_plugins_enabled_suffix" />
     <string name="prefs_summary_global_plugins_enabled_none">No plugins enabled</string>
 
-    <string name="prefs_title_global_permissions_not_granted">Grant permissions for %s</string>
-    <string name="prefs_summary_global_permissions_not_granted">Touch here to grant for permission</string>
-
 </resources>

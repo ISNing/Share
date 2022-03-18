@@ -41,14 +41,6 @@ public class DiscoveringTileService extends TileService {
         public void onServiceConnected(ComponentName name, IBinder service) {
             ServiceUtils.MyService.MyBinder binder = (ServiceUtils.MyService.MyBinder) service;
             mService = (DiscoverService) binder.getService();
-            // TODO: No need for this DiscoverService has already take the initiative to call
-            // TODO: Also check for unuseful call for require
-//            BaseEventListener listener = (OnDiscovererStartedListener) event -> setState(Tile.STATE_ACTIVE);
-//            mService.registerListener(listener);
-//            mListenersDiscoverService.add(listener);
-//            listener = (OnDiscovererStoppedListener) event -> setState(Tile.STATE_INACTIVE);
-//            mService.registerListener(listener);
-//            mListenersDiscoverService.add(listener);
             for (OnServiceConnectedListener l:
                     mOnServiceConnectedListeners) {
                 l.onServiceConnected();

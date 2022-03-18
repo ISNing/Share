@@ -7,17 +7,19 @@ import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.util.Base64;
 import android.util.Log;
 
-import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.documentfile.provider.DocumentFile;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -69,20 +71,36 @@ public class Utils {
         return include;
     }
 
-    public static File getDestinationDirectory(Context context) {
-        String destinationDirectoryPath = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
+    public static @NonNull DocumentFile getDestinationDirectory(Context context) {
+        String destinationDirectoryUri = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
 
-        if (destinationDirectoryPath == null) return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-        File destinationDirectory = new File(destinationDirectoryPath);
+        DocumentFile downloadsDirectory = DocumentFile.fromFile(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS));
+
+        if (destinationDirectoryUri == null) return downloadsDirectory;
+        DocumentFile destinationDirectory = DocumentFile.fromTreeUri(context, Uri.parse(destinationDirectoryUri));
+        if (destinationDirectory == null) {
+            Log.e(TAG, "Failed to get DocumentFile object, returning Download directory.");
+            return downloadsDirectory;
+        }
         if (!destinationDirectory.isDirectory()) {
             Log.e(TAG, "Got non-directory destination directory path, returning Download directory.");
-            return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            return downloadsDirectory;
         }
         if (!destinationDirectory.canWrite()) {
             Log.e(TAG, "Got non-writeable destination directory path, returning Download directory.");
-            return context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            return downloadsDirectory;
         }
         return destinationDirectory;
+    }
+
+    public static @NonNull String getDefaultFileName(Context context) {
+        String defaultValue = context.getString(R.string.prefs_default_global_default_file_name);
+        String defaultFileName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
+        if (defaultFileName == null | TextUtils.isEmpty(defaultFileName)) {
+            Log.e(TAG, String.format("Got invalid default file name, returning default value \"%s\".", defaultValue));
+            defaultFileName = defaultValue;
+        }
+        return defaultFileName;
     }
 
     public static SharedPreferences getDefaultSharedPreferences(Context context) {

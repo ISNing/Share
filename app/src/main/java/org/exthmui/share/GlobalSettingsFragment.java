@@ -5,17 +5,25 @@ import static android.content.Context.BIND_AUTO_CREATE;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
-import androidx.preference.PreferenceManager;
 
-import androidx.fragment.app.Fragment;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.MultiSelectListPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.preferences.ClickableStringPreference;
+import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -26,6 +34,10 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     MultiSelectListPreference pluginsEnabledPrefs;
     ServiceConnection mConnection;
     DiscoverService mService;
+
+    ClickableStringPreference mDestinationDirectoryPrefs;
+
+    ActivityResultLauncher<?> mDestinationDirectoryActivityResultLauncher;
 
     public String buildSummaryForPluginsEnabledPrefs(Collection<String> codes) {
         if (codes == null) codes = Collections.emptySet();
@@ -77,13 +89,13 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                     for (String code : whatRemoved) {
                         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
                         if (type == null) continue;
-                        Class<? extends Fragment> fragment = type.getPreferenceFragmentClass();
+                        Class<? extends PluginPreferenceFragmentCompat> fragment = type.getPreferenceFragmentClass();
                         activity.removeFragment(fragment);
                     }
                     for (String code : whatAdded) {
                         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
                         if (type == null) continue;
-                        Class<? extends Fragment> fragment = type.getPreferenceFragmentClass();
+                        Class<? extends PluginPreferenceFragmentCompat> fragment = type.getPreferenceFragmentClass();
                         activity.addFragment(fragment);
                     }
                     mConnection = new ServiceConnection() {
@@ -111,5 +123,28 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             return true;
         });
         getPreferenceScreen().addPreference(pluginsEnabledPrefs);
+
+        mDestinationDirectoryPrefs = findPreference(getString(R.string.prefs_key_global_destination_directory));
+        assert mDestinationDirectoryPrefs != null;
+        mDestinationDirectoryPrefs.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+            @Override
+            public boolean onPreferenceClick(@NonNull Preference preference) {
+                mDestinationDirectoryActivityResultLauncher.launch(null);
+                return true;
+            }
+        });
+        mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new ActivityResultCallback<Uri>() {
+            @Override
+            public void onActivityResult(Uri uri) {
+                mDestinationDirectoryPrefs.setValue(uri.toString());
+                mDestinationDirectoryPrefs.setSummary(uri.toString());
+            }
+        });
     }
 }

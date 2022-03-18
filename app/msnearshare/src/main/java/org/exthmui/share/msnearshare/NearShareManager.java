@@ -15,7 +15,11 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
-import com.microsoft.connecteddevices.*;
+import com.microsoft.connecteddevices.ConnectedDevicesAccount;
+import com.microsoft.connecteddevices.ConnectedDevicesAccountManager;
+import com.microsoft.connecteddevices.ConnectedDevicesAddAccountResult;
+import com.microsoft.connecteddevices.ConnectedDevicesNotificationRegistrationManager;
+import com.microsoft.connecteddevices.ConnectedDevicesPlatform;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAuthorizationKind;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemAuthorizationKindFilter;
@@ -27,9 +31,11 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatusTypeFilter
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcher;
 
 import org.exthmui.share.shared.BaseEventListenersUtils;
+import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
@@ -40,11 +46,17 @@ import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
-import org.exthmui.share.shared.base.Sender;
-import org.exthmui.share.shared.Constants;
 
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EventObject;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 @SuppressWarnings("unchecked")
 public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
@@ -270,8 +282,10 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     @Override
     public boolean isFeatureAvailable() {
-        //TODO:Add test on feature dependencies
-        return true;
+        return mContext.getPackageManager().hasSystemFeature(
+                PackageManager.FEATURE_BLUETOOTH) &
+                mContext.getPackageManager().hasSystemFeature(
+                        PackageManager.FEATURE_WIFI);
     }
 
     @Override

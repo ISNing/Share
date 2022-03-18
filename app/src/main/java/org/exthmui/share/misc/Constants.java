@@ -1,28 +1,18 @@
 package org.exthmui.share.misc;
 
-import static org.exthmui.share.shared.Constants.CONNECTION_CODE_MSNEARSHARE;
-import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
-
 import androidx.annotation.NonNull;
-import androidx.preference.PreferenceFragmentCompat;
 
-import org.exthmui.share.msnearshare.NearShareManager;
-import org.exthmui.share.msnearshare.NearSharePeer;
-import org.exthmui.share.msnearshare.NearShareReceiver;
-import org.exthmui.share.msnearshare.NearShareSettingsFragment;
 import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.Sender;
-import org.exthmui.share.wifidirect.DirectManager;
-import org.exthmui.share.wifidirect.DirectPeer;
-import org.exthmui.share.wifidirect.DirectReceiver;
-import org.exthmui.share.wifidirect.DirectSettingsFragment;
+import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 public class Constants {
-    public enum ConnectionType {
-        MSNEARSHARE("Microsoft NearShare",CONNECTION_CODE_MSNEARSHARE, NearShareManager.class, NearShareManager.class, NearShareReceiver.class, NearSharePeer.class, NearShareSettingsFragment.class),
-        WIFIDIRECT("WiFi Direct", CONNECTION_CODE_WIFIDIRECT, DirectManager.class, DirectManager.class, DirectReceiver.class, DirectPeer.class, DirectSettingsFragment.class);
+    public enum ConnectionType implements org.exthmui.share.shared.misc.IConnectionType {
+        MSNEARSHARE(new org.exthmui.share.msnearshare.Metadata()),
+        WIFIDIRECT(new org.exthmui.share.wifidirect.Metadata());
         @NonNull private final String friendlyName;
         @NonNull private final String code;
         @NonNull private final Class<? extends Sender<? extends PeerInfo>> senderClass;
@@ -30,9 +20,9 @@ public class Constants {
         @NonNull private final Class<? extends Receiver> receiverClass;
         @NonNull private final Class<? extends PeerInfo> peerClass;
         // IMPORTANT: preferenceFragmentClass must have a public non-argument constructor
-        @NonNull private final Class<? extends PreferenceFragmentCompat> preferenceFragmentClass;
+        @NonNull private final Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass;
 
-        ConnectionType(@NonNull String friendlyName, @NonNull String code, @NonNull Class<? extends Sender<? extends PeerInfo>> senderClass, @NonNull Class<? extends Discoverer> discovererClass, @NonNull Class<? extends Receiver> receiverClass, @NonNull Class<? extends PeerInfo> peerClass, @NonNull Class<? extends PreferenceFragmentCompat> preferenceFragmentClass) {
+        ConnectionType(@NonNull String friendlyName, @NonNull String code, @NonNull Class<? extends Sender<? extends PeerInfo>> senderClass, @NonNull Class<? extends Discoverer> discovererClass, @NonNull Class<? extends Receiver> receiverClass, @NonNull Class<? extends PeerInfo> peerClass, @NonNull Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass) {
             this.friendlyName = friendlyName;
             this.code = code;
             this.senderClass = senderClass;
@@ -42,38 +32,55 @@ public class Constants {
             this.preferenceFragmentClass = preferenceFragmentClass;
         }
 
+        ConnectionType(IConnectionType type) {
+            this.friendlyName = type.getFriendlyName();
+            this.code = type.getCode();
+            this.senderClass = type.getSenderClass();
+            this.discovererClass = type.getDiscovererClass();
+            this.receiverClass = type.getReceiverClass();
+            this.peerClass = type.getPeerClass();
+            this.preferenceFragmentClass = type.getPreferenceFragmentClass();
+        }
+
+        @Override
         @NonNull
         public String getFriendlyName() {
             return friendlyName;
         }
 
+        @Override
         @NonNull
         public String getCode() {
             return code;
         }
 
+        @Override
         @NonNull
         public Class<? extends Sender<? extends PeerInfo>> getSenderClass() {
             return senderClass;
         }
 
+        @Override
         @NonNull
         public Class<? extends Discoverer> getDiscovererClass() {
             return discovererClass;
         }
 
+        @Override
         @NonNull
         public Class<? extends Receiver> getReceiverClass() {
             return receiverClass;
         }
 
+        @Override
         @NonNull
         public Class<? extends PeerInfo> getPeerClass() {
             return peerClass;
         }
 
+        @Override
         @NonNull
-        public Class<? extends PreferenceFragmentCompat> getPreferenceFragmentClass() {
+        public Class<? extends PluginPreferenceFragmentCompat> getPreferenceFragmentClass() {
             return preferenceFragmentClass;
         }
 
@@ -86,15 +93,13 @@ public class Constants {
             return null;
         }
 
-        public static ConnectionType parseFromPreferenceFragmentClass(Class<? extends PreferenceFragmentCompat> preferenceFragmentClass) {
+        public static ConnectionType parseFromPreferenceFragmentClass(Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass) {
             for (ConnectionType o : ConnectionType.values()) {
-                if (preferenceFragmentClass.isInstance(o.getPreferenceFragmentClass())) {
+                if (preferenceFragmentClass.isAssignableFrom(o.getPreferenceFragmentClass())) {
                     return o;
                 }
             }
             return null;
         }
     }
-
-    public static final String PREFS_KEY_PLUGINS_ENABLED = "plugins_enabled";
 }

@@ -1,5 +1,7 @@
 package org.exthmui.share.msnearshare;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.base.Receiver;
@@ -8,21 +10,26 @@ import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.EventObject;
 import java.util.Map;
 import java.util.Set;
 
 public class NearShareReceiver implements Receiver {
+    public static NearShareReceiver getInstance(Context context) {
+        return new NearShareReceiver();
+    }
+    
     @NonNull
     @Override
     public Set<String> getPermissionNotGranted() {
-        return null;
+        return Collections.emptySet();
     }
 
     @NonNull
     @Override
     public Set<String> getPermissionsRequired() {
-        return null;
+        return Collections.emptySet();
     }
 
     @Override

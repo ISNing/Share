@@ -11,8 +11,6 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-import androidx.preference.Preference;
-import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
 import org.exthmui.share.databinding.SettingsActivityBinding;
@@ -22,6 +20,7 @@ import org.exthmui.share.services.DiscoverableTileService;
 import org.exthmui.share.services.DiscoveringTileService;
 import org.exthmui.share.services.ReceiveService;
 import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,9 +39,6 @@ public class SettingsActivity extends AppCompatActivity {
     private final ServiceUtils.MyServiceConnection mReceiveConnection = new ServiceUtils.MyServiceConnection();
     @Nullable
     private ReceiveService mReceiveService;
-
-    private final List<Preference> mGrantPreferencesDiscover = new ArrayList<>();
-    private final List<Preference> mGrantPreferencesReceive = new ArrayList<>();
 
     private GlobalSettingsFragment mGlobalSettingsFragment;
     private final List<Fragment> mFragmentList = new ArrayList<>();
@@ -70,9 +66,9 @@ public class SettingsActivity extends AppCompatActivity {
             } catch (InstantiationException e) {
                 e.printStackTrace();
             }
-            addGrantPermissionPreferences();
         } else {
             mFragmentList.addAll(getSupportFragmentManager().getFragments());
+            checkGrantPermissionPreferences();
         }
 
         ActionBar actionBar = getSupportActionBar();
@@ -82,6 +78,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void addFragment(@NonNull Fragment fragment) {
+        if (PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) {
+            PluginPreferenceFragmentCompat preferenceFragment = (PluginPreferenceFragmentCompat) fragment;
+            checkGrantPermissionPreferences(preferenceFragment);
+        }
         getSupportFragmentManager().beginTransaction()
                 .add(binding.preferencesContainer.getId(), fragment)
                 .commit();
@@ -100,76 +100,32 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     /**
-     * Add permission tint to preferences
+     * Add/Remove permission tint to preferences
      */
-    private void addGrantPermissionPreferences() {
+    private void checkGrantPermissionPreferences() {
         for (Fragment fragment : mFragmentList) {
-            if (!PreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) continue;
-            PreferenceFragmentCompat preferenceFragment = (PreferenceFragmentCompat) fragment;
-            Constants.ConnectionType type = Constants.ConnectionType.parseFromPreferenceFragmentClass(preferenceFragment.getClass());
-            if (type == null) continue;
-            try {
-                Class<? extends PreferenceFragmentCompat> c = type.getPreferenceFragmentClass();
-                PreferenceFragmentCompat preferenceFragmentCompat = c.newInstance();
-
-                Preference grantPreferenceDiscover = new Preference(this);
-                grantPreferenceDiscover.setTitle(String.format(getString(R.string.prefs_title_global_permissions_not_granted), type.getFriendlyName()));
-                grantPreferenceDiscover.setSummary(R.string.prefs_summary_global_permissions_not_granted);
-                grantPreferenceDiscover.setOrder(-1);
-                grantPreferenceDiscover.setKey(type.getCode());
-                if (mDiscoverService == null)
-                    mDiscoverConnection.registerOnServiceConnectedListener(myService -> {
-                        DiscoverService service = (DiscoverService) myService;
-                        if (service.getDiscovererPermissionsNotGranted(type.getCode()).isEmpty()) return;
-                        grantPreferenceDiscover.setOnPreferenceClickListener(preference -> {
-                            service.grantDiscovererPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesDiscover.indexOf(grantPreferenceDiscover));
-                            return false;
-                        });
-                        mGrantPreferencesDiscover.add(grantPreferenceDiscover);
-                        preferenceFragmentCompat.getPreferenceScreen().addPreference(grantPreferenceDiscover);
-                    });
-                else if (!mDiscoverService.getDiscovererPermissionsNotGranted(type.getCode()).isEmpty()) {
-                    grantPreferenceDiscover.setOnPreferenceClickListener(preference -> {
-                        if (mDiscoverService == null)
-                            mDiscoverConnection.registerOnServiceConnectedListener(service -> ((DiscoverService) service).grantDiscovererPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesDiscover.indexOf(grantPreferenceDiscover)));
-                        mDiscoverService.grantDiscovererPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesDiscover.indexOf(grantPreferenceDiscover));
-                        return false;
-                    });
-                    mGrantPreferencesDiscover.add(grantPreferenceDiscover);
-                    preferenceFragmentCompat.getPreferenceScreen().addPreference(grantPreferenceDiscover);
-                }
-
-                Preference grantPreferenceReceive = new Preference(this);
-                grantPreferenceReceive.setTitle(String.format(getString(R.string.prefs_title_global_permissions_not_granted), type.getFriendlyName()));
-                grantPreferenceReceive.setSummary(R.string.prefs_summary_global_permissions_not_granted);
-                grantPreferenceReceive.setOrder(-1);
-                grantPreferenceReceive.setKey(type.getCode());
-                if (mReceiveService == null)
-                    mReceiveConnection.registerOnServiceConnectedListener(myService -> {
-                        ReceiveService service = (ReceiveService) myService;
-                        if (service.getReceiverPermissionsNotGranted(type.getCode()).isEmpty()) return;
-                        grantPreferenceReceive.setOnPreferenceClickListener(preference -> {
-                            service.grantReceiverPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesReceive.indexOf(grantPreferenceReceive));
-                            return false;
-                        });
-                        mGrantPreferencesReceive.add(grantPreferenceReceive);
-                        preferenceFragmentCompat.getPreferenceScreen().addPreference(grantPreferenceReceive);
-                    });
-                else if (!mReceiveService.getReceiverPermissionsNotGranted(type.getCode()).isEmpty()) {
-                    grantPreferenceReceive.setOnPreferenceClickListener(preference -> {
-                        if (mReceiveService == null)
-                            mReceiveConnection.registerOnServiceConnectedListener(service -> ((ReceiveService) service).grantReceiverPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesReceive.indexOf(grantPreferenceReceive)));
-                        mReceiveService.grantReceiverPermissions(type.getCode(), SettingsActivity.this, mGrantPreferencesReceive.indexOf(grantPreferenceReceive));
-                        return false;
-                    });
-                    mGrantPreferencesReceive.add(grantPreferenceReceive);
-                    preferenceFragmentCompat.getPreferenceScreen().addPreference(grantPreferenceReceive);
-                }
-                mFragmentList.add(preferenceFragmentCompat);
-            } catch (IllegalAccessException | InstantiationException e) {
-                e.printStackTrace();
-            }
+            if (!PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) continue;
+            PluginPreferenceFragmentCompat preferenceFragment = (PluginPreferenceFragmentCompat) fragment;
+            checkGrantPermissionPreferences(preferenceFragment);
         }
+    }
+
+    private void checkGrantPermissionPreferences(PluginPreferenceFragmentCompat preferenceFragment) {
+            Constants.ConnectionType type = Constants.ConnectionType.parseFromPreferenceFragmentClass(preferenceFragment.getClass());
+            if (type == null) return;
+            if (mDiscoverService == null)
+                mDiscoverConnection.registerOnServiceConnectedListener(myService -> {
+                    DiscoverService service = (DiscoverService) myService;
+                    preferenceFragment.checkDiscoverPermissions(service);
+                });
+            else preferenceFragment.checkDiscoverPermissions(mDiscoverService);
+
+            if (mReceiveService == null)
+                mReceiveConnection.registerOnServiceConnectedListener(myService -> {
+                    ReceiveService service = (ReceiveService) myService;
+                    preferenceFragment.checkReceivePermissions(service);
+                });
+            else preferenceFragment.checkReceivePermissions(mReceiveService);
     }
 
     public void addFragment(@NonNull Class<? extends Fragment> fragmentClass) throws IllegalAccessException, InstantiationException {
@@ -179,34 +135,7 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        for (Preference gPreference : mGrantPreferencesDiscover) {
-            if (mDiscoverService == null) return;
-            String code = gPreference.getKey();
-            if (mDiscoverService.getDiscovererPermissionsNotGranted(code).isEmpty()) {
-                Constants.ConnectionType t = Constants.ConnectionType.parseFromCode(code);
-                if (t == null) return;
-                for (Fragment fragment : mFragmentList) {
-                    Class<? extends PreferenceFragmentCompat> fragmentClass = t.getPreferenceFragmentClass();
-                    if (fragmentClass.isInstance(fragment)) {
-                        ((PreferenceFragmentCompat) fragment).getPreferenceScreen().removePreference(gPreference);
-                    }
-                }
-            }
-        }
-        for (Preference gPreference : mGrantPreferencesReceive) {
-            if (mReceiveService == null) return;
-            String code = gPreference.getKey();
-            if (mReceiveService.getReceiverPermissionsNotGranted(code).isEmpty()) {
-                Constants.ConnectionType t = Constants.ConnectionType.parseFromCode(code);
-                if (t == null) return;
-                for (Fragment fragment : mFragmentList) {
-                    Class<? extends PreferenceFragmentCompat> fragmentClass = t.getPreferenceFragmentClass();
-                    if (fragmentClass.isInstance(fragment)) {
-                        ((PreferenceFragmentCompat) fragment).getPreferenceScreen().removePreference(gPreference);
-                    }
-                }
-            }
-        }
+        checkGrantPermissionPreferences();
         TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
         TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoverableTileService.class.getName()));
     }

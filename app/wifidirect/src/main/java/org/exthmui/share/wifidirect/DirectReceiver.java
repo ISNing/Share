@@ -3,18 +3,13 @@ package org.exthmui.share.wifidirect;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Looper;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.Observer;
 import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -23,24 +18,24 @@ import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.ReceivingWorker;
-import org.exthmui.share.shared.base.events.PeerAddedEvent;
-import org.exthmui.share.shared.base.events.PeerRemovedEvent;
-import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.base.events.ReceiverStartedEvent;
+import org.exthmui.share.shared.base.events.ReceiverStoppedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStoppedListener;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class DirectReceiver implements Receiver {
 
@@ -67,6 +62,7 @@ public class DirectReceiver implements Receiver {
     private final Map<String, PeerInfo> mPeers = new HashMap<>();
     private boolean mReceiverStarted;
     private boolean mInitialized;
+    private boolean mStartNotified;
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
@@ -97,8 +93,9 @@ public class DirectReceiver implements Receiver {
     @Override
     public Set<String> getPermissionNotGranted() {
         Set<String> permissions = new HashSet<>();
-        for (String permission: getPermissionsRequired())
-            if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED) permissions.add(permission);
+        for (String permission : getPermissionsRequired())
+            if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED)
+                permissions.add(permission);
         return permissions;
     }
 
@@ -134,12 +131,26 @@ public class DirectReceiver implements Receiver {
 
     @Override
     public void initialize() {
+        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observe(ProcessLifecycleOwner.get(), workInfo -> {
+            boolean isRunning = false;
+            for (WorkInfo info : workInfo) {
+                if (!info.getState().isFinished()) {
+                    isRunning = true;
+                    if (!mStartNotified) {
+                        notifyListeners(new ReceiverStartedEvent(this));
+                        mStartNotified = true;
+                    }
+                    break;
+                }
+            }
+            if (isReceiverStarted() & !isRunning) startWork();
+        });
         this.mInitialized = true;
     }
 
     @Override
     public boolean isInitialized() {
-        return false;
+        return mInitialized;
     }
 
     @Override
@@ -153,41 +164,42 @@ public class DirectReceiver implements Receiver {
         try {
             // register BroadcastReceiver
             mContext.registerReceiver(mBroadcastReceiver, DirectBroadcastReceiver.getIntentFilter());
+            mReceiverStarted = true;
+            mStartNotified = false;
 
             startWork();
 
-            mReceiverStarted = true;
         } catch (SecurityException e) {
             e.printStackTrace();
         }
         // Here shouldn't cause any exception, we should only register BroadcastReceiver after permissions are granted.
     }
 
-    private void startWork(){
+    private void startWork() {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) TODO: Check it
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.KEEP, work);
-        WorkManager.getInstance(mContext).getWorkInfoByIdLiveData(work.getId()).observe(ProcessLifecycleOwner.get(), workInfo -> {
-            if (workInfo.getState().isFinished() && isReceiverStarted()) {
-                startWork();
-            }
-        });
     }
 
     @Override
     public void stopReceive() {
-        mContext.unregisterReceiver(mBroadcastReceiver);
-        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observe(ProcessLifecycleOwner.get(), workInfo -> {
+        if (mBroadcastReceiver != null) mContext.unregisterReceiver(mBroadcastReceiver);
+        mReceiverStarted = false;
+        try {
+            List<WorkInfo> workInfo = WorkManager.getInstance(mContext).getWorkInfosForUniqueWork(WORK_UNIQUE_NAME).get();
+            if (workInfo == null) return;
             for (WorkInfo info : workInfo) {
                 if (!info.getState().isFinished()) {
-                    if (info.getProgress().getBoolean(ReceivingWorker.P_WAITING, true)) {
+                    if (info.getProgress().getInt(ReceivingWorker.P_STATUS_CODE, Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) {
                         WorkManager.getInstance(mContext).cancelUniqueWork(WORK_UNIQUE_NAME);
                     }
                 }
             }
-        });
-        mReceiverStarted = false;
+            notifyListeners(new ReceiverStoppedEvent(this));
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

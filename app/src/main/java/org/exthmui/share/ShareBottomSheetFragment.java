@@ -1,7 +1,6 @@
 package org.exthmui.share;
 
 import static android.content.Context.BIND_AUTO_CREATE;
-
 import static org.exthmui.share.PeersAdapter.REQUEST_CODE_PICK_FILE;
 
 import android.content.Context;
@@ -25,13 +24,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.exthmui.share.databinding.FragmentShareBinding;
-import org.exthmui.share.msnearshare.NearShareManager;
-import org.exthmui.share.msnearshare.NearSharePeer;
 import org.exthmui.share.services.DiscoverService;
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
 import org.exthmui.share.shared.base.events.PeerRemovedEvent;
 import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
@@ -41,6 +38,8 @@ import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -208,6 +207,31 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
             }
         });
         binding.shareAction.setOnClickListener(new View.OnClickListener() {
+            public void sendTo(@NonNull PeerInfo target, @NonNull Entity entity){
+                org.exthmui.share.misc.Constants.ConnectionType connectionType = org.exthmui.share.misc.Constants.ConnectionType.parseFromCode(target.getConnectionType());
+                if (connectionType == null) return;// TODO: handle failure
+                try {
+                    Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
+                    Sender<?> sender = (Sender<?>) method.invoke(null, requireContext());
+                    if (sender == null) return;// TODO: handle failure
+                    sender.sendToPeerInfo(target, entity);
+                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
+                    exception.printStackTrace();
+                }
+            }
+
+            public void sendTo(@NonNull PeerInfo target, @NonNull List<Entity> entities){
+                org.exthmui.share.misc.Constants.ConnectionType connectionType = org.exthmui.share.misc.Constants.ConnectionType.parseFromCode(target.getConnectionType());
+                if (connectionType == null) return;// TODO: handle failure
+                try {
+                    Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
+                    Sender<?> sender = (Sender<?>) method.invoke(null, requireContext());
+                    if (sender == null) return;// TODO: handle failure
+                    sender.sendToPeerInfo(target, entities);
+                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
+                    exception.printStackTrace();
+                }
+            }
             @Override
             public void onClick(View v) {
                 if (CLICK_ACTION == ClickAction.CHOOSE_ENTITIES) {//TODO: remove it?
@@ -224,17 +248,13 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                             DiscoverService service = (DiscoverService) s;
                             PeerInfo peer = service.getPeerInfoMap().get(mAdapter.getPeerSelected());
                             if (peer == null) return; // TODO: handle failure
-                            if(peer.getConnectionType().equals(Constants.CONNECTION_CODE_MSNEARSHARE)){
-                                NearShareManager.getInstance(requireContext()).send((NearSharePeer) peer, mEntities);
-                            }
+                            sendTo(peer, mEntities);
                         }
                     });
                     else {
                         PeerInfo peer = mService.getPeerInfoMap().get(mAdapter.getPeerSelected());
                         if (peer == null) return; // TODO: handle failure
-                        if (peer.getConnectionType().equals(Constants.CONNECTION_CODE_MSNEARSHARE)) {
-                            NearShareManager.getInstance(requireContext()).send((NearSharePeer) peer, mEntities);
-                        }
+                        sendTo(peer, mEntities);
                     }
                 }
             }

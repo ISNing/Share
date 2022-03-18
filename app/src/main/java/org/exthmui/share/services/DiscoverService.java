@@ -35,11 +35,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class DiscoverService extends ServiceUtils.MyService {
+public class DiscoverService extends ServiceUtils.MyService implements org.exthmui.share.shared.services.IDiscoverService {
 
     private static final String TAG = "DiscoverService";
-
-    public static final int REQUEST_CODE_GRANT_PERMISSIONS = 0;
 
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
     private static DiscoverService instance;
@@ -66,11 +64,13 @@ public class DiscoverService extends ServiceUtils.MyService {
         return instance;
     }
 
+    @Override
     public void registerListener(BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
+    @Override
     public void unregisterListener(BaseEventListener listener) {
         mListeners.remove(listener);
     }
@@ -94,6 +94,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         stopDiscoverers();
     }
 
+    @Override
     public void unregisterDiscoverersListeners(Collection<BaseEventListener> listeners) {
         for (Discoverer discoverer : mDiscovererList) {
             for (BaseEventListener listener : listeners) {
@@ -103,8 +104,9 @@ public class DiscoverService extends ServiceUtils.MyService {
         registerInternalListeners();
     }
 
+    @Override
     @Nullable
-    private Discoverer getDiscoverer(String code) {
+    public Discoverer getDiscoverer(String code) {
         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
         if (type == null) return null;
         for (Discoverer discoverer : mDiscovererList) {
@@ -114,6 +116,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         return null;
     }
 
+    @Override
     public void stopDiscoverers() {
         for (Discoverer discoverer : mDiscovererList) {
             if (discoverer.isDiscovererStarted())
@@ -121,6 +124,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public void addDiscoverers() {
         Set<String> codes = PreferenceManager.getDefaultSharedPreferences(this).getStringSet(getString(R.string.prefs_key_global_plugins_enabled), Collections.emptySet());
         for (String code : codes) {
@@ -128,14 +132,15 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
-    private void registerInternalListeners() {
+    @Override
+    public void registerInternalListeners() {
         Set<BaseEventListener> listeners = new HashSet<>();
         listeners.add((OnDiscovererStartedListener) event -> {
-            TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
+            updateTileState();
             notifyListeners(event);
         });
         listeners.add((OnDiscovererStoppedListener) event -> {
-            TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
+            updateTileState();
             if (isAllDiscoverersStopped()) notifyListeners(event);
         });
         listeners.add((OnPeerAddedListener) event -> mPeerInfoMap.put(event.getPeer().getId(), event.getPeer()));
@@ -144,14 +149,17 @@ public class DiscoverService extends ServiceUtils.MyService {
         registerDiscoverersListeners(listeners);
     }
 
-    private void notifyListeners(EventObject event) {
+    @Override
+    public void notifyListeners(EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
+    @Override
     public boolean isAllDiscoverersStopped() {
         return !isAnyDiscovererStarted();
     }
 
+    @Override
     public void registerDiscoverersListeners(Collection<? extends BaseEventListener> listeners) {
         for (Discoverer discoverer : mDiscovererList) {
             for (BaseEventListener listener : listeners) {
@@ -160,6 +168,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public boolean isAnyDiscovererStarted() {
         for (Discoverer discoverer : mDiscovererList) {
             if (discoverer.isDiscovererStarted()) return true;
@@ -167,6 +176,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         return false;
     }
 
+    @Override
     public void addDiscoverer(String code) {
         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
         if (type == null) return;
@@ -174,39 +184,50 @@ public class DiscoverService extends ServiceUtils.MyService {
             Method method = type.getDiscovererClass().getDeclaredMethod("getInstance", Context.class);
             Discoverer discoverer = (Discoverer) method.invoke(null, this);
             mDiscovererList.add(discoverer);
+            updateTileState();
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
         }
     }
 
+    @Override
     public void removeDiscoverer(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         if (discoverer.isDiscovererStarted()) {
-            discoverer.registerListener((OnDiscovererStoppedListener) event -> mDiscovererList.remove(discoverer));
+            discoverer.registerListener((OnDiscovererStoppedListener) event -> {
+                mDiscovererList.remove(discoverer);
+                updateTileState();
+            });
             discoverer.stopDiscover();
         } else {
             mDiscovererList.remove(discoverer);
         }
     }
 
+    @Override
     public void startDiscoverer(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         discoverer.startDiscover();
+        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
     }
 
+    @Override
     public void stopDiscoverer(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         discoverer.stopDiscover();
+        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
     }
 
+    @Override
     public void restartDiscoverers() {
         stopDiscoverers();
         startDiscoverers();
     }
 
+    @Override
     public void startDiscoverers() {
         for (Discoverer discoverer : mDiscovererList) {
             if (!discoverer.isInitialized()) discoverer.initialize();
@@ -214,6 +235,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public void registerDiscovererListeners(Collection<? extends BaseEventListener> listeners, String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
@@ -222,6 +244,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public void unregisterDiscovererListeners(Collection<? extends BaseEventListener> listeners, String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
@@ -230,10 +253,12 @@ public class DiscoverService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public boolean isAnyDiscovererStopped() {
         return !isAllDiscoverersStarted();
     }
 
+    @Override
     public boolean isAllDiscoverersStarted() {
         for (Discoverer discoverer : mDiscovererList) {
             if (!discoverer.isDiscovererStarted()) return false;
@@ -241,10 +266,12 @@ public class DiscoverService extends ServiceUtils.MyService {
         return true;
     }
 
+    @Override
     public boolean isDiscovererStopped(String code) {
         return !isDiscovererStarted(code);
     }
 
+    @Override
     public boolean isDiscovererStarted(String code) {
         Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(code);
         if (connectionType == null) return false;
@@ -256,6 +283,7 @@ public class DiscoverService extends ServiceUtils.MyService {
         return false;
     }
 
+    @Override
     public boolean isDiscoverersAvailable() {
         for (Discoverer discoverer : mDiscovererList) {
             if (discoverer.isFeatureAvailable() & discoverer.getPermissionNotGranted().isEmpty())
@@ -264,12 +292,14 @@ public class DiscoverService extends ServiceUtils.MyService {
         return false;
     }
 
+    @Override
     public boolean isDiscovererAvailable(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return false;
         return discoverer.isFeatureAvailable() & discoverer.getPermissionNotGranted().isEmpty();
     }
 
+    @Override
     public Set<String> getDiscoverersPermissionsNotGranted() {
         Set<String> permissions = new HashSet<>();
         for (Discoverer discoverer : mDiscovererList) {
@@ -278,21 +308,29 @@ public class DiscoverService extends ServiceUtils.MyService {
         return permissions;
     }
 
+    @Override
     public Set<String> getDiscovererPermissionsNotGranted(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return Collections.emptySet();
         return discoverer.getPermissionNotGranted();
     }
 
+    @Override
     public void grantDiscoverPermissions(Activity activity) {
         ActivityCompat.requestPermissions(activity, getDiscoverersPermissionsNotGranted().toArray(new String[0]), REQUEST_CODE_GRANT_PERMISSIONS);
     }
 
+    @Override
     public void grantDiscovererPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode) {
         ActivityCompat.requestPermissions(activity, getDiscovererPermissionsNotGranted(code).toArray(new String[0]), requestCode);
     }
 
+    @Override
     public Map<String, PeerInfo> getPeerInfoMap() {
         return mPeerInfoMap;
+    }
+
+    private void updateTileState() {
+        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
     }
 }

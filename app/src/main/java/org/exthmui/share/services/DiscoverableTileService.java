@@ -7,7 +7,6 @@ import android.graphics.drawable.Icon;
 import android.os.IBinder;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
-import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -151,14 +150,6 @@ public class DiscoverableTileService extends TileService {
         public void onServiceConnected(ComponentName name, IBinder service) {
             ServiceUtils.MyService.MyBinder binder = (ServiceUtils.MyService.MyBinder) service;
             mService = (ReceiveService) binder.getService();
-            // TODO: No need for this DiscoverService has already take the initiative to call
-            // TODO: Also check for unuseful call for require
-//            BaseEventListener listener = (OnReceiverStartedListener) event -> setState(Tile.STATE_ACTIVE);
-//            mService.registerListener(listener);
-//            mListenersDiscoverService.add(listener);
-//            listener = (OnReceiverStoppedListener) event -> setState(Tile.STATE_INACTIVE);
-//            mService.registerListener(listener);
-//            mListenersDiscoverService.add(listener);
             for (OnServiceConnectedListener l :
                     mOnServiceConnectedListeners) {
                 l.onServiceConnected();

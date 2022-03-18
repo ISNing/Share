@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.service.quicksettings.TileService;
 
 import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.preference.PreferenceManager;
@@ -37,9 +38,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class ReceiveService extends ServiceUtils.MyService {
+public class ReceiveService extends ServiceUtils.MyService implements org.exthmui.share.shared.services.IReceiveService {
 
-    public static final int REQUEST_CODE_GRANT_PERMISSIONS = 0;
     private static final String TAG = "ReceiveService";
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
     private static ReceiveService instance;
@@ -68,11 +68,13 @@ public class ReceiveService extends ServiceUtils.MyService {
         return instance;
     }
 
+    @Override
     public void registerListener(BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
+    @Override
     public void unregisterListener(BaseEventListener listener) {
         mListeners.remove(listener);
     }
@@ -115,11 +117,13 @@ public class ReceiveService extends ServiceUtils.MyService {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        mShareBroadcastReceiver.setListener(null);
         unregisterReceiver(mShareBroadcastReceiver);
         unregisterReceiverListeners(mReceiverListenerList);
         stopReceivers();
     }
 
+    @Override
     public void unregisterReceiverListeners(Collection<BaseEventListener> listeners) {
         for (Receiver receiver : mReceiverList) {
             for (BaseEventListener listener : listeners) {
@@ -129,8 +133,9 @@ public class ReceiveService extends ServiceUtils.MyService {
         registerInternalListeners();
     }
 
+    @Override
     @Nullable
-    private Receiver getReceiver(String code) {
+    public Receiver getReceiver(String code) {
         Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(code);
         if (connectionType == null) return null;
         for (Receiver receiver : mReceiverList) {
@@ -141,13 +146,16 @@ public class ReceiveService extends ServiceUtils.MyService {
         return null;
     }
 
+    @Override
     public void stopReceivers() {
         for (Receiver receiver : mReceiverList) {
-            if (receiver.isReceiverStarted())
+            if (receiver.isReceiverStarted()) {
                 receiver.stopReceive();
+            }
         }
     }
 
+    @Override
     public void addReceivers() {
         Set<String> codes = PreferenceManager.getDefaultSharedPreferences(this).getStringSet(getString(R.string.prefs_key_global_plugins_enabled), Collections.emptySet());
         for (String code : codes) {
@@ -155,19 +163,21 @@ public class ReceiveService extends ServiceUtils.MyService {
         }
     }
 
-    private void registerInternalListeners() {
+    @Override
+    public void registerInternalListeners() {
         Set<BaseEventListener> listeners = new HashSet<>();
         listeners.add((OnReceiverStartedListener) event -> {
-            TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoverableTileService.class.getName()));
+            updateTileState();
             notifyListeners(event);
         });
         listeners.add((OnReceiverStoppedListener) event -> {
-            TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoverableTileService.class.getName()));
+            updateTileState();
             if (isAllReceiversStopped()) notifyListeners(event);
         });
         registerReceiverListeners(listeners);
     }
 
+    @Override
     public void addReceiver(String code) {
         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
         if (type == null) return;
@@ -175,19 +185,23 @@ public class ReceiveService extends ServiceUtils.MyService {
             Method method = type.getReceiverClass().getDeclaredMethod("getInstance", Context.class);
             Receiver receiver = (Receiver) method.invoke(null, this);
             mReceiverList.add(receiver);
+            updateTileState();
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
         }
     }
 
-    private void notifyListeners(EventObject event) {
+    @Override
+    public void notifyListeners(EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
+    @Override
     public boolean isAllReceiversStopped() {
         return !isAnyReceiverStarted();
     }
 
+    @Override
     public void registerReceiverListeners(Collection<? extends BaseEventListener> listeners) {
         for (Receiver receiver : mReceiverList) {
             for (BaseEventListener listener : listeners) {
@@ -196,6 +210,7 @@ public class ReceiveService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public boolean isAnyReceiverStarted() {
         for (Receiver receiver : mReceiverList) {
             if (receiver.isReceiverStarted()) return true;
@@ -203,36 +218,43 @@ public class ReceiveService extends ServiceUtils.MyService {
         return false;
     }
 
+    @Override
     public void removeReceiver(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
         if (receiver.isReceiverStarted()) {
-            receiver.registerListener((OnReceiverStoppedListener) event -> mReceiverList.remove(receiver));
+            receiver.registerListener((OnReceiverStoppedListener) event -> {
+                mReceiverList.remove(receiver);
+                updateTileState();
+            });
             receiver.stopReceive();
         } else {
             mReceiverList.remove(receiver);
+            updateTileState();
         }
     }
 
+    @Override
     public void startReceiver(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
         receiver.startReceive();
-
     }
 
+    @Override
     public void stopReceiver(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
         receiver.stopReceive();
-
     }
 
+    @Override
     public void restartReceiver() {
         stopReceivers();
         startReceivers();
     }
 
+    @Override
     public void startReceivers() {
         for (Receiver receiver : mReceiverList) {
             if (!receiver.isInitialized()) receiver.initialize();
@@ -240,6 +262,7 @@ public class ReceiveService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public void registerReceiverListeners(Collection<? extends BaseEventListener> listeners, String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
@@ -248,6 +271,7 @@ public class ReceiveService extends ServiceUtils.MyService {
         }
     }
 
+    @Override
     public void unregisterReceiverListeners(Collection<? extends BaseEventListener> listeners, String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
@@ -257,10 +281,12 @@ public class ReceiveService extends ServiceUtils.MyService {
 
     }
 
+    @Override
     public boolean isAnyReceiverStopped() {
         return !isAllReceiversStarted();
     }
 
+    @Override
     public boolean isAllReceiversStarted() {
         for (Receiver receiver : mReceiverList) {
             if (!receiver.isReceiverStarted()) return false;
@@ -268,16 +294,19 @@ public class ReceiveService extends ServiceUtils.MyService {
         return true;
     }
 
+    @Override
     public boolean isReceiverStopped(String code) {
         return !isReceiverStarted(code);
     }
 
+    @Override
     public boolean isReceiverStarted(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return false;
         return receiver.isReceiverStarted();
     }
 
+    @Override
     public boolean isReceiversAvailable() {
         for (Receiver receiver : mReceiverList) {
             if (receiver.isFeatureAvailable() & receiver.getPermissionNotGranted().isEmpty())
@@ -286,16 +315,20 @@ public class ReceiveService extends ServiceUtils.MyService {
         return false;
     }
 
+    @Override
     public boolean isReceiverAvailable(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return false;
         return receiver.isFeatureAvailable() & receiver.getPermissionNotGranted().isEmpty();
     }
 
+    @Override
     public void grantReceiversPermissions(Activity activity) {
         ActivityCompat.requestPermissions(activity, getReceiversPermissionsNotGranted().toArray(new String[0]), REQUEST_CODE_GRANT_PERMISSIONS);
     }
 
+    @NonNull
+    @Override
     public Set<String> getReceiversPermissionsNotGranted() {
         Set<String> permissions = new HashSet<>();
         for (Receiver receiver : mReceiverList) {
@@ -304,13 +337,20 @@ public class ReceiveService extends ServiceUtils.MyService {
         return permissions;
     }
 
+    @Override
     public void grantReceiverPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode) {
         ActivityCompat.requestPermissions(activity, getReceiverPermissionsNotGranted(code).toArray(new String[0]), requestCode);
     }
 
+    @NonNull
+    @Override
     public Set<String> getReceiverPermissionsNotGranted(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return Collections.emptySet();
         return receiver.getPermissionNotGranted();
+    }
+    
+    private void updateTileState(){
+        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoverableTileService.class.getName()));
     }
 }
