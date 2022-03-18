@@ -25,6 +25,8 @@ public class Auth {
         InputStream inputStreamSSLConf = context.getResources().openRawResource(R.raw.sslconf);
         Properties properties = new Properties();
         properties.load(inputStreamSSLConf);
+        String storeType = properties.getProperty("storeType");
+        String algorithm = properties.getProperty("algorithm");
         String protocol = properties.getProperty("protocol");
         String sCertificatePwd = properties.getProperty("serverCertificatePwd");
         String sMainPwd = properties.getProperty("serverMainPwd");
@@ -33,30 +35,29 @@ public class Auth {
 
         //KeyStore class is used to save certificate.
         char[] c_pwd = sCertificatePwd.toCharArray();
-        KeyStore keyStore = KeyStore.getInstance("JKS");
+        KeyStore keyStore = KeyStore.getInstance(storeType);
         InputStream inputStreamServerCert = context.getResources().openRawResource(R.raw.server_rsa);
         keyStore.load(inputStreamServerCert, c_pwd);
         inputStreamServerCert.close();
 
         //TrustManagerFactory class is used to create TrustManager class.
-        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-        char[] m_pwd = sMainPwd.toCharArray();
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm);
         trustManagerFactory.init(keyStore);
         //TrustManager class is used to decide weather to trust the certificate or not.
         TrustManager[] tms = trustManagerFactory.getTrustManagers();
 
         KeyManager[] kms = null;
-        if(mutual){
+        if(mutual) {
             //KeyStore class is used to save certificate.
             c_pwd = cCertificatePwd.toCharArray();
-            keyStore = KeyStore.getInstance("JKS");
+            keyStore = KeyStore.getInstance(storeType);
             InputStream inputStreamClientCert = context.getResources().openRawResource(R.raw.client_rsa);
             keyStore.load(inputStreamClientCert, c_pwd);
             inputStreamClientCert.close();
 
             //KeyManagerFactory class is used to create KeyManager class.
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
-            m_pwd = cMainPwd.toCharArray();
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
+            char[] m_pwd = cMainPwd.toCharArray();
             keyManagerFactory.init(keyStore, m_pwd);
             //KeyManager class is used to choose a certificate to prove the identity of the client side.
             kms = keyManagerFactory.getKeyManagers();
@@ -75,6 +76,8 @@ public class Auth {
         Properties properties = new Properties();
         properties.load(inputStreamSSLConf);
         inputStreamSSLConf.close();
+        String storeType = properties.getProperty("storeType");
+        String algorithm = properties.getProperty("algorithm");
         String protocol = properties.getProperty("protocol");
         String sCertificatePwd = properties.getProperty("serverCertificatePwd");
         String sMainPwd = properties.getProperty("serverMainPwd");
@@ -83,13 +86,13 @@ public class Auth {
 
         //KeyStore class is used to save certificate.
         char[] c_pwd = sCertificatePwd.toCharArray();
-        KeyStore keyStore = KeyStore.getInstance("JKS");
+        KeyStore keyStore = KeyStore.getInstance(storeType);
         InputStream inputStreamServerCert = context.getResources().openRawResource(R.raw.server_rsa);
         keyStore.load(inputStreamServerCert, c_pwd);
         inputStreamServerCert.close();
 
         //KeyManagerFactory class is used to create KeyManager class.
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance("SunX509");
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(algorithm);
         char[] m_pwd = sMainPwd.toCharArray();
         keyManagerFactory.init(keyStore, m_pwd);
         //KeyManager class is used to choose a certificate
@@ -100,14 +103,13 @@ public class Auth {
         if(mutual){
             //KeyStore class is used to save certificate.
             c_pwd = cCertificatePwd.toCharArray();
-            keyStore = KeyStore.getInstance("JKS");
+            keyStore = KeyStore.getInstance(storeType);
             InputStream inputStreamClientCert = context.getResources().openRawResource(R.raw.client_rsa);
             keyStore.load(inputStreamClientCert, c_pwd);
             inputStreamClientCert.close();
 
             //TrustManagerFactory class is used to create TrustManager class.
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance("SunX509");
-            m_pwd = cMainPwd.toCharArray();
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(algorithm);
             trustManagerFactory.init(keyStore);
             //TrustManager class is used to decide weather to trust the certificate
             //or not.

@@ -1,5 +1,6 @@
 package org.exthmui.share.msnearshare;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
@@ -19,6 +20,7 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareStatus;
 
 import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
@@ -63,13 +65,13 @@ public class NearShareSendingWorker extends SendingWorker {
 
         operation = mNearShareSender.sendFileAsync(connectionRequest, fileProvider);
 
-        operation.progress().subscribe((op, progress) -> {
-            updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileProvider.getFileName(), peer.getDisplayName());
-        });
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileProvider.getFileName(), peer.getDisplayName()));
 
         operation.whenComplete((status, tr) -> {
             if (status == NearShareStatus.COMPLETED) {
                 result.set(Result.success(getInputData()));
+                finished.set(true);
+                return;
             }
 
             HashMap<NearShareStatus, Constants.TransmissionStatus> m = new HashMap<>() {
@@ -82,6 +84,7 @@ public class NearShareSendingWorker extends SendingWorker {
                     put(NearShareStatus.DENIED_BY_REMOTE_SYSTEM, Constants.TransmissionStatus.REJECTED);
                 }
 
+                @SuppressLint("ObsoleteSdkInt")
                 @Nullable
                 @Override
                 public Constants.TransmissionStatus getOrDefault(@Nullable Object key, @Nullable Constants.TransmissionStatus defaultValue) {
@@ -95,6 +98,8 @@ public class NearShareSendingWorker extends SendingWorker {
             };
 
             if (tr != null) {
+                Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
+                Log.i(TAG, StackTraceUtils.getStackTraceString(tr.getStackTrace()));
                 result.set(genFailureResult(Objects.requireNonNull(m.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), tr.getLocalizedMessage()));
             } else {
                 Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
@@ -102,6 +107,8 @@ public class NearShareSendingWorker extends SendingWorker {
             }
             finished.set(true);
         });
+
+        // Block until finished
         while (finished.get()) {
             if (getForegroundInfoAsync().isCancelled()) {
                 operation.cancel(true);

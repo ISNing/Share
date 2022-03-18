@@ -45,6 +45,7 @@ public class DiscoveringTileService extends TileService {
                     mOnServiceConnectedListeners) {
                 l.onServiceConnected();
             }
+            refreshState();
         }
 
         @Override
@@ -78,7 +79,6 @@ public class DiscoveringTileService extends TileService {
     @Override
     public void onTileAdded() {
         super.onTileAdded();
-        onStartListening();
     }
 
     @Override
@@ -121,6 +121,10 @@ public class DiscoveringTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
+        refreshState();
+    }
+
+    private void refreshState() {
         if (mService == null) return;
         if (!mService.isDiscoverersAvailable()) {
             setState(Tile.STATE_UNAVAILABLE);
@@ -133,6 +137,7 @@ public class DiscoveringTileService extends TileService {
 
     private void setState(int state) {
         Tile tile = getQsTile();
+        if (tile == null) return;
         Icon icon;
         switch (state) {
             case Tile.STATE_UNAVAILABLE:

@@ -1,18 +1,13 @@
 package org.exthmui.share.wifidirect;
 
-import android.Manifest;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.net.NetworkInfo;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +39,6 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.e(TAG, "接收到广播： " + intent.getAction());
         if (!TextUtils.isEmpty(intent.getAction())) {
             switch (intent.getAction()) {
                 // 用于指示 Wifi P2P 是否可用
@@ -61,12 +55,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
                 }
                 case WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION: {
                     try {
-                        mWifiP2pManager.requestPeers(mChannel, new WifiP2pManager.PeerListListener() {
-                            @Override
-                            public void onPeersAvailable(WifiP2pDeviceList peers) {
-                                mDirectActionListener.onPeersListChanged(peers.getDeviceList());
-                            }
-                        });
+                        mWifiP2pManager.requestPeers(mChannel, peers -> mDirectActionListener.onPeersListChanged(peers.getDeviceList()));
                     } catch (SecurityException e) {
                         e.printStackTrace();
                     }
@@ -77,12 +66,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
                 case WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION: {
                     NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
                     if (networkInfo.isConnected()) {
-                        mWifiP2pManager.requestConnectionInfo(mChannel, new WifiP2pManager.ConnectionInfoListener() {
-                            @Override
-                            public void onConnectionInfoAvailable(WifiP2pInfo info) {
-                                mDirectActionListener.onConnectionInfoChanged(info);
-                            }
-                        });
+                        mWifiP2pManager.requestConnectionInfo(mChannel, mDirectActionListener::onConnectionInfoChanged);
                     } else {
                         mDirectActionListener.onDisconnected();
                     }

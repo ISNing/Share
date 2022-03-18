@@ -8,6 +8,7 @@ import static org.exthmui.share.wifidirect.Constants.COMMAND_SUCCESS;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.system.ErrnoException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -20,10 +21,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.FileUtils;
 import org.exthmui.share.shared.ReceiverUtils;
+import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.ReceivingWorker;
-import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
-import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.wifidirect.ssl.SSLUtils;
@@ -38,6 +38,13 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.util.concurrent.ExecutionException;
 
 public class DirectReceivingWorker extends ReceivingWorker {
 
@@ -89,19 +96,13 @@ public class DirectReceivingWorker extends ReceivingWorker {
             Log.d(TAG, "FileTransfer model received: " + fileTransfer);
 
             // Wait for acceptation from user
-            DirectReceiver.getInstance(getApplicationContext()).registerListener(new OnReceiveActionAcceptListener() {
-                @Override
-                public void onReceiveActionAccept(ReceiveActionAcceptEvent event) {
-                    Log.d(TAG, "User accepted file");
-                    ((SettableFuture<Boolean>) isAccepted[0]).set(true);
-                }
+            DirectReceiver.getInstance(getApplicationContext()).registerListener((OnReceiveActionAcceptListener) event -> {
+                Log.d(TAG, "User accepted file");
+                ((SettableFuture<Boolean>) isAccepted[0]).set(true);
             });
-            DirectReceiver.getInstance(getApplicationContext()).registerListener(new OnReceiveActionRejectListener() {
-                @Override
-                public void onReceiveActionReject(ReceiveActionRejectEvent event) {
-                    Log.d(TAG, "User rejected file");
-                    ((SettableFuture<Boolean>) isAccepted[0]).set(false);
-                }
+            DirectReceiver.getInstance(getApplicationContext()).registerListener((OnReceiveActionRejectListener) event -> {
+                Log.d(TAG, "User rejected file");
+                ((SettableFuture<Boolean>) isAccepted[0]).set(false);
             });
             ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), fileTransfer.getPeerName(), fileTransfer.getFileName(), fileTransfer.getFileSize());
 
@@ -214,7 +215,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
             } else Log.d(TAG, "Md5 validation passed");
 
             // Send receiving result
-            Log.d(TAG, "Trying to send command \""+ COMMAND_SUCCESS + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
+            Log.d(TAG, "Trying to send command \"" + COMMAND_SUCCESS + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
             dataOutputStream = SSLUtils.getDataOutput(socketToClient);
             dataOutputStream.writeUTF(COMMAND_SUCCESS + "\n");
             dataOutputStream.close();
@@ -222,13 +223,23 @@ public class DirectReceivingWorker extends ReceivingWorker {
             // Close socketToClient
             socketToClient.close();
             socketToClient = null;
-        } catch (Exception ex) {
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), ex.getMessage());
+        } catch (SocketTimeoutException e) {
+            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), e.getMessage());
+        } catch (ErrnoException | FileNotFoundException e) {
+            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), e.getMessage());
+        } catch (IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
+            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
+        } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+            Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
+            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } finally {
             if (outputStream != null) {
                 try {
                     outputStream.close();
-                    outputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -236,7 +247,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (dataOutputStream != null) {
                 try {
                     dataOutputStream.close();
-                    dataOutputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -244,7 +254,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (objectInputStream != null) {
                 try {
                     objectInputStream.close();
-                    objectInputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -252,7 +261,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                    inputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -260,7 +268,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (socketToServer != null) {
                 try {
                     socketToServer.close();
-                    socketToServer = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -268,7 +275,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (socketToClient != null) {
                 try {
                     socketToClient.close();
-                    socketToClient = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

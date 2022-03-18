@@ -12,7 +12,6 @@ import android.net.Uri;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
@@ -24,6 +23,7 @@ import androidx.work.impl.utils.futures.SettableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
@@ -128,12 +128,9 @@ public class DirectSendingWorker extends SendingWorker {
         {
             CountDownLatch latch = new CountDownLatch(1);
 
-            manager.getWifiP2pManager().requestConnectionInfo(manager.getChannel(), new WifiP2pManager.ConnectionInfoListener() {
-                @Override
-                public void onConnectionInfoAvailable(WifiP2pInfo wifiP2pInfo) {
-                    serverAddress[0] = wifiP2pInfo.groupOwnerAddress;
-                    latch.countDown();
-                }
+            manager.getWifiP2pManager().requestConnectionInfo(manager.getChannel(), wifiP2pInfo -> {
+                serverAddress[0] = wifiP2pInfo.groupOwnerAddress;
+                latch.countDown();
             });
             try {
                 latch.await();
@@ -336,7 +333,7 @@ public class DirectSendingWorker extends SendingWorker {
             if (getForegroundInfoAsync().isCancelled()) {
                 Log.d(TAG, "User cancelled receiving file");
                 // Send cancel command
-                Log.d(TAG, "Trying to send command \""+ COMMAND_CANCEL + "\" -> " + serverAddress[0].getAddress() + ":" + clientPort);
+                Log.d(TAG, "Trying to send command \"" + COMMAND_CANCEL + "\" -> " + serverAddress[0].getHostAddress() + ":" + clientPort);
                 dataOutputStream = SSLUtils.getDataOutput(socketToServer);
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
@@ -388,18 +385,19 @@ public class DirectSendingWorker extends SendingWorker {
             serverSocketToClientReference.get().close();
             serverSocketToClientReference.set(null);
         } catch (SocketTimeoutException e) {
+            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), e.getMessage());
         } catch (IOException | ExecutionException | InterruptedException e) {
+            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-            Log.e(TAG, "Check your SSL configuration!!!!!!");
-            e.printStackTrace();
+            Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
+            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } finally {
             if (objectOutputStream != null) {
                 try {
                     objectOutputStream.close();
-                    objectOutputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -407,7 +405,6 @@ public class DirectSendingWorker extends SendingWorker {
             if (outputStream != null) {
                 try {
                     outputStream.close();
-                    outputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -415,7 +412,6 @@ public class DirectSendingWorker extends SendingWorker {
             if (dataOutputStream != null) {
                 try {
                     dataOutputStream.close();
-                    dataOutputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -423,7 +419,6 @@ public class DirectSendingWorker extends SendingWorker {
             if (inputStream != null) {
                 try {
                     inputStream.close();
-                    inputStream = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -431,7 +426,6 @@ public class DirectSendingWorker extends SendingWorker {
             if (socketToServer != null) {
                 try {
                     socketToServer.close();
-                    socketToServer = null;
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
