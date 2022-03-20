@@ -12,7 +12,6 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import com.microsoft.connecteddevices.ConnectedDevicesAccount;
@@ -263,21 +262,20 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     public UUID send(NearSharePeer peer, Entity entity) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareSendingWorker.class)
                 .setInputData(genSendingInputData(peer, entity))
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) // FIXME: 3/20/22
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
     }
 
     @Override
-    public UUID[] send(NearSharePeer peer, List<Entity> entities) {
-        UUID[] uuids = new UUID[entities.size()];
-        int i = 0;
-        for (Entity entity :entities) {
-            uuids[i] = send(peer, entity);
-            i++;
-        }
-        return uuids;
+    public UUID send(NearSharePeer peer, List<Entity> entities) {
+        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareMultiSendingWorker.class)
+                .setInputData(genSendingInputData(peer, (Entity[]) entities.toArray()))
+//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)// FIXME: 3/20/22
+                .build();
+        WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
+        return work.getId();
     }
 
     @Override

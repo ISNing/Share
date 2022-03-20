@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Share</string>
-    <string name="status_sending_progress">%s/%s</string>
-    <string name="title_send_file">Send file \"%s\" to:</string>
-    <string name="title_send_files">Send \"%s\" and %d more files to:</string>
+    <string name="status_sending_progress" formatted="false">%s/%s</string>
+    <string name="title_send_file" formatted="false">Send file \"%s\" to:</string>
+    <string name="title_send_files" formatted="false">Send \"%s\" and %d more files to:</string>
     <string name="toast_no_file">No file was selected</string>
 
     <string name="tile_scanning_default">Scanning</string>

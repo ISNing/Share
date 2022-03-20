@@ -15,7 +15,7 @@ public class File implements FileInfo {
     private int fileModifiedTime=-1;
     private int fileType= Constants.FileTypes.UNKNOWN.getNumVal();
 
-
+    @SuppressWarnings("deprecated")
     public File(Cursor c) {
         this.filePath = c.getString(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA));
         this.fileName = filePath.substring(filePath.lastIndexOf('/')+1);

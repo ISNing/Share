@@ -30,7 +30,9 @@
     <string name="notification_title_receive_request">Share Request</string>
     <string name="notification_content_receive_request">\"%s\" want\'s to share \"%s\" with you\rSize: %s</string>
 
-    <string name="notification_title_sending">Sending file \"%s\" to %s</string>
+    <string name="notification_title_sending" formatted="false">Sending file \"%s\" to %s</string>
+    <string name="notification_title_sending_two" formatted="false">Sending \"%s\", \"%s\" to %s</string>
+    <string name="notification_title_sending_multi" formatted="false">Sending \"%s\", \"%s\" and %d more files to %s</string>
     <string name="notification_action_cancel">Cancel</string>
 
     <string name="dialog_title_accept_or_reject_request">%s request to send you file \"%s\"</string>
@@ -41,4 +43,22 @@
     <string name="notification_title_receive_receiving">Receiving file \"%s\" from %s</string>
     <string name="notification_placeholder_unknown">Unknown</string>
 
+    <!-- Transmission Status Friendly -->
+    <string name="transmission_status_unknown">Unknown</string>
+    <string name="transmission_status_waiting_for_request">Waiting for request</string>
+    <string name="transmission_status_waiting_for_acceptation">Waiting for acceptation</string>
+    <string name="transmission_status_rejected">Rejected</string>
+    <string name="transmission_status_connection_established">Connection established</string>
+    <string name="transmission_status_in_progress">In progress</string>
+    <string name="transmission_status_completed">Completed</string>
+
+    <string name="transmission_status_unknown_error">Unknown error</string>
+    <string name="transmission_status_network_error">Network error</string>
+    <string name="transmission_status_timed_out">Timed out</string>
+    <string name="transmission_status_sender_cancelled">Sender cancelled</string>
+    <string name="transmission_status_receiver_cancelled">Receiver cancelled</string>
+    <string name="transmission_status_file_io_error">File IO error</string>
+    <string name="transmission_status_no_enough_space">No enough disk space</string>
+    <string name="transmission_status_remote_error">Remote unknown error</string>
+    <string name="transmission_status_peer_disappeared">Peer disappeared</string>
 </resources>

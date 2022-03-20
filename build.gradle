@@ -1,8 +1,8 @@
 ext {
-    compileSdkVersion = 31
+    compileSdkVersion = 32
     buildToolsVersion = '30.0.3'
     minSdkVersion = 24
-    targetSdkVersion = 31
+    targetSdkVersion = 32
 
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
@@ -32,6 +32,12 @@ allprojects {
         mavenCentral()
         maven {
             url "https://raw.github.com/microsoft/project-rome/mvn-repo/"
+        }
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+//            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
         }
     }
 }

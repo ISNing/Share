@@ -1,9 +1,20 @@
 package org.exthmui.share.wifidirect;
 
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_DISPLAY_NAME;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_PEER_ID;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SERVER_PORT;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_UID;
+import static org.exthmui.share.wifidirect.Constants.SHARE_PROTOCOL_VERSION;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
@@ -41,21 +52,18 @@ public class DirectReceiver implements Receiver {
 
     private static final String TAG = "DirectReceiver";
 
-    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+            {
+                    OnReceiverStartedListener.class,
+                    OnReceiverStoppedListener.class,
+                    OnReceiveActionAcceptListener.class,
+                    OnReceiveActionRejectListener.class
+            };
 
     private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + new DirectPeer(null).getConnectionType();
 
     private static DirectReceiver instance;
-
-    static {
-        LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
-                {
-                        OnReceiverStartedListener.class,
-                        OnReceiverStoppedListener.class,
-                        OnReceiveActionAcceptListener.class,
-                        OnReceiveActionRejectListener.class
-                };
-    }
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;
@@ -66,6 +74,7 @@ public class DirectReceiver implements Receiver {
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
+    private WifiP2pDnsSdServiceInfo mServiceInfo;
     private DirectBroadcastReceiver mBroadcastReceiver;
 
     private DirectReceiver(Context context) {
@@ -131,6 +140,9 @@ public class DirectReceiver implements Receiver {
 
     @Override
     public void initialize() {
+        mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
+        mChannel = mWifiP2pManager.initialize(mContext, Looper.getMainLooper(), () -> {
+        });
         WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observe(ProcessLifecycleOwner.get(), workInfo -> {
             boolean isRunning = false;
             for (WorkInfo info : workInfo) {
@@ -169,6 +181,36 @@ public class DirectReceiver implements Receiver {
 
             startWork();
 
+            int serverPort = DirectUtils.getServerPort(mContext);
+
+            //  Create a string map containing information about your service.
+            Map<String, String> record = new HashMap<>();
+            record.put(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION);
+            record.put(RECORD_KEY_SERVER_PORT, String.valueOf(serverPort));
+            record.put(RECORD_KEY_DISPLAY_NAME, "");
+            record.put(RECORD_KEY_PEER_ID, "");// Without prefix
+            record.put(RECORD_KEY_UID, "");
+            record.put(RECORD_KEY_ACCOUNT_SERVER_SIGN, "");
+
+            // Service information
+            mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(
+                    org.exthmui.share.wifidirect.Constants.LOCAL_SERVICE_INSTANCE_NAME,
+                    org.exthmui.share.wifidirect.Constants.LOCAL_SERVICE_SERVICE_TYPE,
+                    record);
+
+            mWifiP2pManager.addLocalService(mChannel, mServiceInfo, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    Log.d(TAG, "LocalService successfully added");
+                }
+
+                @Override
+                public void onFailure(int arg0) {
+                    Log.e(TAG, String.format("LocalService add failed: %d", arg0));
+                }
+            });
+
+            // Peer should be discoverable from now.
         } catch (SecurityException e) {
             e.printStackTrace();
         }
@@ -200,6 +242,18 @@ public class DirectReceiver implements Receiver {
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
+        mWifiP2pManager.removeLocalService(mChannel, mServiceInfo, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                Log.d(TAG, "LocalService successfully removed");
+            }
+
+            @Override
+            public void onFailure(int arg0) {
+                Log.e(TAG, String.format("LocalService remove failed: %d", arg0));
+            }
+        });
+        mServiceInfo = null;
     }
 
     @Override

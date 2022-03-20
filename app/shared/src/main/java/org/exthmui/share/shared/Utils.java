@@ -1,5 +1,6 @@
 package org.exthmui.share.shared;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -10,7 +11,6 @@ import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.util.Base64;
@@ -18,6 +18,7 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.documentfile.provider.DocumentFile;
+import androidx.preference.PreferenceManager;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -25,13 +26,17 @@ import java.lang.reflect.Method;
 
 public class Utils {
     private static final String TAG = "Utils";
+
+    @SuppressLint("ObsoleteSdkInt")
+    @SuppressWarnings("deprecated")
     public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
             return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
-        else return (Settings.Secure.getInt(cr, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
+        else
+            return (Settings.Secure.getInt(cr, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
     }
 
-    public Bitmap Drawable2Bitmap(Drawable img){
+    public Bitmap Drawable2Bitmap(Drawable img) {
         return ((BitmapDrawable) img).getBitmap();
     }
 

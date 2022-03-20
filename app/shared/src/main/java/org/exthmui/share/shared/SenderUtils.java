@@ -7,6 +7,8 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.work.WorkManager;
 
@@ -27,8 +29,8 @@ public class SenderUtils {
         }
     }
 
-    public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, String fileName, String targetName, boolean indeterminate) {
-        createNotificationChannel(context);//TODO: make use of statuscode
+    public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, @Nullable String fileName, @Nullable String targetName, boolean indeterminate) {
+        createNotificationChannel(context);
 
         String title = String.format(context.getString(R.string.notification_title_sending), fileName, targetName);
         String cancel = context.getString(R.string.notification_action_cancel);
@@ -36,7 +38,30 @@ public class SenderUtils {
 
         return new NotificationCompat.Builder(context, SEND_CHANNEL_ID)
                 .setContentTitle(title)
-                .setProgress((int)totalBytesToSend, (int)bytesSent, indeterminate)
+                .setContentText(context.getString(Constants.TransmissionStatus.parse(statusCode).getFriendlyStringRes()))
+                .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
+                .setTicker(title)
+                .setSmallIcon(R.drawable.ic_notification_send)
+                .setOngoing(true)
+                .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent)
+                .build();
+    }
+
+    public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, @NonNull String[] fileNames, @Nullable String targetName, boolean indeterminate) {
+        createNotificationChannel(context);
+
+        String title;
+        if (fileNames.length == 2)
+            title = String.format(context.getString(R.string.notification_title_sending_two), fileNames[0], fileNames[1], targetName);
+        else
+            title = String.format(context.getString(R.string.notification_title_sending_multi), fileNames[0], fileNames[1], fileNames.length - 2, targetName);
+        String cancel = context.getString(R.string.notification_action_cancel);
+        PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
+
+        return new NotificationCompat.Builder(context, SEND_CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(context.getString(Constants.TransmissionStatus.parse(statusCode).getFriendlyStringRes()))
+                .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
                 .setTicker(title)
                 .setSmallIcon(R.drawable.ic_notification_send)
                 .setOngoing(true)

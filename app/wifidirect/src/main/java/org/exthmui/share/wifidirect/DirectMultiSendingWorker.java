@@ -5,6 +5,7 @@ import static org.exthmui.share.wifidirect.Constants.COMMAND_CANCEL;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_FAILURE;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_REJECT;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_SUCCESS;
+import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER_END;
 
 import android.annotation.SuppressLint;
@@ -54,11 +55,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class DirectSendingWorker extends SendingWorker {
+public class DirectMultiSendingWorker extends SendingWorker {
 
     private static final String TAG = "DirectSendingWorker";
 
-    public DirectSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public DirectMultiSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
 
@@ -97,15 +98,26 @@ public class DirectSendingWorker extends SendingWorker {
     @Override
     public Result doWork() {
         Data input = getInputData();
-        Uri uri = Uri.parse(input.getString(Entity.FILE_URI));
+        String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
+        String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
+        if (uriStrings == null)
+            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+        Uri[] uris = new Uri[uriStrings.length];
+        for (int i = 0; i < uriStrings.length; i++) {
+            if (uriStrings[i] == null)
+                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+            uris[i] = Uri.parse(uriStrings[i]);
+        }
 
         DirectManager manager = DirectManager.getInstance(getApplicationContext());
 
-        Entity entity;
-        try {
-            entity = new Entity(getApplicationContext(), uri);
-        } catch (FailedResolvingUriException e) {
-            return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), e.getMessage());
+        Entity[] entities = new Entity[uris.length];
+        for (int i = 0; i < uris.length; i++) {
+            try {
+                entities[i] = new Entity(getApplicationContext(), uris[i]);
+            } catch (FailedResolvingUriException e) {
+                return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), "Failed resolving uri of: " + fileNames[i] + "\n" + e.getMessage());
+            }
         }
         String peerId = input.getString(Sender.TARGET_PEER_ID);
         DirectPeer peer = (DirectPeer) manager.getPeers().get(peerId);
@@ -117,7 +129,7 @@ public class DirectSendingWorker extends SendingWorker {
             CountDownLatch latch = new CountDownLatch(1);
 
             connect(peer, latch);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, entity.getFileName(), peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileNames, peer.getDisplayName());
             try {
                 latch.await();
             } catch (InterruptedException e) {
@@ -162,8 +174,7 @@ public class DirectSendingWorker extends SendingWorker {
         succeeded[0] = SettableFuture.create();
 
         Thread senderServerThread = new Thread() {
-            DataInputStream inputStream = null;
-            InputStreamReader inputStreamReader = null;
+            DataInputStream dataInputStream = null;
             BufferedReader bufferedReader = null;
 
             @SuppressLint("RestrictedApi")
@@ -171,10 +182,10 @@ public class DirectSendingWorker extends SendingWorker {
             public void run() {
                 // Read commands
                 try {
-                    inputStream = SSLUtils.getDataInput(socketToClientReference.get());
+                    dataInputStream = SSLUtils.getDataInput(socketToClientReference.get());
                     socketToClientReference.get().setSoTimeout(0);
 
-                    bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+                    bufferedReader = new BufferedReader(new InputStreamReader(dataInputStream));
                     String command;
                     label:
                     while ((command = bufferedReader.readLine()) != null) {
@@ -206,10 +217,8 @@ public class DirectSendingWorker extends SendingWorker {
                     }
                     bufferedReader.close();
                     bufferedReader = null;
-                    inputStreamReader.close();
-                    inputStreamReader = null;
-                    inputStream.close();
-                    inputStream = null;
+                    dataInputStream.close();
+                    dataInputStream = null;
                     socketToClientReference.get().close();
                     socketToClientReference.set(null);
                     serverSocketToClientReference.get().close();
@@ -225,18 +234,10 @@ public class DirectSendingWorker extends SendingWorker {
                             e.printStackTrace();
                         }
                     }
-                    if (inputStreamReader != null) {
+                    if (dataInputStream != null) {
                         try {
-                            inputStreamReader.close();
-                            inputStreamReader = null;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (inputStream != null) {
-                        try {
-                            inputStream.close();
-                            inputStream = null;
+                            dataInputStream.close();
+                            dataInputStream = null;
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
@@ -262,17 +263,21 @@ public class DirectSendingWorker extends SendingWorker {
         };
 
         try {
-
             // Initial fileTransfer object
-            entity.calculateMD5(getApplicationContext());
-            FileTransfer fileTransfer = new FileTransfer();
-            fileTransfer.setFileName(entity.getFileName());
-            fileTransfer.setFileSize(entity.getFileSize());
-            fileTransfer.setPeerName(/* TODO:getSelfName */"ISNing's Phone");
-            fileTransfer.setMd5(fileTransfer.getMd5());
-            fileTransfer.setClientPort(clientPort);
+            FileTransfer[] fileTransfers = new FileTransfer[entities.length];
+            long totalBytesToSend = 0;
+            for (int i = 0; i < entities.length; i++) {
+                entities[i].calculateMD5(getApplicationContext());
+                FileTransfer fileTransfer = new FileTransfer();
+                fileTransfer.setFileName(entities[i].getFileName());
+                fileTransfer.setFileSize(entities[i].getFileSize());
+                fileTransfer.setPeerName(/* TODO:getSelfName */"ISNing's Phone");
+                fileTransfer.setMd5(fileTransfer.getMd5());
+                fileTransfer.setClientPort(clientPort);
+                fileTransfers[i] = fileTransfer;
+                totalBytesToSend += fileTransfer.getFileSize();
+            }
 
-            long totalBytesToSend = fileTransfer.getFileSize();
             long bytesSent = 0;
 
             socketToServer = SSLUtils.genMutualSocket(getApplicationContext());
@@ -281,12 +286,33 @@ public class DirectSendingWorker extends SendingWorker {
             socketToServer.connect((new InetSocketAddress(serverAddress[0], serverPort)), timeout);
 
             // Send fileTransfer
-            Log.d(TAG, "Trying to send " + fileTransfer + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
+            Log.d(TAG, "Trying to send " + fileTransfers[0] + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
             outputStream = socketToServer.getOutputStream();
             objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(fileTransfer);
+            objectOutputStream.writeObject(fileTransfers[0]);
             objectOutputStream.close();
             objectOutputStream = null;
+            outputStream.close();
+            outputStream = null;
+
+            for (int i = 1; i < fileTransfers.length; i++) {
+                FileTransfer fileTransfer = fileTransfers[i];
+                Log.d(TAG, "Trying to send command \"" + COMMAND_TRANSFER + "\" -> " + serverAddress[0].getHostAddress() + ":" + clientPort);
+                dataOutputStream = SSLUtils.getDataOutput(socketToServer);
+                dataOutputStream.writeUTF(COMMAND_TRANSFER + "\n");
+                dataOutputStream.close();
+                dataOutputStream = null;
+
+                // Send fileTransfer
+                Log.d(TAG, "Trying to send " + fileTransfer + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
+                outputStream = socketToServer.getOutputStream();
+                objectOutputStream = new ObjectOutputStream(outputStream);
+                objectOutputStream.writeObject(fileTransfer);
+                objectOutputStream.close();
+                objectOutputStream = null;
+                outputStream.close();
+                outputStream = null;
+            }
 
             Log.d(TAG, "Trying to send command \"" + COMMAND_TRANSFER_END + "\" -> " + serverAddress[0].getHostAddress() + ":" + clientPort);
             dataOutputStream = SSLUtils.getDataOutput(socketToServer);
@@ -310,7 +336,7 @@ public class DirectSendingWorker extends SendingWorker {
                 serverSocketToClientReference.get().setSoTimeout(timeout);// Set timeout TODO: check timeout working
                 try {
                     socketToClientReference.set(serverSocketToClientReference.get().accept());
-                } catch (SocketTimeoutException e){
+                } catch (SocketTimeoutException e) {
                     return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), "Connection timeout(1)");
                 }
                 if (socketToClientReference.get() == null) continue;
@@ -318,7 +344,7 @@ public class DirectSendingWorker extends SendingWorker {
             } while (!Arrays.equals(oriAddress, address)); // Ensure the connection is from identical address
             // Connection established
             serverSocketToClientReference.get().setSoTimeout(0);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
 
             // Monitor command sending
             senderServerThread.start();
@@ -326,7 +352,7 @@ public class DirectSendingWorker extends SendingWorker {
             // Read ACCEPT or REJECT command
             isAccepted[0] = SettableFuture.create();// Re-initialize acceptation status
 
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User rejected receiving file");
                 return genFailureResult(Constants.TransmissionStatus.REJECTED.getNumVal(), "Remote system rejected receiving file");
@@ -350,27 +376,31 @@ public class DirectSendingWorker extends SendingWorker {
                 return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
             }
 
-            // Start send file
-            updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
-            inputStream = entity.getInputStream(getApplicationContext());
-            byte[] buf = new byte[bufferSize];
-            int len;
-            while ((len = inputStream.read(buf)) != -1) {
-                outputStream.write(buf, 0, len);
-                bytesSent += len;
-                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
+            for (Entity entity : entities) {
+                // Start send file
+                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+                outputStream = socketToServer.getOutputStream();
+                inputStream = entity.getInputStream(getApplicationContext());
+                byte[] buf = new byte[bufferSize];
+                int len;
+                while ((len = inputStream.read(buf)) != -1) {
+                    outputStream.write(buf, 0, len);
+                    bytesSent += len;
+                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
 
-                // Check if remote cancelled
-                if (canceledByReceiver[0].isDone())
-                    return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
-                // Check if user cancelled
-                if (getForegroundInfoAsync().isCancelled())
-                    return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                    // Check if remote cancelled
+                    if (canceledByReceiver[0].isDone())
+                        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                    // Check if user cancelled
+                    if (getForegroundInfoAsync().isCancelled())
+                        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                }
+                inputStream.close();
+                inputStream = null;
+                outputStream.close();
+                outputStream = null;
             }
-            inputStream.close();
-            inputStream = null;
-            outputStream.close();
-            outputStream = null;
+
             socketToServer.close();
             socketToServer = null;
 
@@ -391,7 +421,7 @@ public class DirectSendingWorker extends SendingWorker {
             serverSocketToClientReference.get().close();
             serverSocketToClientReference.set(null);
 
-            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
             result.set(Result.success(getInputData()));
             return result.get();
         } catch (SocketTimeoutException e) {

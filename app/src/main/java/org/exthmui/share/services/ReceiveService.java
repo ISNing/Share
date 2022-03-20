@@ -41,16 +41,13 @@ import java.util.Set;
 public class ReceiveService extends ServiceUtils.MyService implements org.exthmui.share.shared.services.IReceiveService {
 
     private static final String TAG = "ReceiveService";
-    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+            {
+                    OnReceiverStartedListener.class,
+                    OnReceiverStoppedListener.class
+            };
     private static ReceiveService instance;
-
-    static {
-        LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
-                {
-                        OnReceiverStartedListener.class,
-                        OnReceiverStoppedListener.class
-                };
-    }
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 

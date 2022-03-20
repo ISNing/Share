@@ -4,7 +4,6 @@ import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_SENT;
 import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_TOTAL;
 
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.text.format.Formatter;
 import android.util.ArrayMap;
@@ -22,14 +21,13 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 
 import org.exthmui.share.databinding.ItemPeerBinding;
+import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.ui.BadgeHelper;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> {
 
@@ -42,12 +40,12 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
     private List<Entity> mEntities;
 
     private final LayoutInflater mInflater;
-    private ArrayMap<String, PeerInfo> mPeers = new ArrayMap<>();
+    private final ArrayMap<String, PeerInfo> mPeers = new ArrayMap<>();
 
     private final Context mContext;
     private LifecycleOwner mLifecycleOwner;
 
-    private MutableLiveData<String> mPeerSelectedLiveData = new MutableLiveData<>(null);
+    private final MutableLiveData<String> mPeerSelectedLiveData = new MutableLiveData<>(null);
 
     PeersAdapter(Context context) {
         mContext = context;
@@ -122,11 +120,14 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                                     succeededNumber++;
                             }
                         }
-                        if(failedNumber != 0) holder.addBadge(mContext.getResources().getColor(R.color.transmission_failed_badge_background), failedNumber);
-                        else if(waitingNumber != 0) holder.addBadge(mContext.getResources().getColor(R.color.transmission_waiting_badge_background), waitingNumber);
-                        else if(succeededNumber != 0) holder.addBadge(mContext.getResources().getColor(R.color.transmission_succeeded_badge_background), succeededNumber);
+                        if (failedNumber != 0)
+                            holder.addBadge(mContext.getResources().getColor(R.color.transmission_failed_badge_background, null), failedNumber);
+                        else if (waitingNumber != 0)
+                            holder.addBadge(mContext.getResources().getColor(R.color.transmission_waiting_badge_background, null), waitingNumber);
+                        else if (succeededNumber != 0)
+                            holder.addBadge(mContext.getResources().getColor(R.color.transmission_succeeded_badge_background, null), succeededNumber);
                         holder.binding.peerDetailText.setText(detailText);
-                        if(bytesSent == -1 | bytesTotal == -1) {
+                        if (bytesSent == -1 | bytesTotal == -1) {
                             holder.binding.peerProgressBar.setIndeterminate(true);
                         } else {
                             holder.binding.peerProgressBar.setIndeterminate(false);
@@ -149,12 +150,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
         } else {
             holder.binding.peerProgressBar.setVisibility(View.GONE);
         }
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                mPeerSelectedLiveData.setValue(peer.getId());
-            }
-        });
+        holder.itemView.setOnClickListener(view -> mPeerSelectedLiveData.setValue(peer.getId()));
     }
 
     @Override

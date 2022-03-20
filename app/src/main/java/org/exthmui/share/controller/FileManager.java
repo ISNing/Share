@@ -9,15 +9,26 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
+import android.os.CancellationSignal;
 import android.provider.MediaStore;
+import android.util.Size;
+
+import androidx.annotation.RequiresApi;
 
 import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.*;
 import org.exthmui.share.shared.FileUtils;
+import org.exthmui.share.shared.base.AppInfo;
+import org.exthmui.share.shared.base.AudioFile;
+import org.exthmui.share.shared.base.File;
+import org.exthmui.share.shared.base.ImgFolderBean;
+import org.exthmui.share.shared.base.VideoFile;
 
-import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class FileManager {
 
@@ -100,13 +111,24 @@ public class FileManager {
         return videos;
     }
 
-    // 获取视频缩略图
+    // For Api lower than Q
+    @SuppressWarnings("deprecated")
     public Bitmap getVideoThumbnail(int id) {
-        Bitmap bitmap = null;
+        Bitmap bitmap;
         BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inDither = false;
         options.inPreferredConfig = Bitmap.Config.ARGB_8888;
         bitmap = MediaStore.Video.Thumbnails.getThumbnail(mContentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, options);
+        return bitmap;
+    }
+
+    // 获取视频缩略图
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public Bitmap getVideoThumbnail(Context context, Uri mediaUri, Size size) throws IOException {
+        Bitmap bitmap;
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
+        CancellationSignal cs = new CancellationSignal();
+        bitmap = context.getContentResolver().loadThumbnail(mediaUri, size, cs);
         return bitmap;
     }
 
@@ -114,7 +136,7 @@ public class FileManager {
      * 通过文件类型得到相应文件的集合
      **/
     public List<File> getFilesByType(int fileType) {
-        List<File> files = new ArrayList<File>();
+        List<File> files = new ArrayList<>();
         // 扫描files文件库
         try (Cursor c = mContentResolver.query(MediaStore.Files.getContentUri("external"), null, null, null, null)) {
             while (c.moveToNext()) {
@@ -144,7 +166,7 @@ public class FileManager {
                 new String[]{"image/jpeg", "image/png"}, MediaStore.Images.Media.DATE_MODIFIED)) {
             List<String> mDirs = new ArrayList<String>();//用于保存已经添加过的文件夹目录
             while (c.moveToNext()) {
-                String path = c.getString(c.getColumnIndex(MediaStore.Images.Media.DATA));// 路径
+                String path = c.getString(c.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
                 java.io.File parentFile = new java.io.File(path).getParentFile();
                 if (parentFile == null)
                     continue;
@@ -159,9 +181,7 @@ public class FileManager {
                 folderBean.setFistImgPath(path);
                 if (parentFile.list() == null)
                     continue;
-                int count = parentFile.list((dir1, filename) -> {
-                    return filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".png");
-                }).length;
+                int count = Objects.requireNonNull(parentFile.list((dir1, filename) -> filename.endsWith(".jpeg") | filename.endsWith(".jpg") | filename.endsWith(".png"))).length;
 
                 folderBean.setCount(count);
                 folders.add(folderBean);
@@ -197,6 +217,7 @@ public class FileManager {
     /**
      * 获取已安装apk的列表
      */
+    @SuppressWarnings("deprecated")
     public List<AppInfo> getAppInfos(Context ctx) {
 
         ArrayList<AppInfo> appInfos = new ArrayList<>();
@@ -209,7 +230,9 @@ public class FileManager {
             AppInfo appInfo = new AppInfo();
 
             appInfo.setApplicationInfo(packageInfo.applicationInfo);
-            appInfo.setVersionCode(packageInfo.versionCode);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                appInfo.setVersionCode(packageInfo.getLongVersionCode());
+            else appInfo.setVersionCode(packageInfo.versionCode);
 
             //得到icon
             Drawable drawable = packageInfo.applicationInfo.loadIcon(packageManager);

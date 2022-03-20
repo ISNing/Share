@@ -74,6 +74,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         Set<String> pluginsEnabledPrefsValue = PreferenceManager.getDefaultSharedPreferences(requireContext()).getStringSet(pluginsEnabledPrefs.getKey(), Collections.emptySet());
         pluginsEnabledPrefs.setSummary(buildSummaryForPluginsEnabledPrefs(pluginsEnabledPrefsValue));
         pluginsEnabledPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+            @SuppressWarnings("unchecked")
             Set<String> prefsValueNew = (Set<String>) newValue;
             if (prefsValueNew == null)
                 prefsValueNew = Collections.emptySet();

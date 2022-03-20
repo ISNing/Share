@@ -3,6 +3,7 @@ package org.exthmui.share.shared.base.trash;
 import android.database.Cursor;
 import android.os.Build;
 import android.provider.MediaStore;
+
 import androidx.annotation.NonNull;
 
 import java.util.Arrays;
@@ -60,6 +61,7 @@ public class Media {
 
     public Media() {}
 
+    @SuppressWarnings("deprecated")
     public Media(@NonNull Cursor c){
         this.data = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA));
         this.date_added = c.getInt(c.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED));

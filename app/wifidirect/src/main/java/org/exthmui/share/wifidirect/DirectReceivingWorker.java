@@ -5,6 +5,8 @@ import static org.exthmui.share.wifidirect.Constants.COMMAND_CANCEL;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_FAILURE;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_REJECT;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_SUCCESS;
+import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER;
+import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER_END;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -28,10 +30,13 @@ import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.wifidirect.ssl.SSLUtils;
 
+import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
@@ -44,6 +49,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 public class DirectReceivingWorker extends ReceivingWorker {
@@ -56,13 +63,15 @@ public class DirectReceivingWorker extends ReceivingWorker {
 
     private ServerSocket serverSocketToServer = null;
 
-    @SuppressLint("RestrictedApi")
+    @SuppressLint({"RestrictedApi", "MissingPermission"})
     @NonNull
     @Override
     public Result doWork() {
 
         InputStream inputStream = null;
         ObjectInputStream objectInputStream = null;
+        DataInputStream dataInputStream = null;
+        BufferedReader bufferedReader = null;
         OutputStream outputStream = null;
         DataOutputStream dataOutputStream = null;
         Socket socketToClient = null;
@@ -81,19 +90,59 @@ public class DirectReceivingWorker extends ReceivingWorker {
             serverSocketToServer = SSLUtils.genMutualServerSocket(getApplicationContext());
             serverSocketToServer.setReuseAddress(true);
             serverSocketToServer.bind(new InetSocketAddress(serverPort));
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal(), 0, 0, null, null);
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal(), 0, 0, (String) null, null);
             socketToServer = serverSocketToServer.accept();// Handled cancel by closing serverSocket in onStopped
 
             InetAddress clientAddress = socketToServer.getInetAddress();
-            Log.d(TAG, "Client connected. IP: " + clientAddress.getHostAddress());
+            Log.d(TAG, "serverSocketToServer connected. From: " + clientAddress.getHostAddress());
 
+            List<FileTransfer> fileTransferList = new ArrayList<>();
+            List<String> fileNameList = new ArrayList<>();
             // Read FileTransfer
             inputStream = socketToServer.getInputStream();
             objectInputStream = new ObjectInputStream(inputStream);
-            FileTransfer fileTransfer = (FileTransfer) objectInputStream.readObject();
-            int clientPort = fileTransfer.getClientPort();
+            fileTransferList.add((FileTransfer) objectInputStream.readObject());
+            fileNameList.add(fileTransferList.get(0).getFileName());
+            objectInputStream.close();
+            objectInputStream = null;
+            inputStream.close();
+            inputStream = null;
 
-            Log.d(TAG, "FileTransfer model received: " + fileTransfer);
+            long totalBytesToSend = 0;
+            trans:
+            while (true) {
+                // Read FileTransfer
+                inputStream = socketToServer.getInputStream();
+                objectInputStream = new ObjectInputStream(inputStream);
+                FileTransfer fileTransfer = (FileTransfer) objectInputStream.readObject();
+                fileTransferList.add(fileTransfer);
+                fileNameList.add(fileTransfer.getFileName());
+                objectInputStream.close();
+                objectInputStream = null;
+                inputStream.close();
+                inputStream = null;
+                Log.d(TAG, "FileTransfer model received: " + fileTransfer);
+                totalBytesToSend += fileTransfer.getFileSize();
+
+                dataInputStream = SSLUtils.getDataInput(socketToServer);
+                socketToServer.setSoTimeout(0);
+
+                bufferedReader = new BufferedReader(new InputStreamReader(dataInputStream));
+                String command;
+                while ((command = bufferedReader.readLine()) != null) {
+                    switch (command) {
+                        case COMMAND_TRANSFER:// Transfer command, get ready for receiving next FileTransfer model
+                            Log.d(TAG, String.format("Received transfer command \"%s\"", command));
+                            continue trans;
+                        case COMMAND_TRANSFER_END:// Transfer End command, no more model will be sent
+                            Log.d(TAG, String.format("Received transfer end command \"%s\"", command));
+                            break trans;
+                        default:
+                            Log.w(TAG, String.format("Received unknown command \"%s\"", command));
+                    }
+                }
+            }
+            int clientPort = fileTransferList.get(0).getClientPort();
 
             // Wait for acceptation from user
             DirectReceiver.getInstance(getApplicationContext()).registerListener((OnReceiveActionAcceptListener) event -> {
@@ -104,15 +153,17 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 Log.d(TAG, "User rejected file");
                 ((SettableFuture<Boolean>) isAccepted[0]).set(false);
             });
-            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), fileTransfer.getPeerName(), fileTransfer.getFileName(), fileTransfer.getFileSize());
+            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), fileTransferList.get(0).getPeerName(), fileTransferList.get(0).getFileName(), fileTransferList.get(0).getFileSize());
 
-            // For sending acceptation result
+            // Connect to client
             socketToClient = SSLUtils.genMutualSocket(getApplicationContext());
             socketToClient.bind(null);
+            socketToClient.connect((new InetSocketAddress(clientAddress, clientPort)), timeout);
+            Log.d(TAG, "socketToClient connected. To: " + clientAddress.getHostAddress() + ":" + clientPort);
 
             Log.d(TAG, "Trying to send \"" + COMMAND_ACCEPT + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
             dataOutputStream = SSLUtils.getDataOutput(socketToClient);
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), fileTransfer.getFileSize(), 0, fileTransfer.getFileName(), fileTransfer.getPeerName());
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), fileTransferList.get(0).getFileSize(), 0, (String[]) fileNameList.toArray(), fileTransferList.get(0).getPeerName());
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 dataOutputStream.writeUTF(COMMAND_REJECT);
                 Log.d(TAG, "User rejected receiving file");
@@ -143,49 +194,58 @@ public class DirectReceivingWorker extends ReceivingWorker {
             DocumentFile destinationDirectory = Utils.getDestinationDirectory(getApplicationContext());
 
             // Receive file
-            if (FileUtils.getSpaceAvailable(getApplicationContext(), destinationDirectory) < fileTransfer.getFileSize()) {
+            if (FileUtils.getSpaceAvailable(getApplicationContext(), destinationDirectory) < totalBytesToSend) {
                 return genFailureResult(Constants.TransmissionStatus.NO_ENOUGH_SPACE.getNumVal(), "No enough free disk space");
             }
-            String fileName = fileTransfer.getFileName();
-            if (fileName == null) {
-                fileName = Utils.getDefaultFileName(getApplicationContext());
-            }
-            DocumentFile file = destinationDirectory.createFile("", fileName);
-            if (file == null) {
-                return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), "Failed creating file");
-            }
-            outputStream = getApplicationContext().getContentResolver().openOutputStream(file.getUri());
-            byte[] buf = new byte[bufferSize];
-            int len;
-            long bytesReceived = 0;
-            while ((len = inputStream.read(buf)) != -1) {
-                outputStream.write(buf, 0, len);
-                bytesReceived += len;
-                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),fileTransfer.getFileSize(), bytesReceived, fileTransfer.getFileName(), fileTransfer.getFileName());
-                // Check if remote cancelled
-                if (canceledBySender[0].isDone()) {
-                    Log.d(TAG, "Remote cancelled receiving file");
-                    return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+            DocumentFile[] files = new DocumentFile[fileTransferList.size()];
+            for (int i = 0; i < fileTransferList.size(); i++) {
+                FileTransfer fileTransfer = fileTransferList.get(i);
+                inputStream = socketToServer.getInputStream();
+
+                String fileName = fileTransfer.getFileName();
+                if (fileName == null) {
+                    fileName = Utils.getDefaultFileName(getApplicationContext());
                 }
-                // Check if user cancelled
-                if (getForegroundInfoAsync().isCancelled()) {
-                    Log.d(TAG, "User cancelled receiving file");
-                    // Send cancel command
-                    Log.d(TAG, "Trying to send command \""+ COMMAND_CANCEL + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
-                    dataOutputStream = SSLUtils.getDataOutput(socketToClient);
-                    dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
-                    dataOutputStream.close();
-                    dataOutputStream = null;
+                DocumentFile file = destinationDirectory.createFile("", fileName);
+                files[i] = file;
+                if (file == null) {
+                    return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), "Failed creating file");
+                }
+                outputStream = getApplicationContext().getContentResolver().openOutputStream(file.getUri());
+                byte[] buf = new byte[bufferSize];
+                int len;
+                long bytesReceived = 0;
+                while ((len = inputStream.read(buf)) != -1) {
+                    outputStream.write(buf, 0, len);
+                    bytesReceived += len;
+                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesReceived, (String[]) fileNameList.toArray(), fileTransfer.getFileName());
+                    // Check if remote cancelled
+                    if (canceledBySender[0].isDone()) {
+                        Log.d(TAG, "Remote cancelled receiving file");
+                        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                    }
+                    // Check if user cancelled
+                    if (getForegroundInfoAsync().isCancelled()) {
+                        Log.d(TAG, "User cancelled receiving file");
+                        // Send cancel command
+                        Log.d(TAG, "Trying to send command \"" + COMMAND_CANCEL + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
+                        dataOutputStream = SSLUtils.getDataOutput(socketToClient);
+                        dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
+                        dataOutputStream.close();
+                        dataOutputStream = null;
+                        // Delete file
+                        file.delete();
+                        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                    }
+                }
+                if (bytesReceived != fileTransfer.getFileSize()) {
+                    // Unexpected EOF
                     // Delete file
                     file.delete();
-                    return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                    return genFailureResult(Constants.TransmissionStatus.NETWORK_ERROR.getNumVal(), "Unexpected EOF");
                 }
             }
 
-            objectInputStream.close();
-            objectInputStream = null;
-            inputStream.close();
-            inputStream = null;
             socketToServer.close();
             socketToServer = null;
             serverSocketToServer.close();
@@ -194,26 +254,28 @@ public class DirectReceivingWorker extends ReceivingWorker {
             outputStream = null;
 
             // Validate md5
-            try {
-                inputStream = getApplicationContext().getContentResolver().openInputStream(file.getUri());
-            } catch (FileNotFoundException e) {
-                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "Failed calculating MD5");
+            for (int i = 0; i < fileTransferList.size(); i++) {
+                try {
+                    inputStream = getApplicationContext().getContentResolver().openInputStream(files[i].getUri());
+                } catch (FileNotFoundException e) {
+                    return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "Failed calculating MD5");
+                }
+                String md5 = FileUtils.getMD5(inputStream);
+                inputStream = null;
+                if (!fileTransferList.get(i).getMd5().equals(md5)) {
+                    Log.e(TAG, "Md5 validation failed");
+                    // Send failure command
+                    Log.d(TAG, "Trying to send command \"" + COMMAND_FAILURE + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
+                    dataOutputStream = SSLUtils.getDataOutput(socketToClient);
+                    dataOutputStream.writeUTF(COMMAND_FAILURE + "\n");
+                    dataOutputStream.close();
+                    dataOutputStream = null;
+                    // Delete file
+                    files[i].delete();
+                    return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "File validation failed");
+                } else
+                    Log.d(TAG, "Md5 validation passed: " + fileTransferList.get(i).getFileName());
             }
-            String md5 = FileUtils.getMD5(inputStream);
-            inputStream = null;
-            if (!fileTransfer.getMd5().equals(md5)) {
-                Log.e(TAG, "Md5 validation failed");
-                // Send failure command
-                Log.d(TAG, "Trying to send command \""+ COMMAND_FAILURE + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
-                dataOutputStream = SSLUtils.getDataOutput(socketToClient);
-                dataOutputStream.writeUTF(COMMAND_FAILURE + "\n");
-                dataOutputStream.close();
-                dataOutputStream = null;
-                // Delete file
-                file.delete();
-                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "File validation failed");
-            } else Log.d(TAG, "Md5 validation passed");
-
             // Send receiving result
             Log.d(TAG, "Trying to send command \"" + COMMAND_SUCCESS + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
             dataOutputStream = SSLUtils.getDataOutput(socketToClient);

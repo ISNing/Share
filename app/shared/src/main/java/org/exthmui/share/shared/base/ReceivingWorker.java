@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
@@ -25,25 +26,34 @@ public abstract class ReceivingWorker extends Worker {
 
     /**
      * Update progress
-     *
+     * <p>
      * Note: (fileName == null && senderName == null) == true => means ready for receiving file, but no acceptation received.
+     *
      * @param totalBytesToSend As name
-     * @param bytesReceived As name
-     * @param fileName File name
-     * @param senderName Sender's display name
+     * @param bytesReceived    As name
+     * @param fileName         File name
+     * @param senderName       Sender's display name
      */
-    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, String fileName, String senderName) {
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String senderName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
         setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileName, senderName, indeterminate));
     }
 
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String senderName) {
+        setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
+        boolean indeterminate = bytesReceived == 0;
+        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileNames, senderName, indeterminate));
+    }
+
     protected Result genFailureResult(int errCode, String message) {
         return Result.failure(genFailureData(errCode, message));
     }
+
     protected Result genSenderCancelledResult() {
         return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Sender cancelled");
     }
+
     protected Result genReceiverCancelledResult() {
         return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Receiver cancelled");
     }
@@ -87,8 +97,14 @@ public abstract class ReceivingWorker extends Worker {
     public abstract Result doWork();
 
     @NonNull
-    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, String fileName, String targetName, boolean indeterminate) {
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String targetName, boolean indeterminate) {
         Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileName, targetName, indeterminate);
+        return new ForegroundInfo(notificationId, notification);
+    }
+
+    @NonNull
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String targetName, boolean indeterminate) {
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileNames, targetName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
     }
 }

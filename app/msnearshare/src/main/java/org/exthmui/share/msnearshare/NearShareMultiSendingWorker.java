@@ -31,13 +31,13 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class NearShareSendingWorker extends SendingWorker {
+public class NearShareMultiSendingWorker extends SendingWorker {
 
     private static final String TAG = "NearShareSendingWorker";
 
     private NearShareSender mNearShareSender;
 
-    public NearShareSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
+    public NearShareMultiSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
     }
 
@@ -45,10 +45,17 @@ public class NearShareSendingWorker extends SendingWorker {
     @Override
     public Result doWork() {
         Data input = getInputData();
-        String uriString = input.getString(Entity.FILE_URI);
-        if (uriString == null)
+        String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
+        String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
+        if (uriStrings == null)
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
-        Uri uri = Uri.parse(uriString);
+        Uri[] uris = new Uri[uriStrings.length];
+        for (int i = 0; i < uriStrings.length; i++) {
+            if (uriStrings[i] == null)
+                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+            uris[i] = Uri.parse(uriStrings[i]);
+        }
+
         final NearShareManager manager = NearShareManager.getInstance(getApplicationContext());
         String peerId = input.getString(Sender.TARGET_PEER_ID);
         PeerInfo peer = manager.getPeers().get(peerId);
@@ -61,15 +68,20 @@ public class NearShareSendingWorker extends SendingWorker {
 
         final AsyncOperationWithProgress<NearShareStatus, NearShareProgress> operation;
 
-        final NearShareFileProvider fileProvider = NearShareHelper.createNearShareFileFromContentUri(
-                uri, getApplicationContext());
+        final NearShareFileProvider[] fileProviders = new NearShareFileProvider[uris.length];
+
+        for (int i = 0; i < uris.length; i++) {
+            NearShareFileProvider fileProvider = NearShareHelper.createNearShareFileFromContentUri(
+                    uris[i], getApplicationContext());
+            fileProviders[i] = fileProvider;
+        }
 
         AtomicReference<Result> result = new AtomicReference<>(null);
         AtomicBoolean finished = new AtomicBoolean(false);
 
-        operation = mNearShareSender.sendFileAsync(connectionRequest, fileProvider);
+        operation = mNearShareSender.sendFilesAsync(connectionRequest, fileProviders);
 
-        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileProvider.getFileName(), peer.getDisplayName()));
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileNames, peer.getDisplayName()));
 
         operation.whenComplete((status, tr) -> {
             if (status == NearShareStatus.COMPLETED) {

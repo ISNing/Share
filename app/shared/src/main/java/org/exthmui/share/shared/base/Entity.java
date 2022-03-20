@@ -6,7 +6,6 @@ import static android.content.ContentResolver.SCHEME_FILE;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.util.Log;
 
@@ -15,16 +14,15 @@ import androidx.annotation.Nullable;
 import androidx.core.content.FileProvider;
 import androidx.work.Data;
 
+import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.FileUtils;
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.base.exceptions.EmptyPathException;
 import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
 import org.exthmui.share.shared.base.exceptions.FileNotExistsException;
 import org.exthmui.share.shared.base.exceptions.UnknownUriSchemeException;
-import org.exthmui.share.shared.Constants;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,20 +33,28 @@ public class Entity {
     private static final String TAG = "Entity";
 
     public static final String FILE_URI = "FILE_URI";
+    public static final String FILE_URIS = "FILE_URIS";
     public static final String FILE_NAME = "FILE_NAME";
+    public static final String FILE_NAMES = "FILE_NAMES";
     public static final String FILE_PATH = "FILE_PATH";
+    public static final String FILE_PATHS = "FILE_PATHS";
     public static final String FILE_TYPE = "FILE_TYPE";
+    public static final String FILE_TYPES = "FILE_TYPES";
     public static final String FILE_SIZE = "FILE_SIZE";
+    public static final String FILE_SIZES = "FILE_SIZES";
 
-    private Uri uri = null;
+    @NonNull
+    private final Uri uri;
     private final boolean initialized;
+    @Nullable
     private String fileName = null;
+    @Nullable
     private String filePath = null;
     private int fileType = Constants.FileTypes.UNKNOWN.getNumVal();
     private long fileSize = -1;
     private String MD5;
 
-    public Entity(Context context, Uri uri) throws FailedResolvingUriException {
+    public Entity(Context context, @NonNull Uri uri) throws FailedResolvingUriException {
         switch (uri.getScheme()) {
             case SCHEME_FILE:
                 final String path = uri.getPath();
@@ -86,7 +92,7 @@ public class Entity {
         if (cursor == null) {
             Log.w(TAG, "Failed resolving Uri: Got a null cursor, ignoring. Uri: " + uri);
             this.initialized = true;
-            return;
+            throw new FailedResolvingUriException();
         }
 
         cursor.moveToFirst();
@@ -139,7 +145,7 @@ public class Entity {
         if (cursor == null) {
             Log.w(TAG, "Failed resolving Uri: Got a null cursor, ignoring. Uri: " + uri);
             this.initialized = true;
-            return;
+            throw new FailedResolvingUriException();
         }
 
         cursor.moveToFirst();
@@ -151,7 +157,7 @@ public class Entity {
         this.initialized = true;
     }
 
-    private Entity(Uri uri, String fileName, String filePath, int fileType, long fileSize) {
+    private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath, int fileType, long fileSize) {
         this.uri = uri;
         this.fileName = fileName;
         this.filePath = filePath;
@@ -160,36 +166,43 @@ public class Entity {
         this.initialized = true;
     }
 
-    public @Nullable InputStream getInputStream(@NonNull Context context) {
+    public @NonNull
+    InputStream getInputStream(@NonNull Context context) throws FileNotFoundException {
         InputStream inputStream = null;
+        FileNotFoundException exception = null;
         if (filePath != null) {
             File file = new File(filePath);
             try {
                 inputStream = new FileInputStream(file);
-            } catch (FileNotFoundException ignored) {}
+            } catch (FileNotFoundException e) {
+                exception = e;
+            }
         }
         if (inputStream == null) {
             try {
                 inputStream = context.getContentResolver().openInputStream(uri);
-            } catch (FileNotFoundException ignored) {}
+            } catch (FileNotFoundException e) {
+                exception = e;
+            }
+        }
+        if (inputStream == null) {
+            if (exception != null) throw exception;
+            else throw new FileNotFoundException();
         }
         return inputStream;
     }
 
     /**
      * Calculate MD5
+     *
      * @param context {@link Context} object
-     * @return whether succeed calculated MD5
      */
-    public boolean calculateMD5(@NonNull Context context) {
+    public void calculateMD5(@NonNull Context context) throws IOException {
         InputStream inputStream = getInputStream(context);
-        if (inputStream == null) return false;
-        try {
-            this.MD5 = FileUtils.getMD5(inputStream);
-        } catch (IOException ignored) {}
-        return this.MD5 != null;
+        this.MD5 = FileUtils.getMD5(inputStream);
     }
 
+    @NonNull
     public Uri getUri() {
         return uri;
     }
@@ -198,10 +211,12 @@ public class Entity {
         return initialized;
     }
 
+    @Nullable
     public String getFileName() {
         return fileName;
     }
 
+    @Nullable
     public String getFilePath() {
         return filePath;
     }

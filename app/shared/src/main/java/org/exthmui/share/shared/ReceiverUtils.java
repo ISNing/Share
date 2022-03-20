@@ -20,6 +20,8 @@ import android.os.Build;
 import android.text.format.Formatter;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.work.WorkManager;
 
@@ -128,7 +130,7 @@ public class ReceiverUtils {
         dialog.show();
     }
 
-    public static Notification buildReceivingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, String fileName, String senderName, boolean indeterminate) {
+    public static Notification buildReceivingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String senderName, boolean indeterminate) {
         createNotificationChannel(context);
 
         String title;
@@ -138,16 +140,51 @@ public class ReceiverUtils {
             senderName = context.getString(R.string.notification_placeholder_unknown);
         if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
             title = context.getString(R.string.notification_title_receive_waiting);
-        else title = String.format(context.getString(R.string.notification_title_receive_receiving), fileName, senderName);
+        else
+            title = String.format(context.getString(R.string.notification_title_receive_receiving), fileName, senderName);
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_CHANNEL_ID).setContentTitle(title)
-                .setTicker(title)
+                .setContentTitle(title)
+                .setContentText(context.getString(Constants.TransmissionStatus.parse(statusCode).getFriendlyStringRes()))
                 .setSmallIcon(R.drawable.ic_notification_receive)
                 .setOngoing(true);
-        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) builder.addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
-        if (statusCode != Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) builder.setProgress((int)totalBytesToSend, (int)bytesReceived, indeterminate);
+        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            builder.addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
+        if (statusCode != Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            builder.setProgress((int) totalBytesToSend, (int) bytesReceived, indeterminate);
+        return builder.build();
+    }
+
+    public static Notification buildReceivingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String senderName, boolean indeterminate) {
+        createNotificationChannel(context);
+
+        String title;
+        for (int i = 0; i < fileNames.length; i++) {
+            if (fileNames[i] == null)
+                fileNames[i] = context.getString(R.string.notification_placeholder_unknown);
+        }
+        if (senderName == null)
+            senderName = context.getString(R.string.notification_placeholder_unknown);
+        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            title = context.getString(R.string.notification_title_receive_waiting);
+        else if (fileNames.length == 2)
+            title = String.format(context.getString(R.string.notification_title_sending_two), fileNames[0], fileNames[1], senderName);
+        else
+            title = String.format(context.getString(R.string.notification_title_sending_multi), fileNames[0], fileNames[1], fileNames.length - 2, senderName);
+        String cancel = context.getString(R.string.notification_action_cancel);
+        PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_CHANNEL_ID).setContentTitle(title)
+                .setContentTitle(title)
+                .setContentText(context.getString(Constants.TransmissionStatus.parse(statusCode).getFriendlyStringRes()))
+                .setSmallIcon(R.drawable.ic_notification_receive)
+                .setOngoing(true);
+        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            builder.addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
+        if (statusCode != Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+            builder.setProgress((int) totalBytesToSend, (int) bytesReceived, indeterminate);
         return builder.build();
     }
 }

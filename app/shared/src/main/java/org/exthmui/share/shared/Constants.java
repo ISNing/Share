@@ -1,5 +1,9 @@
 package org.exthmui.share.shared;
 
+import androidx.annotation.DrawableRes;
+import androidx.annotation.NonNull;
+import androidx.annotation.StringRes;
+
 public class Constants {
     /**
      * First placeholder: Code of connection type
@@ -49,6 +53,7 @@ public class Constants {
         PHONE(3, R.drawable.ic_phone),TABLET(4, R.drawable.ic_tablet),
         UNKNOWN(0, R.drawable.ic_device_unknown);
         private final int numVal;
+        @DrawableRes
         private final int imgRes;
 
         DeviceType(int numVal, int imgRes) {
@@ -95,41 +100,50 @@ public class Constants {
         }
     }
 
-    public enum TransmissionStatus{
-        UNKNOWN(0),
-        WAITING_FOR_REQUEST(6),
-        WAITING_FOR_ACCEPTATION(5),
-        REJECTED(3),
-        CONNECTION_ESTABLISHED(4),
-        IN_PROGRESS(2),
-        COMPLETED(1),
+    public enum TransmissionStatus {
+        UNKNOWN(0, R.string.transmission_status_unknown),
+        WAITING_FOR_REQUEST(6, R.string.transmission_status_waiting_for_request),
+        WAITING_FOR_ACCEPTATION(5, R.string.transmission_status_waiting_for_acceptation),
+        REJECTED(3, R.string.transmission_status_rejected),
+        CONNECTION_ESTABLISHED(4, R.string.transmission_status_connection_established),
+        IN_PROGRESS(2, R.string.transmission_status_in_progress),
+        COMPLETED(1, R.string.transmission_status_completed),
 
-        UNKNOWN_ERROR(10),
-        NETWORK_ERROR(11),
-        TIMED_OUT(111),
-        SENDER_CANCELLED(121),
-        RECEIVER_CANCELLED(122),
-        FILE_IO_ERROR(13),
-        NO_ENOUGH_SPACE(131),
-        REMOTE_ERROR(14),
-        PEER_DISAPPEARED(15);
+        UNKNOWN_ERROR(10, R.string.transmission_status_unknown_error),
+        NETWORK_ERROR(11, R.string.transmission_status_network_error),
+        TIMED_OUT(111, R.string.transmission_status_timed_out),
+        SENDER_CANCELLED(121, R.string.transmission_status_sender_cancelled),
+        RECEIVER_CANCELLED(122, R.string.transmission_status_receiver_cancelled),
+        FILE_IO_ERROR(13, R.string.transmission_status_file_io_error),
+        NO_ENOUGH_SPACE(131, R.string.transmission_status_no_enough_space),
+        REMOTE_ERROR(14, R.string.transmission_status_remote_error),
+        PEER_DISAPPEARED(15, R.string.transmission_status_peer_disappeared);
         private final int numVal;
+        @StringRes
+        private final int friendlyStringRes;
 
-        TransmissionStatus(int numVal) {
+        TransmissionStatus(int numVal, int friendlyStringRes) {
             this.numVal = numVal;
+            this.friendlyStringRes = friendlyStringRes;
         }
 
-        public static DeviceType parse(int numVal) {
-            for (DeviceType o : DeviceType.values()) {
+        @NonNull
+        public static TransmissionStatus parse(int numVal) {
+            for (TransmissionStatus o : TransmissionStatus.values()) {
                 if (o.getNumVal() == numVal) {
                     return o;
                 }
             }
-            return null;
+            return UNKNOWN;
         }
 
         public int getNumVal() {
             return numVal;
+        }
+
+        @StringRes
+        public int getFriendlyStringRes() {
+            return friendlyStringRes;
         }
     }
 

@@ -39,16 +39,13 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     private static final String TAG = "DiscoverService";
 
-    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+            {
+                    OnDiscovererStartedListener.class,
+                    OnDiscovererStoppedListener.class
+            };
     private static DiscoverService instance;
-
-    static {
-        LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
-                {
-                        OnDiscovererStartedListener.class,
-                        OnDiscovererStoppedListener.class
-                };
-    }
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 

@@ -47,7 +47,7 @@ public class Auth {
         TrustManager[] tms = trustManagerFactory.getTrustManagers();
 
         KeyManager[] kms = null;
-        if(mutual) {
+        if (mutual) {
             //KeyStore class is used to save certificate.
             c_pwd = cCertificatePwd.toCharArray();
             keyStore = KeyStore.getInstance(storeType);
