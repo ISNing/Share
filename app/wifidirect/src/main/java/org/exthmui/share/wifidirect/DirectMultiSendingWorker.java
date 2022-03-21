@@ -157,7 +157,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
         AtomicReference<Result> result = new AtomicReference<>(null);
 
         int timeout = DirectUtils.getTimeout(getApplicationContext());
-        int serverPort = DirectUtils.getServerPort(getApplicationContext());
+        int serverPort = peer.getServerPort();
         int clientPort = DirectUtils.getClientPort(getApplicationContext());
         int bufferSize = DirectUtils.getBufferSize(getApplicationContext());
 

@@ -10,6 +10,7 @@ import org.exthmui.share.shared.base.Peer;
 
 public class DirectPeer extends Peer {
     public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_WIFIDIRECT;
+
     private WifiP2pDevice wifiP2pDevice;
     @IntRange(from = 5001, to = 65535)
     private int serverPort;

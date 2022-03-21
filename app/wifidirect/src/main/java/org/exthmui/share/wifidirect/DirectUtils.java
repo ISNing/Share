@@ -31,9 +31,9 @@ public class DirectUtils {
     }
     public static int getServerPort(Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_server_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_server_port));
-        if (!isServerPortValid(context, port)) {
+        if (!isServerPortValid(context, port) | port == -1) {
             Log.e(TAG, "Got a illegal port, regenerating port in range of 5001-65565");
-            return generatePort();
+            return generatePort(getClientPort(context));
         }
         return port;
     }
@@ -49,7 +49,7 @@ public class DirectUtils {
         return !(port < 5001 | port > 65535);
     }
     public static boolean isServerPortValid(Context context, int serverPort) {
-        return isPortValid(serverPort);
+        return serverPort == -1 | (isPortValid(serverPort) && serverPort != getClientPort(context));
     }
     public static boolean isClientPortValid(Context context, int clientPort) {
         return clientPort == -1 | (isPortValid(clientPort) && clientPort != getServerPort(context));
@@ -58,7 +58,7 @@ public class DirectUtils {
     public static int getBufferSize(Context context) {
         int defaultSize = context.getResources().getInteger(R.integer.prefs_default_wifidirect_buffer_size);
         int bufferSize = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_buffer_size), defaultSize);
-        if (bufferSize < 1) {
+        if (bufferSize <= 0) {
             Log.d(TAG, "Got a illegal port returning default size");
             return defaultSize;
         }
