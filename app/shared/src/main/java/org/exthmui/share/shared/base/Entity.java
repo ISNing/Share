@@ -47,11 +47,11 @@ public class Entity {
     private final Uri uri;
     private final boolean initialized;
     @Nullable
-    private String fileName = null;
+    private final String fileName;
     @Nullable
     private String filePath = null;
-    private int fileType = Constants.FileTypes.UNKNOWN.getNumVal();
-    private long fileSize = -1;
+    private final int fileType;
+    private final long fileSize;
     private String MD5;
 
     public Entity(Context context, @NonNull Uri uri) throws FailedResolvingUriException {
@@ -100,6 +100,7 @@ public class Entity {
         fileName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
         final int sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE);
         fileSize = cursor.isNull(sizeIndex) ? -1 : cursor.getLong(sizeIndex);
+        cursor.close();
         this.uri = uri;
         this.fileType = FileUtils.getFileType(fileName).getNumVal();
         this.initialized = true;
@@ -153,6 +154,7 @@ public class Entity {
         fileName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
         final int sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE);
         fileSize = cursor.isNull(sizeIndex) ? -1 : cursor.getLong(sizeIndex);
+        cursor.close();
         this.uri = uri;
         this.initialized = true;
     }

@@ -1,12 +1,11 @@
 package org.exthmui.share;
 
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.ClipData;
 import android.os.Bundle;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import org.exthmui.share.shared.FileUtils;
-import org.exthmui.share.shared.MimeTypes;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
 

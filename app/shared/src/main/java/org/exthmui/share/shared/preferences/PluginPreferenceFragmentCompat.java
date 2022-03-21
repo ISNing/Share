@@ -19,6 +19,13 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
     private Preference mGrantPreferenceDiscover;
     private Preference mGrantPreferenceReceive;
 
+    private IDiscoverService discoverService;
+    private IReceiveService receiveService;
+
+    private boolean toCheckGrantPreferenceDiscover;
+    private boolean toCheckGrantPreferenceReceive;
+
+
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         onCreatePreferences(savedInstanceState, rootKey, null);
         PreferenceScreen preferenceScreen = getPreferenceScreen();
@@ -27,17 +34,40 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
                 preferenceScreen.addPreference(mGrantPreferenceDiscover);
             if (mGrantPreferenceReceive != null)
                 preferenceScreen.addPreference(mGrantPreferenceReceive);
+            if (toCheckGrantPreferenceDiscover) {
+                toCheckGrantPreferenceDiscover = false;
+                addDiscoverGrantPermissionPreference(discoverService);
+                discoverService = null;
+            }
+            if (toCheckGrantPreferenceReceive) {
+                toCheckGrantPreferenceReceive = false;
+                addReceiveGrantPermissionPreference(receiveService);
+                receiveService = null;
+            }
         }
     }
     public abstract void onCreatePreferences(Bundle savedInstanceState, String rootKey, Object ignored);
 
-    public void checkDiscoverPermissions(IDiscoverService discoverService){
+    public void checkDiscoverPermissions(IDiscoverService discoverService) {
         removeDiscoverGrantPermissionPreference();
-        if (!discoverService.getDiscovererPermissionsNotGranted(getType().getCode()).isEmpty()) addDiscoverGrantPermissionPreference(discoverService);
+        if (isAdded()) {
+            if (!discoverService.getDiscovererPermissionsNotGranted(getType().getCode()).isEmpty())
+                addDiscoverGrantPermissionPreference(discoverService);
+        } else {
+            this.discoverService = discoverService;
+            toCheckGrantPreferenceDiscover = true;
+        }
     }
-    public void checkReceivePermissions(IReceiveService receiveService){
+
+    public void checkReceivePermissions(IReceiveService receiveService) {
         removeReceiveGrantPermissionPreference();
-        if (!receiveService.getReceiverPermissionsNotGranted(getType().getCode()).isEmpty()) addReceiveGrantPermissionPreference(receiveService);
+        if (isAdded()) {
+            if (!receiveService.getReceiverPermissionsNotGranted(getType().getCode()).isEmpty())
+                addReceiveGrantPermissionPreference(receiveService);
+        } else {
+            this.receiveService = receiveService;
+            toCheckGrantPreferenceReceive = true;
+        }
     }
 
     public void addDiscoverGrantPermissionPreference(IDiscoverService service) {

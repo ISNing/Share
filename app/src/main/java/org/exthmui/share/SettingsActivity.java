@@ -61,9 +61,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             try {
                 addFragments();
-            } catch (IllegalAccessException exception) {
-                exception.printStackTrace();
-            } catch (InstantiationException e) {
+            } catch (IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
             }
         } else {
@@ -78,14 +76,13 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void addFragment(@NonNull Fragment fragment) {
-        if (PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) {
-            PluginPreferenceFragmentCompat preferenceFragment = (PluginPreferenceFragmentCompat) fragment;
-            checkGrantPermissionPreferences(preferenceFragment);
-        }
         getSupportFragmentManager().beginTransaction()
                 .add(binding.preferencesContainer.getId(), fragment)
                 .commit();
         mFragmentList.add(fragment);
+        if (PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) {
+            checkGrantPermissionPreferences((PluginPreferenceFragmentCompat) fragment);
+        }
     }
 
     private void addFragments() throws IllegalAccessException, InstantiationException {
@@ -105,8 +102,7 @@ public class SettingsActivity extends AppCompatActivity {
     private void checkGrantPermissionPreferences() {
         for (Fragment fragment : mFragmentList) {
             if (!PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) continue;
-            PluginPreferenceFragmentCompat preferenceFragment = (PluginPreferenceFragmentCompat) fragment;
-            checkGrantPermissionPreferences(preferenceFragment);
+            checkGrantPermissionPreferences((PluginPreferenceFragmentCompat) fragment);
         }
     }
 
@@ -141,7 +137,8 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     public void removeFragment(@NonNull Class<? extends Fragment> fragmentClass) {
-        for (Fragment fragment : mFragmentList) {
+        List<Fragment> fragmentList = new ArrayList<>(mFragmentList);
+        for (Fragment fragment : fragmentList) {
             if (fragment.getClass().isAssignableFrom(fragmentClass)) {
                 removeFragment(fragment);
             }

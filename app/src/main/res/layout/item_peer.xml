@@ -26,15 +26,16 @@
                 style="@android:style/Widget.Material.Light.ProgressBar.Large" />
 
         <ImageView
-                android:id="@+id/peer_icon"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                android:src="@drawable/ic_phone"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:layout_margin="8dp" />
+            android:id="@+id/peer_icon"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:src="@drawable/ic_phone"
+            android:contentDescription="@string/content_description_peer_icon"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_margin="8dp" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <TextView
@@ -45,12 +46,12 @@
         android:ellipsize="end"
         android:maxWidth="64dp"
         android:maxLines="2"
-        android:text="Peer"
         android:textColor="?android:attr/textColorSecondary"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="@id/peer_icon_container"
         app:layout_constraintStart_toStartOf="@id/peer_icon_container"
-        app:layout_constraintTop_toBottomOf="@id/peer_icon_container" />
+        app:layout_constraintTop_toBottomOf="@id/peer_icon_container"
+        tools:text="Peer" />
 
     <TextView
         android:id="@+id/peer_detail_text"
@@ -59,11 +60,11 @@
         android:layout_gravity="center"
         android:ellipsize="end"
         android:maxLines="1"
-        android:text="192.168.0.8"
         android:textColor="?android:attr/textColorTertiary"
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="@id/peer_icon_container"
         app:layout_constraintStart_toStartOf="@id/peer_icon_container"
         app:layout_constraintTop_toBottomOf="@id/peer_name_text"
+        tools:text="192.168.0.8"
         tools:visibility="visible" />
 </LinearLayout>

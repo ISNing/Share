@@ -59,10 +59,8 @@ public class FileManager {
      */
     public List<AudioFile> getAudios() {
         ArrayList<AudioFile> audios = new ArrayList<>();
-        Cursor c = null;
-        try {
-            c = mContentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
-                    MediaStore.Audio.Media.DEFAULT_SORT_ORDER);
+        try (Cursor c = mContentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
+                MediaStore.Audio.Media.DEFAULT_SORT_ORDER)) {
 
             while (c.moveToNext()) {
                 AudioFile audioFile = new AudioFile(c);
@@ -75,10 +73,6 @@ public class FileManager {
 
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (c != null) {
-                c.close();
-            }
         }
         return audios;
     }
@@ -91,9 +85,7 @@ public class FileManager {
 
         List<VideoFile> videos = new ArrayList<>();
 
-        Cursor c = null;
-        try {
-            c = mContentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Video.Media.DEFAULT_SORT_ORDER);
+        try (Cursor c = mContentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Video.Media.DEFAULT_SORT_ORDER)) {
             while (c.moveToNext()) {
                 VideoFile videoFile = new VideoFile(c);
                 if (!FileUtils.isExists(videoFile.getFilePath())) {
@@ -103,10 +95,6 @@ public class FileManager {
             }
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            if (c != null) {
-                c.close();
-            }
         }
         return videos;
     }
@@ -164,7 +152,7 @@ public class FileManager {
         try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
                 MediaStore.Images.Media.MIME_TYPE + "= ? or " + MediaStore.Images.Media.MIME_TYPE + "= ?",
                 new String[]{"image/jpeg", "image/png"}, MediaStore.Images.Media.DATE_MODIFIED)) {
-            List<String> mDirs = new ArrayList<String>();//用于保存已经添加过的文件夹目录
+            List<String> mDirs = new ArrayList<>();//用于保存已经添加过的文件夹目录
             while (c.moveToNext()) {
                 String path = c.getString(c.getColumnIndexOrThrow(MediaStore.Images.Media.DATA));
                 java.io.File parentFile = new java.io.File(path).getParentFile();

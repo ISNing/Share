@@ -67,8 +67,7 @@ public class DiscoveringTileService extends TileService {
     @Override
     public void onCreate() {
         super.onCreate();
-        this.startService(new Intent(getApplicationContext(), DiscoverService.class));
-        this.bindService(new Intent(getApplicationContext(), DiscoverService.class), mConnection, 0);
+        this.bindService(new Intent(getApplicationContext(), DiscoverService.class), mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -143,7 +142,7 @@ public class DiscoveringTileService extends TileService {
             case Tile.STATE_UNAVAILABLE:
                 icon = Icon.createWithResource(getApplicationContext(), R.drawable.ic_tile_discovering_disabled);
                 tile.setState(Tile.STATE_UNAVAILABLE);
-                tile.setLabel(getText(R.string.tile_scanning_disabled));
+                tile.setLabel(getText(R.string.tile_scanning_unavailable));
                 tile.setIcon(icon);
                 break;
             case Tile.STATE_INACTIVE:

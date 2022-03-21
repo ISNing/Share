@@ -7,18 +7,18 @@ import android.provider.MediaStore;
 import org.exthmui.share.shared.Constants;
 
 public class File implements FileInfo {
-    private Bitmap thumbnail=null;
-    private String fileName=null;
-    private String filePath=null;
-    private long fileSize=-1;
-    private int fileAddedTime=-1;
-    private int fileModifiedTime=-1;
-    private int fileType= Constants.FileTypes.UNKNOWN.getNumVal();
+    private Bitmap thumbnail = null;
+    private String fileName;
+    private String filePath;
+    private long fileSize = -1;
+    private int fileAddedTime;
+    private int fileModifiedTime;
+    private int fileType = Constants.FileTypes.UNKNOWN.getNumVal();
 
     @SuppressWarnings("deprecated")
     public File(Cursor c) {
         this.filePath = c.getString(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA));
-        this.fileName = filePath.substring(filePath.lastIndexOf('/')+1);
+        this.fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
         this.fileSize = c.getLong(c.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE));
         this.fileAddedTime = c.getInt(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED));
         this.fileModifiedTime = c.getInt(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED));

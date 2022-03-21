@@ -78,10 +78,10 @@ public class Constants {
         }
     }
 
-    public enum ConnectionStatus{
+    public enum ConnectionStatus {
         AVAILABLE(1, R.string.connection_status_available),
         UNAVAILABLE(2, R.string.connection_status_unavailable),
-        TRANSMITTING(3, R.string.connection_status_unavailable),
+        TRANSMITTING(3, R.string.connection_status_transmitting),
         UNKNOWN(0, R.string.connection_status_unknown);
         private final int numVal;
         private final int strRes;

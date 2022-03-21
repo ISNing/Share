@@ -156,6 +156,7 @@ public class Media {
         this.year = year;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Media{" +

@@ -4,8 +4,6 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 public interface DirectActionListener {
     void onWifiP2pStateChanged(boolean enabled);

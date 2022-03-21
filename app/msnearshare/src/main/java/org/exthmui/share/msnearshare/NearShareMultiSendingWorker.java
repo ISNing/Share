@@ -49,6 +49,8 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
         if (uriStrings == null)
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+        if (fileNames == null)
+            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
         Uri[] uris = new Uri[uriStrings.length];
         for (int i = 0; i < uriStrings.length; i++) {
             if (uriStrings[i] == null)

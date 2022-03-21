@@ -238,6 +238,9 @@ public class DirectReceivingWorker extends ReceivingWorker {
                         return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
                     }
                 }
+                outputStream.close();
+                outputStream = null;
+
                 if (bytesReceived != fileTransfer.getFileSize()) {
                     // Unexpected EOF
                     // Delete file
@@ -250,8 +253,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
             socketToServer = null;
             serverSocketToServer.close();
             serverSocketToServer = null;
-            outputStream.close();
-            outputStream = null;
 
             // Validate md5
             for (int i = 0; i < fileTransferList.size(); i++) {
@@ -323,6 +324,20 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (inputStream != null) {
                 try {
                     inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (dataInputStream != null) {
+                try {
+                    dataInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (bufferedReader != null) {
+                try {
+                    bufferedReader.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

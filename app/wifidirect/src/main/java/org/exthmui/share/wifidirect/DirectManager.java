@@ -183,10 +183,6 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                 }
                 removed.removeAll(notChanged);
                 removed.removeAll(updated);
-//                for (PeerInfo peer: newlyAdded){
-//                    mPeers.put(peer.getId(), peer);
-//                    notifyListeners(new PeerAddedEvent(this, peer));
-//                }
                 for (PeerInfo peer : updated) {
                     peer.notifyPeerUpdated();
                     notifyListeners(new PeerUpdatedEvent(this, peer));

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="content_uri_authority">org.exthmui.share.files</string>
     <string name="connection_status_available">Available</string>
     <string name="connection_status_unavailable">Unavailable</string>
@@ -10,16 +10,16 @@
     <string name="prefs_key_global_destination_directory" translatable="false">global_destination_directory</string>
     <string name="prefs_title_global_destination_directory">Destination Directory</string>
     <string name="prefs_default_global_destination_directory" translatable="false">@null</string>
-    <string name="prefs_summary_global_destination_directory_default" translatable="false">Download</string>
+    <string name="prefs_summary_global_destination_directory_default" translatable="false">Download Directory</string>
 
     <string name="prefs_key_global_default_file_name" translatable="false">global_default_file_name</string>
     <string name="prefs_title_global_default_file_name">Default file name</string>
     <string name="prefs_default_global_default_file_name" translatable="false">unknown</string>
     <string name="prefs_summary_global_default_file_name" translatable="false">unknown</string>
 
-    <string name="prefs_title_global_permissions_not_granted_discover">Grant permissions for %s(Discover)</string>
+    <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for %s(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
-    <string name="prefs_title_global_permissions_not_granted_receive">Grant permissions for %s(Receive)</string>
+    <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for %s(Receive)</string>
     <string name="prefs_summary_global_permissions_not_granted_receive">Touch here to grant for permission for receiving</string>
 
     <string name="notification_channel_receive_name">Receive Share request</string>
@@ -28,19 +28,19 @@
     <string name="notification_action_reject">Reject</string>
 
     <string name="notification_title_receive_request">Share Request</string>
-    <string name="notification_content_receive_request">\"%s\" want\'s to share \"%s\" with you\rSize: %s</string>
+    <string name="notification_content_receive_request" formatted="true">\"%s\" want\'s to share \"%s\" with you\rSize: %s</string>
 
-    <string name="notification_title_sending" formatted="false">Sending file \"%s\" to %s</string>
-    <string name="notification_title_sending_two" formatted="false">Sending \"%s\", \"%s\" to %s</string>
-    <string name="notification_title_sending_multi" formatted="false">Sending \"%s\", \"%s\" and %d more files to %s</string>
+    <string name="notification_title_sending" formatted="true">Sending file \"%s\" to %s</string>
+    <string name="notification_title_sending_two" formatted="true">Sending \"%s\", \"%s\" to %s</string>
+    <string name="notification_title_sending_multi" formatted="true" tools:ignore="PluralsCandidate">Sending \"%s\", \"%s\" and %d more files to %s</string>
     <string name="notification_action_cancel">Cancel</string>
 
-    <string name="dialog_title_accept_or_reject_request">%s request to send you file \"%s\"</string>
-    <string name="dialog_accept_or_reject_request_size">Size: %s</string>
+    <string name="dialog_title_accept_or_reject_request" formatted="true">%s request to send you file \"%s\"</string>
+    <string name="dialog_accept_or_reject_request_size" formatted="true">Size: %s</string>
     <string name="dialog_action_accept">Accept</string>
     <string name="dialog_action_reject">Reject</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
-    <string name="notification_title_receive_receiving">Receiving file \"%s\" from %s</string>
+    <string name="notification_title_receive_receiving" formatted="true">Receiving file \"%s\" from %s</string>
     <string name="notification_placeholder_unknown">Unknown</string>
 
     <!-- Transmission Status Friendly -->

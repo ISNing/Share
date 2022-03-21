@@ -5,17 +5,15 @@ import static android.content.Context.BIND_AUTO_CREATE;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.InputType;
 
-import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 
@@ -87,18 +85,6 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             try {
                 SettingsActivity activity = (SettingsActivity) getActivity();
                 if (activity != null) {
-                    for (String code : whatRemoved) {
-                        Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
-                        if (type == null) continue;
-                        Class<? extends PluginPreferenceFragmentCompat> fragment = type.getPreferenceFragmentClass();
-                        activity.removeFragment(fragment);
-                    }
-                    for (String code : whatAdded) {
-                        Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
-                        if (type == null) continue;
-                        Class<? extends PluginPreferenceFragmentCompat> fragment = type.getPreferenceFragmentClass();
-                        activity.addFragment(fragment);
-                    }
                     mConnection = new ServiceConnection() {
                         @Override
                         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -106,7 +92,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                             mService = (DiscoverService) binder.getService();
                             for (String code: whatRemoved)
                                 mService.removeDiscoverer(code);
-                            for (String code: whatAdded)
+                            for (String code : whatAdded)
                                 mService.addDiscoverer(code);
                             activity.unbindService(mConnection);
                         }
@@ -116,9 +102,22 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                             mService = null;
                         }
                     };
-                    activity.bindService(new Intent(getContext(),DiscoverService.class), mConnection, BIND_AUTO_CREATE);
+                    activity.bindService(new Intent(getContext(), DiscoverService.class), mConnection, BIND_AUTO_CREATE);
+                    for (String code : whatRemoved) {
+                        Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
+                        if (type == null) continue;
+                        Class<? extends PluginPreferenceFragmentCompat> fragment = type.getPreferenceFragmentClass();
+                        activity.removeFragment(fragment);
+                    }
+                    for (String code : whatAdded) {
+                        Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
+                        if (type == null) continue;
+                        Class<? extends PluginPreferenceFragmentCompat> fragmentClass = type.getPreferenceFragmentClass();
+                        activity.addFragment(fragmentClass);
+                    }
                 }
-            } catch (ClassCastException ignored) {} catch (IllegalAccessException | java.lang.InstantiationException exception) {
+            } catch (ClassCastException ignored) {
+            } catch (IllegalAccessException | java.lang.InstantiationException exception) {
                 exception.printStackTrace();
             }
             return true;
@@ -127,25 +126,30 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
 
         mDestinationDirectoryPrefs = findPreference(getString(R.string.prefs_key_global_destination_directory));
         assert mDestinationDirectoryPrefs != null;
-        mDestinationDirectoryPrefs.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
-            @Override
-            public boolean onPreferenceClick(@NonNull Preference preference) {
-                mDestinationDirectoryActivityResultLauncher.launch(null);
-                return true;
-            }
+        mDestinationDirectoryPrefs.setOnPreferenceClickListener(preference -> {
+            mDestinationDirectoryActivityResultLauncher.launch(null);
+            return true;
         });
-        mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
+        if (mDestinationDirectoryPrefs.getValue() == null) {
+            mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
+        } else mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
+
+        EditTextPreference defaultFileNamePrefs = findPreference(getString(R.string.prefs_key_global_default_file_name));
+        assert defaultFileNamePrefs != null;
+        defaultFileNamePrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT));
+        defaultFileNamePrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+            defaultFileNamePrefs.setSummary((String) newValue);
+            return true;
+        });
+        defaultFileNamePrefs.setSummary(defaultFileNamePrefs.getText());
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), new ActivityResultCallback<Uri>() {
-            @Override
-            public void onActivityResult(Uri uri) {
-                mDestinationDirectoryPrefs.setValue(uri.toString());
-                mDestinationDirectoryPrefs.setSummary(uri.toString());
-            }
+        mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
+            mDestinationDirectoryPrefs.setValue(uri.toString());
+            mDestinationDirectoryPrefs.setSummary(uri.toString());
         });
     }
 }

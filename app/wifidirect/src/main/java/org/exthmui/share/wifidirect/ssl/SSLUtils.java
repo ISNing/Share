@@ -51,8 +51,8 @@ public class SSLUtils {
     }
 
     public static SSLSocket genSSLSocket(SSLContext sslContext, boolean mutual) throws IOException {
-        SSLSocketFactory factory = (SSLSocketFactory) sslContext.getSocketFactory();
-        SSLSocket socket = (SSLSocket)factory.createSocket();
+        SSLSocketFactory factory = sslContext.getSocketFactory();
+        SSLSocket socket = (SSLSocket) factory.createSocket();
         String[] pwdSuits = socket.getSupportedCipherSuites();
         socket.setEnabledCipherSuites(pwdSuits);
         if(mutual){

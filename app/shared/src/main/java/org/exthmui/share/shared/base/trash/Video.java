@@ -4,12 +4,15 @@ import android.database.Cursor;
 import android.os.Build;
 import android.provider.MediaStore;
 
+import androidx.annotation.NonNull;
+
 /**
  * Bean for VideoColumns
+ *
  * @see android.provider.MediaStore.Video.VideoColumns
  * @see <a href="https://developer.android.google.cn/reference/android/provider/MediaStore.Video.VideoColumns">MediaStore.Video.VideoColumns</a>
- * */
-public class Video extends Media{
+ */
+public class Video extends Media {
     private int bookmark;
     private String category;
     private int color_range;
@@ -68,6 +71,7 @@ public class Video extends Media{
         this.tags = tags;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Video{" +

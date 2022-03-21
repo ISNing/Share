@@ -23,6 +23,7 @@ import androidx.preference.PreferenceManager;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Objects;
 
 public class Utils {
     private static final String TAG = "Utils";
@@ -51,26 +52,26 @@ public class Utils {
 
     /**
      * 判断数值是否属于枚举类的值
-     * @param clzz 枚举类 Enum
+     *
+     * @param clazz 枚举类 Enum
      * @param code
-     * @author wayleung
      * @return
+     * @author wayleung
      */
-    public static boolean isInclude(Class<?> clzz,Integer code) {
+    public static boolean isInclude(Class<?> clazz, Integer code) {
         boolean include = false;
-        if(clzz.isEnum()){
-            Object[] enumConstants = clzz.getEnumConstants();
+        if (clazz.isEnum()) {
+            Object[] enumConstants = clazz.getEnumConstants();
             try {
-                Method getCode = clzz.getMethod("getCode");
-                for (Object enumConstant:enumConstants){
-                    if (getCode.invoke(enumConstant).equals(code)) {
+                Method getCode = clazz.getMethod("getCode");
+                for (Object enumConstant : Objects.requireNonNull(enumConstants)) {
+                    if (Objects.requireNonNull(getCode.invoke(enumConstant)).equals(code)) {
                         include = true;
                         break;
                     }
                 }
-            }catch (NoSuchMethodException ignored){}
-            catch (IllegalAccessException ignored){}
-            catch (InvocationTargetException ignored) {}
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+            }
         }
 
         return include;

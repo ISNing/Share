@@ -45,8 +45,7 @@
         <service
             android:name=".services.DiscoverService"
             android:enabled="true"
-            android:exported="true" >
-        </service>
+            android:exported="false"></service>
         <service
             android:name=".services.DiscoverableTileService"
             android:enabled="true"
@@ -65,8 +64,7 @@
         <service
             android:name=".services.ReceiveService"
             android:enabled="true"
-            android:exported="true" >
-        </service>
+            android:exported="false"></service>
 
         <activity
             android:name=".SettingsActivity"

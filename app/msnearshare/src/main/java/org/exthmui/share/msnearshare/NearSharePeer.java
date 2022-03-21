@@ -1,17 +1,22 @@
 package org.exthmui.share.msnearshare;
 
+import androidx.annotation.NonNull;
+
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemKinds;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
 
-import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+
+import java.util.Objects;
 
 public class NearSharePeer extends Peer {
     public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_MSNEARSHARE;
     RemoteSystem remoteSystem;
-    public NearSharePeer(RemoteSystem remoteSystem){
+
+    public NearSharePeer(RemoteSystem remoteSystem) {
         this.remoteSystem = remoteSystem;
     }
 
@@ -25,14 +30,16 @@ public class NearSharePeer extends Peer {
 
     }
 
+    @NonNull
     @Override
     public String getId() {
         return String.format(Constants.PEER_ID_STRING, getConnectionType(), remoteSystem.getId());
     }
 
+    @NonNull
     @Override
     public String getDisplayName() {
-        return remoteSystem.getDisplayName();
+        return Objects.requireNonNull(remoteSystem.getDisplayName());
     }
 
     @Override
@@ -46,6 +53,7 @@ public class NearSharePeer extends Peer {
         return deviceType;
     }
 
+    @NonNull
     @Override
     public String getConnectionType() {
         return CONNECTION_CODE;

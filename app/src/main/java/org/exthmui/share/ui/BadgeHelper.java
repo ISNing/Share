@@ -252,14 +252,13 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
             Field viewField = TabLayout.Tab.class.getDeclaredField("mView");
             viewField.setAccessible(true);
             targetView = tabView = (View) viewField.get(tab);
-
         } catch (Exception e) {
             e.printStackTrace();
         }
 
         try {
             if (tabView != null) {
-                Field mTextViewField = tabView.getClass().getDeclaredField("mTextView");//"mIconView"
+                Field mTextViewField = tabView.getClass().getDeclaredField("mTextView");
                 mTextViewField.setAccessible(true);
                 targetView = (View) mTextViewField.get(tabView);
             }
@@ -316,14 +315,11 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
                 }
 
                 setLayoutParams(layoutParams);
-
-
             } else {//[小红点放右侧]模式
                 LinearLayout badgeContainer = new LinearLayout(getContext());
                 badgeContainer.setOrientation(LinearLayout.HORIZONTAL);
                 ViewGroup.LayoutParams targetLayoutParams = target.getLayoutParams();
                 badgeContainer.setLayoutParams(targetLayoutParams);
-
 
                 target.setLayoutParams(new ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -372,12 +368,12 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
         rect.top = 0;
         rect.right = getWidth();
         rect.bottom = getHeight();
-        canvas.drawRoundRect(rect, getWidth() / 2, getWidth() / 2, mBackgroundPaint);
+        canvas.drawRoundRect(rect, getWidth() / 2f, getWidth() / 2f, mBackgroundPaint);
 
         if (type == Type.TYPE_TEXT) {
             float textWidth = getTextWidth(text, mTextPaint);
             float textHeight = getTextHeight(text, mTextPaint);
-            canvas.drawText(text, getWidth() / 2 - textWidth / 2, getHeight() / 2 + textHeight / 2, mTextPaint);
+            canvas.drawText(text, getWidth() / 2f - textWidth / 2, getHeight() / 2f + textHeight / 2, mTextPaint);
         }
     }
 

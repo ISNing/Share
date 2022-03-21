@@ -1,8 +1,8 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Share</string>
-    <string name="status_sending_progress" formatted="false">%s/%s</string>
-    <string name="title_send_file" formatted="false">Send file \"%s\" to:</string>
-    <string name="title_send_files" formatted="false">Send \"%s\" and %d more files to:</string>
+    <string name="status_sending_progress" formatted="true">%s/%s</string>
+    <string name="title_send_file" formatted="true">Send file \"%s\" to:</string>
+    <string name="title_send_files" formatted="true" tools:ignore="PluralsCandidate">Send \"%s\" and %d more files to:</string>
     <string name="toast_no_file">No file was selected</string>
 
     <string name="tile_scanning_default">Scanning</string>
@@ -24,5 +24,6 @@
     <string name="prefs_summary_global_plugins_enabled_prefix">Enabled</string>
     <string name="prefs_summary_global_plugins_enabled_suffix" />
     <string name="prefs_summary_global_plugins_enabled_none">No plugins enabled</string>
+    <string name="content_description_peer_icon">Peer Icon</string>
 
 </resources>

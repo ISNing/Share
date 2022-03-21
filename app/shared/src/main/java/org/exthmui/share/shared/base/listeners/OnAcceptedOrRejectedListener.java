@@ -1,7 +1,6 @@
 package org.exthmui.share.shared.base.listeners;
 
 import org.exthmui.share.shared.base.events.AcceptedOrRejectedEvent;
-import org.exthmui.share.shared.base.events.ProgressUpdatedEvent;
 
 import java.lang.reflect.Method;
 import java.util.EventObject;

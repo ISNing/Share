@@ -1,5 +1,7 @@
 package org.exthmui.share.web;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.Gson;
 import com.yanzhenjie.andserver.annotation.Converter;
 import com.yanzhenjie.andserver.framework.MessageConverter;
@@ -27,7 +29,7 @@ public class AppMessageConverter implements MessageConverter {
     }
 
     @Override
-    public <T> T convert(InputStream stream, MediaType mediaType, Type type) throws IOException {
+    public <T> T convert(@NonNull InputStream stream, MediaType mediaType, Type type) throws IOException {
         Charset charset = mediaType == null ? null : mediaType.getCharset();
         if (charset == null) {
             return gson.fromJson(IOUtils.toString(stream), type);

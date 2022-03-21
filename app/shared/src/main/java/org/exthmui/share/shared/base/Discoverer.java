@@ -1,7 +1,5 @@
 package org.exthmui.share.shared.base;
 
-import android.app.Activity;
-
 import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.base.listeners.BaseEventListener;

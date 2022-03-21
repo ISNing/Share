@@ -3,11 +3,14 @@ package org.exthmui.share.shared.base.trash;
 import android.database.Cursor;
 import android.provider.BaseColumns;
 
+import androidx.annotation.NonNull;
+
 public class Base {
     String _id;
     String _count;
 
-    public Base() {}
+    public Base() {
+    }
 
     public Base(Cursor c) {
         this._id = c.getString(c.getColumnIndexOrThrow(BaseColumns._ID));
@@ -19,6 +22,7 @@ public class Base {
         this._count = _count;
     }
 
+    @NonNull
     @Override
     public String toString() {
         return "Base{" +

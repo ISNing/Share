@@ -2,6 +2,8 @@ package org.exthmui.share.wifidirect;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 
+import androidx.annotation.NonNull;
+
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Peer;
 
@@ -13,11 +15,13 @@ public class DirectPeer extends Peer {
         this.wifiP2pDevice = wifiP2pDevice;
     }
 
+    @NonNull
     @Override
     public String getId() {
         return String.format(Constants.PEER_ID_STRING, getConnectionType(), wifiP2pDevice.deviceAddress);
     }
 
+    @NonNull
     @Override
     public String getDisplayName() {
         return wifiP2pDevice.deviceName;
@@ -48,6 +52,7 @@ public class DirectPeer extends Peer {
         return Constants.DeviceType.UNKNOWN.getNumVal();
     }
 
+    @NonNull
     @Override
     public String getConnectionType() {
         return CONNECTION_CODE;
