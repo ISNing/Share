@@ -29,7 +29,6 @@ public class Utils {
     private static final String TAG = "Utils";
 
     @SuppressLint("ObsoleteSdkInt")
-    @SuppressWarnings("deprecated")
     public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
             return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
@@ -42,11 +41,11 @@ public class Utils {
     }
 
     @TargetApi(Build.VERSION_CODES.FROYO)
-    public String Bitmap2StrByBase64(Bitmap bm){
+    public String Bitmap2StrByBase64(@NonNull Bitmap bm) {
         int compressQuality = Constants.COMPRESS_QUALITY;
-        ByteArrayOutputStream bos=new ByteArrayOutputStream();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bm.compress(Bitmap.CompressFormat.PNG, compressQuality, bos);
-        byte[] bytes=bos.toByteArray();
+        byte[] bytes = bos.toByteArray();
         return Base64.encodeToString(bytes, Base64.DEFAULT);
     }
 
@@ -56,9 +55,8 @@ public class Utils {
      * @param clazz 枚举类 Enum
      * @param code
      * @return
-     * @author wayleung
      */
-    public static boolean isInclude(Class<?> clazz, Integer code) {
+    public static boolean isInclude(@NonNull Class<?> clazz, Integer code) {
         boolean include = false;
         if (clazz.isEnum()) {
             Object[] enumConstants = clazz.getEnumConstants();
@@ -99,7 +97,8 @@ public class Utils {
         return destinationDirectory;
     }
 
-    public static @NonNull String getDefaultFileName(Context context) {
+    public static @NonNull
+    String getDefaultFileName(@NonNull Context context) {
         String defaultValue = context.getString(R.string.prefs_default_global_default_file_name);
         String defaultFileName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
         if (defaultFileName == null | TextUtils.isEmpty(defaultFileName)) {
