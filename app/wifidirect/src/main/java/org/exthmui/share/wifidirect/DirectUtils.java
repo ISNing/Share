@@ -1,5 +1,8 @@
 package org.exthmui.share.wifidirect;
 
+import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
+import static org.exthmui.share.shared.Constants.PEER_ID_STRING;
+
 import android.content.Context;
 import android.util.Log;
 
@@ -51,6 +54,7 @@ public class DirectUtils {
     public static boolean isClientPortValid(Context context, int clientPort) {
         return clientPort == -1 | (isPortValid(clientPort) && clientPort != getServerPort(context));
     }
+
     public static int getBufferSize(Context context) {
         int defaultSize = context.getResources().getInteger(R.integer.prefs_default_wifidirect_buffer_size);
         int bufferSize = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_buffer_size), defaultSize);
@@ -59,5 +63,9 @@ public class DirectUtils {
             return defaultSize;
         }
         return bufferSize;
+    }
+
+    public static String genDirectId(String peerId) {
+        return String.format(PEER_ID_STRING, CONNECTION_CODE_WIFIDIRECT, peerId);
     }
 }

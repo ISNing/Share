@@ -1,7 +1,12 @@
 package org.exthmui.share.wifidirect;
 
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_DISPLAY_NAME;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_PEER_ID;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SERVER_PORT;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
+import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_UID;
+import static org.exthmui.share.wifidirect.Constants.SHARE_PROTOCOL_VERSION_1;
 
 import android.Manifest;
 import android.content.Context;
@@ -18,6 +23,7 @@ import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.BaseEventListenersUtils;
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Discoverer;
@@ -97,8 +103,9 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     @Override
     public Set<String> getPermissionNotGranted() {
         Set<String> permissions = new HashSet<>();
-        for (String permission: getPermissionsRequired())
-            if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED) permissions.add(permission);
+        for (String permission : getPermissionsRequired())
+            if (ContextCompat.checkSelfPermission(mContext, permission) != PackageManager.PERMISSION_GRANTED)
+                permissions.add(permission);
         return permissions;
     }
 
@@ -161,16 +168,16 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
             @Override
             public void onPeersListChanged(Collection<WifiP2pDevice> wifiP2pDeviceList) {
                 // Do not add peer here
-//                Set<PeerInfo> newlyAdded = new HashSet<>();
                 Set<PeerInfo> notChanged = new HashSet<>();
                 Set<PeerInfo> updated = new HashSet<>();
                 Set<PeerInfo> removed = new HashSet<>(mPeers.values());
 
                 for (WifiP2pDevice wifiP2pDevice : wifiP2pDeviceList) {
-                    DirectPeer newPeer = new DirectPeer(wifiP2pDevice);
-                    DirectPeer oldPeer = (DirectPeer) mPeers.get(newPeer.getId());
+                    Map<String, String> record = mPeerRecords.get(wifiP2pDevice.deviceAddress);
+                    if (record == null) return;
+                    DirectPeer oldPeer = (DirectPeer) mPeers.get(DirectUtils.genDirectId(record.get(RECORD_KEY_PEER_ID)));
                     if (oldPeer != null) {
-                        if (newPeer.getWifiP2pDevice().equals(oldPeer.getWifiP2pDevice()))
+                        if (wifiP2pDevice.equals(oldPeer.getWifiP2pDevice()))
                             notChanged.add(oldPeer);
                         else {
                             wifiP2pDevice.deviceName = mPeerRecords.containsKey(wifiP2pDevice.deviceAddress) ?
@@ -179,7 +186,6 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                             updated.add(oldPeer);
                         }
                     }
-//                    else newlyAdded.add(newPeer);
                 }
                 removed.removeAll(notChanged);
                 removed.removeAll(updated);
@@ -235,20 +241,42 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                     Log.d(TAG, "DnsSdTxtRecord available: " + record.toString());
                     try {
                         @SuppressWarnings("unchecked") Map<String, String> rec = (Map<String, String>) record;
-                        if (rec.get(RECORD_KEY_SHARE_PROTOCOL_VERSION) == null) {
-                            Log.d(TAG, String.format("The key %s for protocol version not found in DnsSdTxtRecord,ignoring...", RECORD_KEY_SHARE_PROTOCOL_VERSION));
-                        } else {
-                            mPeerRecords.put(device.deviceAddress, rec);
-                            // Update the device name with the human-friendly version from
-                            // the DnsTxtRecord, assuming one arrived.
-                            device.deviceName =
-                                    mPeerRecords.containsKey(device.deviceAddress) ?
-                                            Objects.requireNonNull(mPeerRecords.get(device.deviceAddress)).get(RECORD_KEY_DISPLAY_NAME) : device.deviceName;
+                        mPeerRecords.put(device.deviceAddress, rec);
+                        // Update the device name with the human-friendly version from
+                        // the DnsTxtRecord, assuming one arrived.
+                        device.deviceName =
+                                mPeerRecords.containsKey(device.deviceAddress) ?
+                                        Objects.requireNonNull(mPeerRecords.get(device.deviceAddress)).get(RECORD_KEY_DISPLAY_NAME) : device.deviceName;
 
-                            PeerInfo peer = new DirectPeer(device);
+                        String shareProtocolVersion = rec.get(RECORD_KEY_SHARE_PROTOCOL_VERSION);
+                        if (shareProtocolVersion == null) {
+                            Log.d(TAG, String.format("The key %s for protocol version not found in DnsSdTxtRecord, ignoring...", RECORD_KEY_SHARE_PROTOCOL_VERSION));
+                        } else if (shareProtocolVersion.equals(SHARE_PROTOCOL_VERSION_1)) {
+                            String serverPortStr = rec.get(RECORD_KEY_SERVER_PORT);
+                            String peerId = rec.get(RECORD_KEY_PEER_ID);
+                            String uidStr = rec.get(RECORD_KEY_UID);
+                            String serverSign = rec.get(RECORD_KEY_ACCOUNT_SERVER_SIGN);
+                            if (serverPortStr == null | peerId == null | uidStr == null |
+                                    serverSign == null | !StringUtils.isNumeric(serverPortStr) |
+                                    !StringUtils.isNumeric(uidStr)) {
+                                Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
+                                Log.d(TAG, "DnsSdTxtRecord: " + rec);
+                                Log.d(TAG, "Invalid DnsSdTxtRecord, ignoring...");
+                                return;
+                            }
+                            Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
+                            Log.d(TAG, "Valid DnsSdTxtRecord, adding peer...");
+                            PeerInfo peer = new DirectPeer(device, shareProtocolVersion,
+                                    Integer.parseInt(serverPortStr),
+                                    peerId,
+                                    Integer.parseInt(uidStr),
+                                    serverSign);
                             Log.d(TAG, String.format("New peer added: %s(%s)", peer.getDisplayName(), peer.getId()));
                             mPeers.put(peer.getId(), peer);
                             notifyListeners(new PeerAddedEvent(this, peer));
+                        } else {
+                            // Unsupported
+                            Log.d(TAG, "Unsupported protocol version: %s, ignoring...");
                         }
                     } catch (ClassCastException e) {
                         Log.d(TAG, "Failed casting DnsSdTxtRecord,ignoring...");

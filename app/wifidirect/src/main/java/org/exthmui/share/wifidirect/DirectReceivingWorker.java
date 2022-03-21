@@ -67,7 +67,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
     @NonNull
     @Override
     public Result doWork() {
-
         InputStream inputStream = null;
         ObjectInputStream objectInputStream = null;
         DataInputStream dataInputStream = null;

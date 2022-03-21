@@ -2,6 +2,7 @@ package org.exthmui.share.wifidirect;
 
 import android.net.wifi.p2p.WifiP2pDevice;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.Constants;
@@ -10,15 +11,33 @@ import org.exthmui.share.shared.base.Peer;
 public class DirectPeer extends Peer {
     public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_WIFIDIRECT;
     private WifiP2pDevice wifiP2pDevice;
+    @IntRange(from = 5001, to = 65535)
+    private int serverPort;
+    @NonNull
+    private String shareProtocolVersion;
+    @NonNull
+    private String peerId;
+    @IntRange(from = 0)
+    private int uid;
+    @NonNull
+    private String serverSign;
 
-    public DirectPeer(WifiP2pDevice wifiP2pDevice) {
+    public DirectPeer(WifiP2pDevice wifiP2pDevice, @NonNull String shareProtocolVersion,
+                      @IntRange(from = 5001, to = 65535) int serverPort,
+                      @NonNull String peerId,
+                      @IntRange(from = 0) int uid, @NonNull String serverSign) {
         this.wifiP2pDevice = wifiP2pDevice;
+        this.serverPort = serverPort;
+        this.shareProtocolVersion = shareProtocolVersion;
+        this.peerId = peerId;
+        this.uid = uid;
+        this.serverSign = serverSign;
     }
 
     @NonNull
     @Override
     public String getId() {
-        return String.format(Constants.PEER_ID_STRING, getConnectionType(), wifiP2pDevice.deviceAddress);
+        return DirectUtils.genDirectId(getPeerId());
     }
 
     @NonNull
@@ -114,5 +133,50 @@ public class DirectPeer extends Peer {
 
     public void setWifiP2pDevice(WifiP2pDevice wifiP2pDevice) {
         this.wifiP2pDevice = wifiP2pDevice;
+    }
+
+    @IntRange(from = 5001, to = 65535)
+    public int getServerPort() {
+        return serverPort;
+    }
+
+    public void setServerPort(@IntRange(from = 5001, to = 65535) int serverPort) {
+        this.serverPort = serverPort;
+    }
+
+    @NonNull
+    public String getShareProtocolVersion() {
+        return shareProtocolVersion;
+    }
+
+    public void setShareProtocolVersion(@NonNull String shareProtocolVersion) {
+        this.shareProtocolVersion = shareProtocolVersion;
+    }
+
+    @NonNull
+    public String getPeerId() {
+        return peerId;
+    }
+
+    public void setPeerId(@NonNull String peerId) {
+        this.peerId = peerId;
+    }
+
+    @IntRange(from = 0)
+    public int getUid() {
+        return uid;
+    }
+
+    public void setUid(@IntRange(from = 5001, to = 65535) int uid) {
+        this.uid = uid;
+    }
+
+    @NonNull
+    public String getServerSign() {
+        return serverSign;
+    }
+
+    public void setServerSign(@NonNull String serverSign) {
+        this.serverSign = serverSign;
     }
 }

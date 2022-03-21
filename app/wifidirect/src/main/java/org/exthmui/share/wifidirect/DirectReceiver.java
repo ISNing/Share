@@ -1,12 +1,13 @@
 package org.exthmui.share.wifidirect;
 
+import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_DISPLAY_NAME;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_PEER_ID;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SERVER_PORT;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_UID;
-import static org.exthmui.share.wifidirect.Constants.SHARE_PROTOCOL_VERSION;
+import static org.exthmui.share.wifidirect.Constants.SHARE_PROTOCOL_VERSION_1;
 
 import android.Manifest;
 import android.content.Context;
@@ -61,7 +62,7 @@ public class DirectReceiver implements Receiver {
                     OnReceiveActionRejectListener.class
             };
 
-    private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + new DirectPeer(null).getConnectionType();
+    private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + CONNECTION_CODE_WIFIDIRECT;
 
     private static DirectReceiver instance;
 
@@ -185,7 +186,7 @@ public class DirectReceiver implements Receiver {
 
             //  Create a string map containing information about your service.
             Map<String, String> record = new HashMap<>();
-            record.put(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION);
+            record.put(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION_1);
             record.put(RECORD_KEY_SERVER_PORT, String.valueOf(serverPort));
             record.put(RECORD_KEY_DISPLAY_NAME, "");
             record.put(RECORD_KEY_PEER_ID, "");// Without prefix
