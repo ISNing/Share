@@ -93,13 +93,17 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/AppTheme.Main" >
+            android:theme="@style/AppTheme.Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".shared.ui.AcceptationRequestActivity"
+            android:exported="false"
+            android:theme="@style/AppTheme.Share" />
     </application>
 
 </manifest>

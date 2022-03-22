@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.exthmui.share.databinding.FragmentShareBinding;
+import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.base.Entity;
@@ -64,13 +65,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 
     private List<Entity> mEntities = new ArrayList<>();
 
-    private ShareActivity mParent;
-
     private PeersAdapter mAdapter;
-
-//    private PartialWakeLock mWakeLock;
-
-    private final boolean mIsInSetup = false;
 
 //    private final WifiStateMonitor mWifiStateMonitor = new WifiStateMonitor() {
 //        @Override
@@ -86,20 +81,12 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 //        }
 //    };
 
-    private final boolean mIsDiscovering = false;
-    private final boolean mShouldKeepDiscovering = false;
-
-//    private SendingSession mSending;
-
     public ShareBottomSheetFragment() {
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        mWakeLock = new PartialWakeLock(getContext(), TAG);
-//        mAirDropManager = new AirDropManager(getContext(),
-//                WarpShareApplication.from(getContext()).getCertificateManager());
         mAdapter = new PeersAdapter(getContext());
         mConnection.registerOnServiceConnectedListener(service -> {
             mService = (DiscoverService) service;
@@ -146,7 +133,6 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
     @Override
     public void onAttach(@NonNull Context context) {
         super.onAttach(context);
-        mParent = (ShareActivity) context;
     }
 
     @Nullable
@@ -177,7 +163,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
         if(mEntities.isEmpty()) {
             Log.w(TAG, "No file was selected");
             Toast.makeText(getContext(), R.string.toast_no_file, Toast.LENGTH_SHORT).show();
-            mParent.finish();
+            requireActivity().finish();
         } else if(mEntities.size() == 1) {
             binding.shareTitle.setText(String.format(getString(R.string.title_send_file), mEntities.get(0).getFileName()));
         } else {
@@ -187,7 +173,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
         mAdapter.getPeerSelectedLiveData().observe(this, s -> binding.shareAction.setClickable(s != null));
         binding.shareAction.setOnClickListener(new View.OnClickListener() {
             public void sendTo(@NonNull PeerInfo target, @NonNull Entity entity) {
-                org.exthmui.share.misc.Constants.ConnectionType connectionType = org.exthmui.share.misc.Constants.ConnectionType.parseFromCode(target.getConnectionType());
+                Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
                 if (connectionType == null) return;// TODO: handle failure
                 try {
                     Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
@@ -200,7 +186,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
             }
 
             public void sendTo(@NonNull PeerInfo target, @NonNull List<Entity> entities){
-                org.exthmui.share.misc.Constants.ConnectionType connectionType = org.exthmui.share.misc.Constants.ConnectionType.parseFromCode(target.getConnectionType());
+                Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
                 if (connectionType == null) return;// TODO: handle failure
                 try {
                     Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
@@ -214,10 +200,10 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
             @Override
             public void onClick(View v) {
                 if (CLICK_ACTION == ClickAction.CHOOSE_ENTITIES) {//TODO: remove it?
-                    Intent requestIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                    requestIntent.addCategory(Intent.CATEGORY_OPENABLE);
-                    requestIntent.setType("*/*");
-                    requestIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                    Intent requestIntent = new Intent(Intent.ACTION_GET_CONTENT)
+                            .addCategory(Intent.CATEGORY_OPENABLE)
+                            .setType("*/*")
+                            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                     ActivityCompat.startActivityForResult(requireActivity(), Intent.createChooser(requestIntent, "File"), REQUEST_CODE_PICK_FILE, null);
                 } else if (CLICK_ACTION == ClickAction.SEND_ENTITIES) {
                     if (mEntities == null) throw new NoEntityPassedException();
@@ -225,20 +211,24 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                         DiscoverService service = (DiscoverService) s;
                         PeerInfo peer = service.getPeerInfoMap().get(mAdapter.getPeerSelected());
                         if (peer == null) return; // TODO: handle failure
-                        sendTo(peer, mEntities);
+                        if (mEntities.size() == 1) {
+                            sendTo(peer, mEntities.get(0));
+                        } else {
+                            sendTo(peer, mEntities);
+                        }
                     });
                     else {
                         PeerInfo peer = mService.getPeerInfoMap().get(mAdapter.getPeerSelected());
                         if (peer == null) return; // TODO: handle failure
-                        sendTo(peer, mEntities);
+                        if (mEntities.size() == 1) {
+                            sendTo(peer, mEntities.get(0));
+                        } else {
+                            sendTo(peer, mEntities);
+                        }
                     }
                 }
             }
         });
-//        mSendButton.setOnClickListener(v -> sendFile(mPeers.get(mPeerPicked), mEntities));
-//
-//        mDiscoveringView = view.findViewById(R.id.discovering);
-//
     }
 
 //    @Override
@@ -273,173 +263,14 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 //        mBluetoothStateMonitor.unregister(getContext());
 //    }
 //
-//    @Override
-//    public void onDismiss(DialogInterface dialog) {
-//        super.onDismiss(dialog);
-//        if (mSending != null) {
-//            mSending.cancel();
-//            mSending = null;
-//        }
-//        mParent.finish();
-//    }
-//
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-//        switch (requestCode) {
-//            case REQUEST_SETUP:
-//                mIsInSetup = false;
-//                if (resultCode != Activity.RESULT_OK) {
-//                    mParent.finish();
-//                }
-//                break;
-//            default:
-//                super.onActivityResult(requestCode, resultCode, data);
-//        }
-//    }
-//
-//    @Override
-//    public void onPeerFound(Peer peer) {
-//        Log.d(TAG, "Found: " + peer.id + " (" + peer.name + ")");
-//        mPeers.put(peer.id, peer);
-//        mAdapter.notifyDataSetChanged();
-//    }
-//
-//    @Override
-//    public void onPeerDisappeared(Peer peer) {
-//        Log.d(TAG, "Disappeared: " + peer.id + " (" + peer.name + ")");
-//        if (peer.id.equals(mPeerPicked)) {
-//            mPeerPicked = null;
-//        }
-//        mPeers.remove(peer.id);
-//        mAdapter.notifyDataSetChanged();
-//    }
-//
-//    private boolean setupIfNeeded() {
-//        if (mIsInSetup) {
-//            return true;
-//        }
-//
-//        final boolean granted = mParent.checkSelfPermission(WRITE_EXTERNAL_STORAGE) == PERMISSION_GRANTED;
-//        final boolean ready = mAirDropManager.ready() == STATUS_OK;
-//        if (!granted || !ready) {
-//            mIsInSetup = true;
-//            startActivityForResult(new Intent(mParent, SetupActivity.class), REQUEST_SETUP);
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
-//
-//    private void handleItemClick(Peer peer) {
-//        if (mPeerStatus != 0 && mPeerStatus != R.string.status_rejected) {
-//            return;
-//        }
-//        mPeerStatus = 0;
-//        if (peer.id.equals(mPeerPicked)) {
-//            mPeerPicked = null;
-//            mSendButton.setEnabled(false);
-//        } else {
-//            mPeerPicked = peer.id;
-//            mSendButton.setEnabled(true);
-//        }
-//        mAdapter.notifyDataSetChanged();
-//    }
-//
-//    private void handleSendConfirming() {
-//        mPeerStatus = R.string.status_waiting_for_confirm;
-//        mBytesTotal = -1;
-//        mBytesSent = 0;
-//        mAdapter.notifyDataSetChanged();
-//        mSendButton.setEnabled(false);
-//        mDiscoveringView.setVisibility(View.GONE);
-//        mShouldKeepDiscovering = true;
-//        mWakeLock.acquire();
-//    }
-//
-//    private void handleSendRejected() {
-//        mSending = null;
-//        mPeerStatus = R.string.status_rejected;
-//        mAdapter.notifyDataSetChanged();
-//        mSendButton.setEnabled(true);
-//        mDiscoveringView.setVisibility(View.VISIBLE);
-//        mShouldKeepDiscovering = false;
-//        mWakeLock.release();
-//        Toast.makeText(getContext(), R.string.toast_rejected, Toast.LENGTH_SHORT).show();
-//    }
-//
-//    private void handleSending() {
-//        mPeerStatus = R.string.status_sending;
-//        mAdapter.notifyDataSetChanged();
-//    }
-//
-//    private void handleSendSucceed() {
-//        mSending = null;
-//        mShouldKeepDiscovering = false;
-//        mWakeLock.release();
-//        Toast.makeText(getContext(), R.string.toast_completed, Toast.LENGTH_SHORT).show();
-//        mParent.setResult(Activity.RESULT_OK);
-//        dismiss();
-//    }
-//
-//    private void handleSendFailed() {
-//        mSending = null;
-//        mPeerPicked = null;
-//        mPeerStatus = 0;
-//        mAdapter.notifyDataSetChanged();
-//        mSendButton.setEnabled(true);
-//        mDiscoveringView.setVisibility(View.VISIBLE);
-//        mShouldKeepDiscovering = false;
-//        mWakeLock.release();
-//    }
-//
-//    private <P extends Peer> void sendFile(P peer, List<Entity> entities) {
-//        handleSendConfirming();
-//
-//        final SendListener listener = new SendListener() {
-//            @Override
-//            public void onAccepted() {
-//                handleSending();
-//            }
-//
-//            @Override
-//            public void onRejected() {
-//                handleSendRejected();
-//            }
-//
-//            @Override
-//            public void onProgress(long bytesSent, long bytesTotal) {
-//                mBytesSent = bytesSent;
-//                mBytesTotal = bytesTotal;
-//                mAdapter.notifyDataSetChanged();
-//            }
-//
-//            @Override
-//            public void onSent() {
-//                handleSendSucceed();
-//            }
-//
-//            @Override
-//            public void onSendFailed() {
-//                handleSendFailed();
-//            }
-//        };
-//
-//        if (peer instanceof AirDropPeer) {
-//            mSending = mAirDropManager.send((AirDropPeer) peer, entities, listener);
-//        } else if (peer instanceof NearSharePeer) {
-//            mSending = mNearShareManager.send((NearSharePeer) peer, entities, listener);
-//        }
-//    }
-//
-
 
     public void onCancel() {
-        mParent.finish();
+        requireActivity().finish();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mParent.finish();
+        requireActivity().finish();
     }
 }

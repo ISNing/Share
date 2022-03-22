@@ -152,7 +152,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 Log.d(TAG, "User rejected file");
                 ((SettableFuture<Boolean>) isAccepted[0]).set(false);
             });
-            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), fileTransferList.get(0).getPeerName(), fileTransferList.get(0).getFileName(), fileTransferList.get(0).getFileSize());
+            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), fileTransferList.get(0).getPeerName(), fileTransferList.get(0).getFileName(), fileTransferList.get(0).getFileSize(), getId().hashCode());
 
             // Connect to client
             socketToClient = SSLUtils.genMutualSocket(getApplicationContext());
@@ -286,16 +286,20 @@ public class DirectReceivingWorker extends ReceivingWorker {
             socketToClient.close();
             socketToClient = null;
         } catch (SocketTimeoutException e) {
+            Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), e.getMessage());
         } catch (ErrnoException | FileNotFoundException e) {
+            Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), e.getMessage());
         } catch (IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
+            Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
+            Log.e(TAG, e.getMessage());
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
         } finally {

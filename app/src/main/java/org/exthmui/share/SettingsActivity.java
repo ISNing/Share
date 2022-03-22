@@ -165,5 +165,6 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         unbindService(mDiscoverConnection);
+        unbindService(mReceiveConnection);
     }
 }

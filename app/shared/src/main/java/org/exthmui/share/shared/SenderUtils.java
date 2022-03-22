@@ -16,17 +16,39 @@ import java.util.UUID;
 
 public class SenderUtils {
     private static final String SEND_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND";
+    private static final String SEND_SERVICE_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND_SERVICE";
 
     public static void createNotificationChannel(Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            CharSequence name = context.getString(R.string.notification_channel_receive_name);
-            String description = context.getString(R.string.notification_channel_receive_description);
+            CharSequence name = context.getString(R.string.notification_channel_send_name);
+            String description = context.getString(R.string.notification_channel_send_description);
             int importance = NotificationManager.IMPORTANCE_HIGH;
             NotificationChannel channel = new NotificationChannel(SEND_CHANNEL_ID, name, importance);
             channel.setDescription(description);
             NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    public static void createServiceNotificationChannel(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = context.getString(R.string.notification_channel_send_service_name);
+            String description = context.getString(R.string.notification_channel_send_service_description);
+            int importance = NotificationManager.IMPORTANCE_LOW;
+            NotificationChannel channel = new NotificationChannel(SEND_SERVICE_CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            NotificationManager notificationManager = context.getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    public static Notification buildServiceNotification(Context context) {
+        createServiceNotificationChannel(context);
+
+        return new NotificationCompat.Builder(context, SEND_SERVICE_CHANNEL_ID)
+                .setContentTitle(context.getString(R.string.notification_title_send_service))
+                .setSmallIcon(R.drawable.ic_notification_send)
+                .build();
     }
 
     public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, @Nullable String fileName, @Nullable String targetName, boolean indeterminate) {
@@ -40,7 +62,6 @@ public class SenderUtils {
                 .setContentTitle(title)
                 .setContentText(context.getString(Constants.TransmissionStatus.parse(statusCode).getFriendlyStringRes()))
                 .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
-                .setTicker(title)
                 .setSmallIcon(R.drawable.ic_notification_send)
                 .setOngoing(true)
                 .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent)

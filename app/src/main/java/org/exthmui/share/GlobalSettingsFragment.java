@@ -19,6 +19,7 @@ import androidx.preference.PreferenceManager;
 
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
+import org.exthmui.share.services.ReceiveService;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.preferences.ClickableStringPreference;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
@@ -30,8 +31,10 @@ import java.util.Set;
 
 public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     MultiSelectListPreference pluginsEnabledPrefs;
-    ServiceConnection mConnection;
-    DiscoverService mService;
+    ServiceConnection mDiscoverConnection;
+    DiscoverService mDiscoverService;
+    ServiceConnection mReceiveConnection;
+    ReceiveService mReceiveService;
 
     ClickableStringPreference mDestinationDirectoryPrefs;
 
@@ -85,24 +88,43 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             try {
                 SettingsActivity activity = (SettingsActivity) getActivity();
                 if (activity != null) {
-                    mConnection = new ServiceConnection() {
+                    mDiscoverConnection = new ServiceConnection() {
                         @Override
                         public void onServiceConnected(ComponentName name, IBinder service) {
                             ServiceUtils.MyService.MyBinder binder = (ServiceUtils.MyService.MyBinder) service;
-                            mService = (DiscoverService) binder.getService();
-                            for (String code: whatRemoved)
-                                mService.removeDiscoverer(code);
+                            mDiscoverService = (DiscoverService) binder.getService();
+                            for (String code : whatRemoved)
+                                mDiscoverService.removeDiscoverer(code);
                             for (String code : whatAdded)
-                                mService.addDiscoverer(code);
-                            activity.unbindService(mConnection);
+                                mDiscoverService.addDiscoverer(code);
+                            activity.unbindService(mDiscoverConnection);
                         }
 
                         @Override
                         public void onServiceDisconnected(ComponentName name) {
-                            mService = null;
+                            mDiscoverService = null;
                         }
                     };
-                    activity.bindService(new Intent(getContext(), DiscoverService.class), mConnection, BIND_AUTO_CREATE);
+                    activity.bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
+                    mReceiveConnection = new ServiceConnection() {
+                        @Override
+                        public void onServiceConnected(ComponentName name, IBinder service) {
+                            ServiceUtils.MyService.MyBinder binder = (ServiceUtils.MyService.MyBinder) service;
+                            mReceiveService = (ReceiveService) binder.getService();
+                            for (String code : whatRemoved)
+                                mReceiveService.removeReceiver(code);
+                            for (String code : whatAdded)
+                                mReceiveService.addReceiver(code);
+                            activity.unbindService(mReceiveConnection);
+                        }
+
+                        @Override
+                        public void onServiceDisconnected(ComponentName name) {
+                            mReceiveService = null;
+                        }
+                    };
+                    activity.bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
+                    activity.bindService(new Intent(getContext(), ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
                     for (String code : whatRemoved) {
                         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
                         if (type == null) continue;

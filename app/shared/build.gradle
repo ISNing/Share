@@ -24,6 +24,10 @@ android {
         sourceCompatibility rootProject.ext.sourceCompatibility
         targetCompatibility rootProject.ext.targetCompatibility
     }
+
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {

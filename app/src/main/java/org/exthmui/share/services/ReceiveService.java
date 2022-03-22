@@ -1,9 +1,11 @@
 package org.exthmui.share.services;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.service.quicksettings.TileService;
 
 import androidx.annotation.IntRange;
@@ -19,7 +21,6 @@ import org.exthmui.share.shared.BaseEventListenersUtils;
 import org.exthmui.share.shared.ReceiverUtils;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.ShareBroadcastReceiver;
-import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
@@ -33,9 +34,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EventObject;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class ReceiveService extends ServiceUtils.MyService implements org.exthmui.share.shared.services.IReceiveService {
@@ -53,7 +52,6 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     private final Set<Receiver> mReceiverList = new HashSet<>();
     private final Set<BaseEventListener> mReceiverListenerList = new HashSet<>();
-    private final Map<String, PeerInfo> mPeerInfoMap = new HashMap<>();
 
     private final ShareBroadcastReceiver mShareBroadcastReceiver = new ShareBroadcastReceiver();
 
@@ -82,8 +80,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
         mShareBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
             @Override
-            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, String peerName, String fileName, long fileSize) {
-                ReceiverUtils.buildRequestDialog(ReceiveService.this, pluginCode, requestId, peerName, fileName, fileSize);
+            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, String peerName, String fileName, long fileSize, int notificationId) {
+                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, peerName, fileName, fileSize, notificationId);
             }
 
             @Override
@@ -108,7 +106,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
+        startForeground();
+        return START_STICKY;
     }
 
     @Override
@@ -169,7 +168,10 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         });
         listeners.add((OnReceiverStoppedListener) event -> {
             updateTileState();
-            if (isAllReceiversStopped()) notifyListeners(event);
+            if (isAllReceiversStopped()) {
+                notifyListeners(event);
+                stopForeground();
+            }
         });
         registerReceiverListeners(listeners);
     }
@@ -346,8 +348,34 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         if (receiver == null) return Collections.emptySet();
         return receiver.getPermissionNotGranted();
     }
-    
-    private void updateTileState(){
+
+    private void updateTileState() {
         TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoverableTileService.class.getName()));
+    }
+
+
+    public void startForeground() {
+        Notification notification = ReceiverUtils.buildServiceNotification(this);
+        startForeground(this.hashCode(), notification);
+    }
+
+    public void stopForeground() {
+        stopForeground(true);
+    }
+
+    @Override
+    public void onBind(Intent intent, Object ignored) {
+        stopForeground();
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        if (isAnyReceiverStarted()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(new Intent(getApplicationContext(), ReceiveService.class));
+                startForeground();
+            } else startService(new Intent(getApplicationContext(), ReceiveService.class));
+        }
+        return super.onUnbind(intent);
     }
 }

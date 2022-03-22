@@ -22,13 +22,27 @@
     <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for %s(Receive)</string>
     <string name="prefs_summary_global_permissions_not_granted_receive">Touch here to grant for permission for receiving</string>
 
-    <string name="notification_channel_receive_name">Receive Share request</string>
-    <string name="notification_channel_receive_description">Will notify request in this channel</string>
+    <string name="notification_channel_receive_name">Receive</string>
+    <string name="notification_channel_receive_description">Show you receiving requests and progress</string>
+
+    <string name="notification_channel_receive_service_name">Receiving Services</string>
+    <string name="notification_channel_receive_service_description">Receiving related foreground service</string>
+
+    <string name="notification_title_receive_service">Receiver Service running</string>
+
     <string name="notification_action_accept">Accept</string>
     <string name="notification_action_reject">Reject</string>
 
     <string name="notification_title_receive_request">Share Request</string>
-    <string name="notification_content_receive_request" formatted="true">\"%s\" want\'s to share \"%s\" with you\rSize: %s</string>
+    <string name="notification_content_receive_request" formatted="true">\"%s\" want\'s to share \"%s\" with you\nSize: %s</string>
+
+    <string name="notification_channel_send_name">Send</string>
+    <string name="notification_channel_send_description">Show you sending progress</string>
+
+    <string name="notification_channel_send_service_name">Sending Services</string>
+    <string name="notification_channel_send_service_description">Sending related foreground service</string>
+
+    <string name="notification_title_send_service">Discover/Sender Service running</string>
 
     <string name="notification_title_sending" formatted="true">Sending file \"%s\" to %s</string>
     <string name="notification_title_sending_two" formatted="true">Sending \"%s\", \"%s\" to %s</string>
@@ -41,6 +55,8 @@
     <string name="dialog_action_reject">Reject</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
     <string name="notification_title_receive_receiving" formatted="true">Receiving file \"%s\" from %s</string>
+    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"%s\", \"%s\" to %s</string>
+    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"%s\", \"%s\" and %d more files to %s</string>
     <string name="notification_placeholder_unknown">Unknown</string>
 
     <!-- Transmission Status Friendly -->

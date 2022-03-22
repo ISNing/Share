@@ -1,9 +1,11 @@
 package org.exthmui.share.services;
 
 import android.app.Activity;
+import android.app.Notification;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.service.quicksettings.TileService;
 
 import androidx.annotation.IntRange;
@@ -15,6 +17,7 @@ import org.exthmui.share.BuildConfig;
 import org.exthmui.share.R;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.shared.BaseEventListenersUtils;
+import org.exthmui.share.shared.SenderUtils;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.PeerInfo;
@@ -81,7 +84,8 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
+        startForeground();
+        return START_STICKY;
     }
 
     @Override
@@ -138,7 +142,10 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         });
         listeners.add((OnDiscovererStoppedListener) event -> {
             updateTileState();
-            if (isAllDiscoverersStopped()) notifyListeners(event);
+            if (isAllDiscoverersStopped()) {
+                notifyListeners(event);
+                stopForeground();
+            }
         });
         listeners.add((OnPeerAddedListener) event -> mPeerInfoMap.put(event.getPeer().getId(), event.getPeer()));
         listeners.add((OnPeerUpdatedListener) event -> mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer()));
@@ -207,7 +214,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         discoverer.startDiscover();
-        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
+        updateTileState();
     }
 
     @Override
@@ -215,7 +222,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         discoverer.stopDiscover();
-        TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
+        updateTileState();
     }
 
     @Override
@@ -329,5 +336,31 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     private void updateTileState() {
         TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
+    }
+
+    public void startForeground() {
+        Notification notification = SenderUtils.buildServiceNotification(this);
+
+        startForeground(this.hashCode(), notification);
+    }
+
+    public void stopForeground() {
+        stopForeground(true);
+    }
+
+    @Override
+    public void onBind(Intent intent, Object ignored) {
+        stopForeground();
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        if (isAnyDiscovererStarted()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(new Intent(getApplicationContext(), DiscoverService.class));
+                startForeground();
+            } else startService(new Intent(getApplicationContext(), DiscoverService.class));
+        }
+        return super.onUnbind(intent);
     }
 }

@@ -1,14 +1,19 @@
 package org.exthmui.share.shared.base;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+import androidx.work.impl.utils.futures.SettableFuture;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.ReceiverUtils;
@@ -37,13 +42,17 @@ public abstract class ReceivingWorker extends Worker {
     protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String senderName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileName, senderName, indeterminate));
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileName, senderName, indeterminate);
+        notificationManager.notify((Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), notification);
     }
 
     protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String senderName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), bytesReceived, totalBytesToSend, fileNames, senderName, indeterminate));
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileNames, senderName, indeterminate);
+        notificationManager.notify((Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), notification);
     }
 
     protected Result genFailureResult(int errCode, String message) {
@@ -97,14 +106,23 @@ public abstract class ReceivingWorker extends Worker {
     public abstract Result doWork();
 
     @NonNull
-    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String targetName, boolean indeterminate) {
-        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileName, targetName, indeterminate);
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @Nullable String fileName, @Nullable String senderName, boolean indeterminate) {
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileName, senderName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
     }
 
     @NonNull
-    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String targetName, boolean indeterminate) {
-        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileNames, targetName, indeterminate);
+    protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String senderName, boolean indeterminate) {
+        Notification notification = ReceiverUtils.buildReceivingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesReceived, fileNames, senderName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
+    }
+
+    @SuppressLint("RestrictedApi")
+    @NonNull
+    @Override
+    public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+        SettableFuture<ForegroundInfo> foregroundInfoListenableFuture = SettableFuture.create();
+        foregroundInfoListenableFuture.set(createForegroundInfo(Constants.TransmissionStatus.UNKNOWN.getNumVal(), (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), 0, 0, (String) null, null, false));
+        return foregroundInfoListenableFuture;
     }
 }

@@ -59,7 +59,7 @@ public class DirectUtils {
         int defaultSize = context.getResources().getInteger(R.integer.prefs_default_wifidirect_buffer_size);
         int bufferSize = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_buffer_size), defaultSize);
         if (bufferSize <= 0) {
-            Log.d(TAG, "Got a illegal port returning default size");
+            Log.d(TAG, "Got a illegal buffer size, returning default size");
             return defaultSize;
         }
         return bufferSize;

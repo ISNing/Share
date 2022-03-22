@@ -38,6 +38,7 @@ import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
+import org.exthmui.share.shared.base.events.PeerRemovedEvent;
 import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
@@ -201,8 +202,8 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         weakRemoteSystemWatcher.get().remoteSystemAdded().subscribe((remoteSystemWatcher, args) -> {
             final RemoteSystem remoteSystem = args.getRemoteSystem();
             NearSharePeer peer = new NearSharePeer(remoteSystem);
-            notifyListeners(new PeerAddedEvent(this, peer));
             mPeers.put(peer.getId(), peer);
+            notifyListeners(new PeerAddedEvent(this, peer));
             Log.d(TAG, String.format("Peer added: %s", peer.getDisplayName()));
         });
         weakRemoteSystemWatcher.get().remoteSystemUpdated().subscribe((remoteSystemWatcher, args) -> {
@@ -216,6 +217,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         weakRemoteSystemWatcher.get().remoteSystemRemoved().subscribe((remoteSystemWatcher, args) -> {
             final RemoteSystem remoteSystemParam = args.getRemoteSystem();
             NearSharePeer peer = new NearSharePeer(remoteSystemParam);
+            notifyListeners(new PeerRemovedEvent(this, mPeers.get(peer.getId())));
             mPeers.remove(peer.getId());
             Log.d(TAG, String.format("Peer removed: %s", peer.getDisplayName()));
         });

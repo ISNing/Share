@@ -19,9 +19,9 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.lifecycle.ProcessLifecycleOwner;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -71,7 +71,6 @@ public class DirectReceiver implements Receiver {
     private final Map<String, PeerInfo> mPeers = new HashMap<>();
     private boolean mReceiverStarted;
     private boolean mInitialized;
-    private boolean mStartNotified;
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
@@ -144,15 +143,11 @@ public class DirectReceiver implements Receiver {
         mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
         mChannel = mWifiP2pManager.initialize(mContext, Looper.getMainLooper(), () -> {
         });
-        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observe(ProcessLifecycleOwner.get(), workInfo -> {
+        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observeForever(workInfo -> {
             boolean isRunning = false;
             for (WorkInfo info : workInfo) {
                 if (!info.getState().isFinished()) {
                     isRunning = true;
-                    if (!mStartNotified) {
-                        notifyListeners(new ReceiverStartedEvent(this));
-                        mStartNotified = true;
-                    }
                     break;
                 }
             }
@@ -178,7 +173,6 @@ public class DirectReceiver implements Receiver {
             // register BroadcastReceiver
             mContext.registerReceiver(mBroadcastReceiver, DirectBroadcastReceiver.getIntentFilter());
             mReceiverStarted = true;
-            mStartNotified = false;
 
             startWork();
 
@@ -202,11 +196,13 @@ public class DirectReceiver implements Receiver {
             mWifiP2pManager.addLocalService(mChannel, mServiceInfo, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onSuccess() {
+                    notifyListeners(new ReceiverStartedEvent(this));
                     Log.d(TAG, "LocalService successfully added");
                 }
 
                 @Override
                 public void onFailure(int arg0) {
+                    stopReceive();
                     Log.e(TAG, String.format("LocalService add failed: %d", arg0));
                 }
             });
@@ -220,7 +216,7 @@ public class DirectReceiver implements Receiver {
 
     private void startWork() {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
-//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) TODO: Check it
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.KEEP, work);
     }

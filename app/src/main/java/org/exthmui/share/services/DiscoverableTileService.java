@@ -32,7 +32,6 @@ public class DiscoverableTileService extends TileService {
     @Override
     public void onCreate() {
         super.onCreate();
-        this.bindService(new Intent(getApplicationContext(), ReceiveService.class), mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -43,9 +42,11 @@ public class DiscoverableTileService extends TileService {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        if (mService != null)
+        if (mService != null) {
             mService.unregisterReceiverListeners(mListenersReceiveService);
-        unbindService(mConnection);
+            unbindService(mConnection);
+            mService = null;
+        }
     }
 
     @Override
@@ -56,7 +57,18 @@ public class DiscoverableTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
+        bindService(new Intent(getApplicationContext(), ReceiveService.class), mConnection, BIND_AUTO_CREATE);
         refreshState();
+    }
+
+    @Override
+    public void onStopListening() {
+        super.onStopListening();
+        if (mService != null) {
+            mService.unregisterReceiverListeners(mListenersReceiveService);
+            unbindService(mConnection);
+            mService = null;
+        }
     }
 
     @Override
@@ -70,11 +82,13 @@ public class DiscoverableTileService extends TileService {
                         @Override
                         public void onServiceConnected() {
                             mService.stopReceivers();
+                            mService.stopForeground();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
                     });
                 } else {
                     mService.stopReceivers();
+                    mService.stopForeground();
                 }
                 break;
             case Tile.STATE_INACTIVE:

@@ -36,7 +36,7 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
     private boolean isOverlap;
     private final RectF rect = new RectF();
     @ColorInt
-    private int badgeColor = 0xFFD3321B; //默认的小红点颜色
+    private int badgeColor = 0xFFD3321B;
     private int textColor = 0xFFFFFFff;
     private float textSize;
     private int w;
@@ -363,7 +363,6 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        //这里不用解释了 很简单 就是画一个圆形和文字
         rect.left = 0;
         rect.top = 0;
         rect.right = getWidth();

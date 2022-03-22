@@ -29,7 +29,11 @@ public class ServiceUtils {
 
         @Override
         public IBinder onBind(Intent intent) {
+            onBind(intent, null);
             return mBinder;
+        }
+
+        public void onBind(Intent intent, Object ignored) {
         }
     }
 

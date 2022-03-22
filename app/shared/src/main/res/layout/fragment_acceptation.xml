@@ -2,11 +2,12 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    style="@style/Theme.Material3.DayNight.BottomSheetDialog"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/dialog_request_title"
+        android:id="@+id/fragment_acceptation_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="@string/dialog_title_accept_or_reject_request"
@@ -14,27 +15,30 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
-        android:id="@+id/dialog_request_size"
+        android:id="@+id/fragment_acceptation_size"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         tools:text="@string/dialog_accept_or_reject_request_size"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/dialog_request_title" />
+        app:layout_constraintTop_toBottomOf="@id/fragment_acceptation_title" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/dialog_request_accept_button"
+    <Button
+        android:id="@+id/fragment_acceptation_accept_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="@string/dialog_action_accept"
+        style="@style/Theme.MaterialComponents.DayNight"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/dialog_request_size" />
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/dialog_request_reject_button"
+        app:layout_constraintTop_toBottomOf="@id/fragment_acceptation_size" />
+
+    <Button
+        android:id="@+id/fragment_acceptation_reject_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="@string/dialog_action_reject"
-        app:layout_constraintEnd_toStartOf="@id/dialog_request_accept_button"
-        app:layout_constraintTop_toBottomOf="@id/dialog_request_size" />
+        style="@style/Theme.MaterialComponents.DayNight"
+        app:layout_constraintEnd_toStartOf="@id/fragment_acceptation_accept_button"
+        app:layout_constraintTop_toBottomOf="@id/fragment_acceptation_size" />
 </androidx.constraintlayout.widget.ConstraintLayout>

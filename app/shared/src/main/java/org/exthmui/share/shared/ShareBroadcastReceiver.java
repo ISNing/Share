@@ -1,11 +1,14 @@
 package org.exthmui.share.shared;
 
+import static androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID;
+
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationManagerCompat;
 
 import org.exthmui.share.shared.base.listeners.OnReceiveShareBroadcastActionListener;
 
@@ -37,6 +40,7 @@ public class ShareBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         if (mOnReceiveShareBroadcastActionListener == null) return;
+        int notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1);
         String pluginCode = intent.getStringExtra(EXTRA_PLUGIN_CODE);
         String requestId = intent.getStringExtra(EXTRA_REQUEST_ID);
         switch (intent.getAction()) {
@@ -44,12 +48,18 @@ public class ShareBroadcastReceiver extends BroadcastReceiver {
                 String peerName = intent.getStringExtra(EXTRA_PEER_NAME);
                 String fileName = intent.getStringExtra(EXTRA_FILE_NAME);
                 long fileSize = intent.getLongExtra(EXTRA_FILE_SIZE, -1);
-                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, peerName, fileName, fileSize);
+                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, peerName, fileName, fileSize, notificationId);
                 break;
             case ACTION_ACCEPT:
+                if (notificationId != -1) {
+                    NotificationManagerCompat.from(context).cancel(notificationId);
+                }
                 mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptShare(pluginCode, requestId);
                 break;
             case ACTION_REJECT:
+                if (notificationId != -1) {
+                    NotificationManagerCompat.from(context).cancel(notificationId);
+                }
                 mOnReceiveShareBroadcastActionListener.onReceiveActionRejectShare(pluginCode, requestId);
                 break;
         }
