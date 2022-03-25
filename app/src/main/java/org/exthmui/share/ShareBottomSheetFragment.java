@@ -5,24 +5,21 @@ import static org.exthmui.share.PeersAdapter.REQUEST_CODE_PICK_FILE;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.app.ActivityCompat;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
-import org.exthmui.share.databinding.FragmentShareBinding;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.ServiceUtils;
@@ -31,9 +28,12 @@ import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.exceptions.NoEntityPassedException;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.ui.PeerChooserView;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -58,14 +58,17 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 
     private ClickAction CLICK_ACTION;
 
-    ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
-    @Nullable DiscoverService mService;
+    private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
+    private @Nullable DiscoverService mService;
 
-    FragmentShareBinding binding;
+    private final Set<BaseEventListener> mServiceListeners = new HashSet<>();
+    
+    private PeerChooserView mPeerChooser;
+    private Button mCancelButton;
+    private TextView mTitle;
+    private Button mActionButton;
 
     private List<Entity> mEntities = new ArrayList<>();
-
-    private PeersAdapter mAdapter;
 
 //    private final WifiStateMonitor mWifiStateMonitor = new WifiStateMonitor() {
 //        @Override
@@ -87,91 +90,83 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new PeersAdapter(getContext());
+
         mConnection.registerOnServiceConnectedListener(service -> {
             mService = (DiscoverService) service;
-            Map<String, PeerInfo> peers = mService.getPeerInfoMap();
-            mAdapter.setData(peers);
-            if (!peers.isEmpty()) {
-                ConstraintLayout placeholderContainer = binding.scanningPlaceholder.scanningPlaceholderContainer;
-                if (placeholderContainer.getVisibility() == View.VISIBLE)
-                    placeholderContainer.setVisibility(View.GONE);
-                if (binding.sharePeers.getVisibility() == View.GONE)
-                    binding.sharePeers.setVisibility(View.VISIBLE);
-            }
-            Set<BaseEventListener> listeners = new HashSet<>();
-            listeners.add((OnPeerAddedListener) event -> {
-                mAdapter.addPeer(event.getPeer());
-                ConstraintLayout placeholderContainer = binding.scanningPlaceholder.scanningPlaceholderContainer;
-                if (placeholderContainer.getVisibility() == View.VISIBLE)
-                    placeholderContainer.setVisibility(View.GONE);
-                if (binding.sharePeers.getVisibility() == View.GONE)
-                    binding.sharePeers.setVisibility(View.VISIBLE);
+            if (mService.isAnyDiscovererStarted()) {
+                Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+                mPeerChooser.setData(peers);
+            } else if (!mService.isDiscoverersAvailable())
+                mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
+            else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
+
+            mServiceListeners.add((OnDiscovererStartedListener) event -> {
+                mPeerChooser.discoverStarted();
             });
-            listeners.add((OnPeerUpdatedListener) event -> mAdapter.updatePeer(event.getPeer()));
-            listeners.add((OnPeerRemovedListener) event -> {
-                mAdapter.removePeer(event.getPeer());
-                if (peers.isEmpty()) {
-                    ConstraintLayout placeholderContainer = binding.scanningPlaceholder.scanningPlaceholderContainer;
-                    if (placeholderContainer.getVisibility() == View.GONE)
-                        placeholderContainer.setVisibility(View.VISIBLE);
-                    if (binding.sharePeers.getVisibility() == View.VISIBLE)
-                        binding.sharePeers.setVisibility(View.GONE);
-                }
+            mServiceListeners.add((OnDiscovererStoppedListener) event -> {
+                if (!mService.isDiscoverersAvailable())
+                    mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
+                else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
             });
-            mService.registerDiscoverersListeners(listeners);
+            mServiceListeners.add((OnPeerAddedListener) event -> {
+                mPeerChooser.addPeer(event.getPeer());
+            });
+            mServiceListeners.add((OnPeerUpdatedListener) event -> {
+                mPeerChooser.updatePeer(event.getPeer());
+            });
+            mServiceListeners.add((OnPeerRemovedListener) event -> {
+                mPeerChooser.removePeer(event.getPeer());
+            });
+            for (BaseEventListener listener: mServiceListeners)
+                mService.registerListener(listener);
+
+            mPeerChooser.setEnableButtonOnClickListener(var1 -> mService.startDiscoverers());
         });
+        mConnection.registerOnServiceDisconnectedListener(name -> mService = null);
         requireContext().bindService(new Intent(requireContext(), DiscoverService.class), mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        if (mService != null) {
+            for (BaseEventListener listener: mServiceListeners)
+                mService.unregisterListener(listener);
+            mService.beforeUnbind();
+        }
         requireContext().unbindService(mConnection);
-    }
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
     }
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding = FragmentShareBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        return inflater.inflate(R.layout.fragment_share, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        final RecyclerView peersView = view.findViewById(R.id.share_peers);
-        peersView.setLayoutManager(new LinearLayoutManager(getContext(), RecyclerView.HORIZONTAL, false));
-        peersView.setAdapter(mAdapter);
-        binding.shareCancel.setOnClickListener(v -> onCancel());
-        binding.scanningPlaceholder.waveView.setWaveColor(Color.parseColor("#DB4437"));
-        binding.scanningPlaceholder.waveView.startWave();
+        mPeerChooser = view.findViewById(R.id.fragment_share_peer_chooser);
+        mTitle = view.findViewById(R.id.fragment_share_title);
+        mCancelButton = view.findViewById(R.id.fragment_share_cancel_button);
+        mActionButton = view.findViewById(R.id.fragment_share_action_button);
 
-        LinearLayoutManager layoutManager = new LinearLayoutManager(requireContext());
-        layoutManager.setOrientation(RecyclerView.HORIZONTAL);
-        mAdapter.setEntities(mEntities);
-        binding.sharePeers.setLayoutManager(layoutManager);
-        binding.sharePeers.setAdapter(mAdapter);
+        mCancelButton.setOnClickListener(v -> onCancel());
 
         if(mEntities.isEmpty()) {
             Log.w(TAG, "No file was selected");
             Toast.makeText(getContext(), R.string.toast_no_file, Toast.LENGTH_SHORT).show();
             requireActivity().finish();
         } else if(mEntities.size() == 1) {
-            binding.shareTitle.setText(String.format(getString(R.string.title_send_file), mEntities.get(0).getFileName()));
+            mTitle.setText(getString(R.string.title_send_file, mEntities.get(0).getFileName()));
         } else {
-            binding.shareTitle.setText(String.format(getString(R.string.title_send_files), mEntities.get(0).getFileName(), mEntities.size() - 1));
+            mTitle.setText(getString(R.string.title_send_files, mEntities.get(0).getFileName(), mEntities.size() - 1));
         }
 
-        mAdapter.getPeerSelectedLiveData().observe(this, s -> binding.shareAction.setClickable(s != null));
-        binding.shareAction.setOnClickListener(new View.OnClickListener() {
+        mPeerChooser.getPeerSelectedLiveData().observe(this, s -> mActionButton.setClickable(s != null));
+        mActionButton.setOnClickListener(new View.OnClickListener() {
             public void sendTo(@NonNull PeerInfo target, @NonNull Entity entity) {
                 Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
                 if (connectionType == null) return;// TODO: handle failure
@@ -209,7 +204,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                     if (mEntities == null) throw new NoEntityPassedException();
                     if (mService == null) mConnection.registerOnServiceConnectedListener(s -> {
                         DiscoverService service = (DiscoverService) s;
-                        PeerInfo peer = service.getPeerInfoMap().get(mAdapter.getPeerSelected());
+                        PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                         if (peer == null) return; // TODO: handle failure
                         if (mEntities.size() == 1) {
                             sendTo(peer, mEntities.get(0));
@@ -218,7 +213,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                         }
                     });
                     else {
-                        PeerInfo peer = mService.getPeerInfoMap().get(mAdapter.getPeerSelected());
+                        PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                         if (peer == null) return; // TODO: handle failure
                         if (mEntities.size() == 1) {
                             sendTo(peer, mEntities.get(0));

@@ -6,55 +6,36 @@
     android:layout_height="match_parent">
 
     <TextView
-        android:id="@+id/share_title"
-        android:layout_width="wrap_content"
+        android:id="@+id/fragment_share_title"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        tools:text="@string/title_send_file"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="@string/title_send_file" />
 
-    <FrameLayout
-        android:id="@+id/share_container"
+    <org.exthmui.share.ui.PeerChooserView
+        android:id="@+id/fragment_share_peer_chooser"
         android:layout_width="match_parent"
         android:layout_height="150dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/share_title">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/share_peers"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:paddingHorizontal="8dp"
-            android:visibility="gone"
-            tools:itemCount="1"
-            tools:listitem="@layout/item_peer"
-            tools:visibility="visible" />
-
-        <include
-            android:id="@+id/scanning_placeholder"
-            layout="@layout/scanning_placeholder"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="visible"
-            tools:visibility="gone" />
-    </FrameLayout>
+        app:layout_constraintTop_toBottomOf="@+id/fragment_share_title"/>
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/share_action"
+        android:id="@+id/fragment_share_action_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="Send"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/share_container" />
+        app:layout_constraintTop_toBottomOf="@id/fragment_share_peer_chooser" />
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/share_cancel"
+        android:id="@+id/fragment_share_cancel_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
         android:text="Cancel"
-        app:layout_constraintEnd_toStartOf="@id/share_action"
-        app:layout_constraintTop_toBottomOf="@id/share_container" />
+        app:layout_constraintEnd_toStartOf="@id/fragment_share_action_button"
+        app:layout_constraintTop_toBottomOf="@id/fragment_share_peer_chooser" />
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,14 +1,19 @@
 package org.exthmui.share.shared.base;
 
+import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+import androidx.work.impl.utils.futures.SettableFuture;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.SenderUtils;
@@ -27,13 +32,30 @@ public abstract class SendingWorker extends Worker {
     protected void updateProgress(int statusCode, long totalBytesToSend, long bytesSent, @Nullable String fileName, @Nullable String targetName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesSent));
         boolean indeterminate = bytesSent == 0;
-        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), bytesSent, totalBytesToSend, fileName, targetName, indeterminate));
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+        Notification notification = SenderUtils.buildSendingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesSent, fileName, targetName, indeterminate);
+        notificationManager.notify((Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), notification);
     }
 
     protected void updateProgress(int statusCode, long totalBytesToSend, long bytesSent, @NonNull String[] fileNames, @Nullable String targetName) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesSent));
         boolean indeterminate = bytesSent == 0;
-        setForegroundAsync(createForegroundInfo(statusCode, (Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), bytesSent, totalBytesToSend, fileNames, targetName, indeterminate));
+        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+        Notification notification = SenderUtils.buildSendingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesSent, fileNames, targetName, indeterminate);
+        notificationManager.notify((Constants.NOTIFICATION_ID_PREFIX_SEND + getId()).hashCode(), notification);
+    }
+
+
+    protected Result genRejectedResult() {
+        return genFailureResult(Constants.TransmissionStatus.REJECTED.getNumVal(), "Remote system rejected receiving file");
+    }
+
+    protected Result genSenderCancelledResult() {
+        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+    }
+
+    protected Result genReceiverCancelledResult() {
+        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
     }
 
     protected Result genFailureResult(int errCode, String message) {
@@ -101,5 +123,14 @@ public abstract class SendingWorker extends Worker {
     protected ForegroundInfo createForegroundInfo(int statusCode, int notificationId, long totalBytesToSend, long bytesSent, @NonNull String[] fileNames, @Nullable String targetName, boolean indeterminate) {
         Notification notification = SenderUtils.buildSendingNotification(getApplicationContext(), statusCode, getId(), totalBytesToSend, bytesSent, fileNames, targetName, indeterminate);
         return new ForegroundInfo(notificationId, notification);
+    }
+
+    @SuppressLint("RestrictedApi")
+    @NonNull
+    @Override
+    public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+        SettableFuture<ForegroundInfo> foregroundInfoListenableFuture = SettableFuture.create();
+        foregroundInfoListenableFuture.set(createForegroundInfo(Constants.TransmissionStatus.UNKNOWN.getNumVal(), (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), 0, 0, (String) null, null, false));
+        return foregroundInfoListenableFuture;
     }
 }

@@ -1,5 +1,7 @@
 package org.exthmui.share.wifidirect;
 
+import static org.exthmui.share.wifidirect.Constants.LOCAL_SERVICE_INSTANCE_NAME;
+import static org.exthmui.share.wifidirect.Constants.LOCAL_SERVICE_SERVICE_TYPE;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_DISPLAY_NAME;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_PEER_ID;
@@ -14,6 +16,8 @@ import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
+import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.net.wifi.p2p.nsd.WifiP2pServiceRequest;
 import android.os.Looper;
 import android.util.Log;
 
@@ -21,6 +25,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,23 +35,27 @@ import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
+import org.exthmui.share.shared.base.events.DiscovererErrorOccurredEvent;
 import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
 import org.exthmui.share.shared.base.events.PeerRemovedEvent;
 import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.base.listeners.OnSenderErrorOccurredListener;
 
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -63,7 +72,9 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                     OnDiscovererStoppedListener.class,
                     OnPeerAddedListener.class,
                     OnPeerUpdatedListener.class,
-                    OnPeerRemovedListener.class
+                    OnPeerRemovedListener.class,
+                    OnDiscovererErrorOccurredListener.class,
+                    OnSenderErrorOccurredListener.class
             };
     private static DirectManager instance;
 
@@ -77,6 +88,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
     private DirectBroadcastReceiver mBroadcastReceiver;
+    private final WifiP2pDnsSdServiceRequest mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance(LOCAL_SERVICE_INSTANCE_NAME, LOCAL_SERVICE_SERVICE_TYPE);
 
     private DirectManager(Context context) {
         this.mContext = context.getApplicationContext();
@@ -113,7 +125,11 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     @Override
     public Set<String> getPermissionsRequired() {
         Set<String> permissions = new HashSet<>();
+        permissions.add(Manifest.permission.ACCESS_WIFI_STATE);
+        permissions.add(Manifest.permission.CHANGE_WIFI_STATE);
+        permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        permissions.add(Manifest.permission.INTERNET);
         return permissions;
     }
 
@@ -126,7 +142,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     public UUID send(DirectPeer peer, Entity entity) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectSendingWorker.class)
                 .setInputData(genSendingInputData(peer, entity))
-//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)// FIXME: 3/20/22
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
@@ -136,7 +152,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     public UUID send(DirectPeer peer, List<Entity> entities) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectMultiSendingWorker.class)
                 .setInputData(genSendingInputData(peer, (Entity[]) entities.toArray()))
-//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)// FIXME: 3/20/22
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
@@ -288,6 +304,23 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
             mWifiP2pManager.setDnsSdResponseListeners(mChannel, servListener, txtListener);
 
+            mWifiP2pManager.addServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    mDiscovererStarted = true;
+                    notifyListeners(new DiscovererStartedEvent(this));
+                }
+
+                @Override
+                public void onFailure(int reasonCode) {
+                    String message = String.format(Locale.ENGLISH, "Service request adding failed: %d", reasonCode);
+                    String messageLocalized = mContext.getString(R.string.error_wifidirect_service_request_add_failed, reasonCode);
+                    notifyListeners(new DiscovererErrorOccurredEvent(DirectManager.this, message, messageLocalized));
+                    Log.e(TAG, message);
+                    stopDiscover();
+                }
+            });
+
             mWifiP2pManager.discoverServices(mChannel, new WifiP2pManager.ActionListener() {
                 @Override
                 public void onSuccess() {
@@ -297,6 +330,10 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
                 @Override
                 public void onFailure(int reasonCode) {
+                    String message = String.format(Locale.ENGLISH, "Service discovering start failed: %d", reasonCode);
+                    String messageLocalized = mContext.getString(R.string.error_wifidirect_service_discovering_start_failed, reasonCode);
+                    notifyListeners(new DiscovererErrorOccurredEvent(DirectManager.this, message, messageLocalized));
+                    Log.e(TAG, message);
                     stopDiscover();
                 }
             });
@@ -309,6 +346,23 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     @Override
     public void stopDiscover() {
         mContext.unregisterReceiver(mBroadcastReceiver);
+
+        mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
+            @Override
+            public void onSuccess() {
+                mDiscovererStarted = false;
+                notifyListeners(new DiscovererStoppedEvent(this));
+            }
+
+            @Override
+            public void onFailure(int reasonCode) {
+                String message = String.format(Locale.ENGLISH, "Service request remove failed: %d", reasonCode);
+                String messageLocalized = mContext.getString(R.string.error_wifidirect_service_request_remove_failed, reasonCode);
+                notifyListeners(new DiscovererErrorOccurredEvent(DirectManager.this, message, messageLocalized));
+                Log.e(TAG, message);
+            }
+        });
+
         mWifiP2pManager.stopPeerDiscovery(mChannel, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {
@@ -317,7 +371,11 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
             }
 
             @Override
-            public void onFailure(int i) {
+            public void onFailure(int reasonCode) {
+                String message = String.format(Locale.ENGLISH, "Service discovering stop failed: %d", reasonCode);
+                String messageLocalized = mContext.getString(R.string.error_wifidirect_service_discovering_stop_failed, reasonCode);
+                notifyListeners(new DiscovererErrorOccurredEvent(DirectManager.this, message, messageLocalized));
+                Log.e(TAG, message);
             }
         });
     }

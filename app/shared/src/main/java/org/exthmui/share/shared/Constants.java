@@ -22,6 +22,10 @@ public class Constants {
 
     public static final int COMPRESS_QUALITY=40;
 
+    public static final String NOTIFICATION_PROGRESS_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.PROGRESSES";
+    public static final String NOTIFICATION_SERVICE_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.SERVICES";
+    public static final String NOTIFICATION_REQUEST_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.PROGRESSES";
+
     public enum FileTypes{
         UNKNOWN(-1),APK(0), AUDIO(1), CERTIFICATE(2),
         CODE(3), COMPRESSED(4),CONTACT(5), EVENTS(6),

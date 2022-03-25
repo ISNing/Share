@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.StackTraceUtils;
+import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
@@ -273,7 +274,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 FileTransfer fileTransfer = new FileTransfer();
                 fileTransfer.setFileName(entities[i].getFileName());
                 fileTransfer.setFileSize(entities[i].getFileSize());
-                fileTransfer.setPeerName(/* TODO:getSelfName */"ISNing's Phone");
+                fileTransfer.setPeerName(Utils.getSelfName(getApplicationContext()));
+                fileTransfer.setPeerId(Utils.getSelfId(getApplicationContext()));
                 fileTransfer.setMd5(fileTransfer.getMd5());
                 fileTransfer.setClientPort(clientPort);
                 fileTransfers[i] = fileTransfer;
@@ -357,14 +359,14 @@ public class DirectMultiSendingWorker extends SendingWorker {
             updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User rejected receiving file");
-                return genFailureResult(Constants.TransmissionStatus.REJECTED.getNumVal(), "Remote system rejected receiving file");
+                return genRejectedResult();
             }
             Log.d(TAG, "User accepted receiving file");
 
             // Check if remote cancelled
             if (canceledByReceiver[0].isDone()) {
                 Log.d(TAG, "Remote cancelled receiving file");
-                return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                return genReceiverCancelledResult();
             }
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
@@ -375,7 +377,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
                 dataOutputStream = null;
-                return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                return genSenderCancelledResult();
             }
 
             for (Entity entity : entities) {
@@ -392,10 +394,10 @@ public class DirectMultiSendingWorker extends SendingWorker {
 
                     // Check if remote cancelled
                     if (canceledByReceiver[0].isDone())
-                        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                        return genReceiverCancelledResult();
                     // Check if user cancelled
                     if (getForegroundInfoAsync().isCancelled())
-                        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                        return genSenderCancelledResult();
                 }
                 inputStream.close();
                 inputStream = null;

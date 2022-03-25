@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
@@ -24,8 +26,10 @@ import org.exthmui.share.shared.ShareBroadcastReceiver;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.base.events.ReceiverStoppedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveShareBroadcastActionListener;
+import org.exthmui.share.shared.base.listeners.OnReceiverErrorOccurredListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStoppedListener;
 
@@ -50,12 +54,17 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 
+    @IntRange(from = 0)
+    private int mBindNumber = 0;
+
     private final Set<Receiver> mReceiverList = new HashSet<>();
+    private final Set<BaseEventListener> mInternalListenerList = new HashSet<>();
     private final Set<BaseEventListener> mReceiverListenerList = new HashSet<>();
 
     private final ShareBroadcastReceiver mShareBroadcastReceiver = new ShareBroadcastReceiver();
 
     public ReceiveService() {
+        initializeInternalListeners();
     }
 
     public static ReceiveService getInstance() {
@@ -116,7 +125,30 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         mShareBroadcastReceiver.setListener(null);
         unregisterReceiver(mShareBroadcastReceiver);
         unregisterReceiverListeners(mReceiverListenerList);
+        Log.d(TAG, "Service going down(onDestroy), stopping receivers");
         stopReceivers();
+    }
+
+    private void initializeInternalListeners() {
+        mInternalListenerList.add((OnReceiverStartedListener) event -> {
+            updateTileState();
+            notifyListeners(event);
+        });
+        mInternalListenerList.add((OnReceiverStoppedListener) event -> {
+            updateTileState();
+            if (isAllReceiversStopped()) {
+                notifyListeners(new ReceiverStoppedEvent(ReceiveService.this));
+                stopForeground();
+            }
+        });
+        mInternalListenerList.add((OnReceiverErrorOccurredListener) event -> {
+            int duration = Toast.LENGTH_LONG;
+
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    getString(R.string.toast_receive_error_occurred_with_message,
+                            event.getMessageLocalized()), duration);
+            toast.show();
+        });
     }
 
     @Override
@@ -160,20 +192,17 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
+    public void registerInternalListeners(Receiver receiver) {
+        for (BaseEventListener listener: mInternalListenerList) {
+            receiver.registerListener(listener);
+        }
+    }
+
+    @Override
     public void registerInternalListeners() {
-        Set<BaseEventListener> listeners = new HashSet<>();
-        listeners.add((OnReceiverStartedListener) event -> {
-            updateTileState();
-            notifyListeners(event);
-        });
-        listeners.add((OnReceiverStoppedListener) event -> {
-            updateTileState();
-            if (isAllReceiversStopped()) {
-                notifyListeners(event);
-                stopForeground();
-            }
-        });
-        registerReceiverListeners(listeners);
+        for (Receiver receiver: mReceiverList) {
+            registerInternalListeners(receiver);
+        }
     }
 
     @Override
@@ -184,6 +213,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
             Method method = type.getReceiverClass().getDeclaredMethod("getInstance", Context.class);
             Receiver receiver = (Receiver) method.invoke(null, this);
             mReceiverList.add(receiver);
+            registerInternalListeners(receiver);
             updateTileState();
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
@@ -354,28 +384,51 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
 
-    public void startForeground() {
+    private void startForeground() {
         Notification notification = ReceiverUtils.buildServiceNotification(this);
         startForeground(this.hashCode(), notification);
     }
 
-    public void stopForeground() {
+    private void stopForeground() {
         stopForeground(true);
     }
 
     @Override
     public void onBind(Intent intent, Object ignored) {
+        Log.d(TAG, "Service going to be bound(onBind)");
+        mBindNumber++;
         stopForeground();
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public void onRebind(Intent intent) {
+        Log.d(TAG, "Service going to be rebound(onRebind)");
+        super.onRebind(intent);
+        mBindNumber++;
+        stopForeground();
+    }
+
+    /**
+     * IMPORTANT: To keep service alive when receiver running, MUST be called before unbind service.
+     */
+    public void beforeUnbind() {
+        if (mBindNumber > 1) return;
+        Log.d(TAG, "Checking whether to start service and in foreground or in background(beforeUnbind)");
         if (isAnyReceiverStarted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.d(TAG, String.format("Receiver running, API newer than %d starting service in foreground", Build.VERSION_CODES.O));
                 startForegroundService(new Intent(getApplicationContext(), ReceiveService.class));
                 startForeground();
-            } else startService(new Intent(getApplicationContext(), ReceiveService.class));
+            } else {
+                Log.d(TAG, String.format("Receiver running, API lower than %d, starting service in background", Build.VERSION_CODES.O));
+                startService(new Intent(getApplicationContext(), ReceiveService.class));
+            }
         }
-        return super.onUnbind(intent);
+    }
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "Service going to be unbound(onUnbind)");
+        mBindNumber--;
+        return true;
     }
 }

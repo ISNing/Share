@@ -12,9 +12,11 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import com.microsoft.connecteddevices.ConnectedDevicesAccount;
+import com.microsoft.connecteddevices.ConnectedDevicesAccountAddedStatus;
 import com.microsoft.connecteddevices.ConnectedDevicesAccountManager;
 import com.microsoft.connecteddevices.ConnectedDevicesAddAccountResult;
 import com.microsoft.connecteddevices.ConnectedDevicesNotificationRegistrationManager;
@@ -41,11 +43,13 @@ import org.exthmui.share.shared.base.events.PeerAddedEvent;
 import org.exthmui.share.shared.base.events.PeerRemovedEvent;
 import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.base.listeners.OnSenderErrorOccurredListener;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -74,7 +78,9 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
                         OnDiscovererStoppedListener.class,
                         OnPeerAddedListener.class,
                         OnPeerUpdatedListener.class,
-                        OnPeerRemovedListener.class
+                        OnPeerRemovedListener.class,
+                        OnDiscovererErrorOccurredListener.class,
+                        OnSenderErrorOccurredListener.class
                 };
     }
 
@@ -142,10 +148,14 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     private void createAndAddAnonymousAccount(ConnectedDevicesPlatform platform) {
         ConnectedDevicesAccount account = ConnectedDevicesAccount.getAnonymousAccount();
         platform.getAccountManager().addAccountAsync(account).whenComplete((ConnectedDevicesAddAccountResult result, Throwable throwable) -> {
-            if (throwable != null) {
-                Log.d(TAG, String.format("AccountManager addAccountAsync returned a throwable: %1$s", throwable.getMessage()));
-            } else {
-                Log.d(TAG, "AccountManager : Added account successfully");
+            if (result.getStatus() == ConnectedDevicesAccountAddedStatus.SUCCESS){
+                Log.d(TAG, "AccountManager: Added account successfully");
+            } else {//TODO:Localize
+                if (throwable == null) {
+                    Log.d(TAG, String.format("AccountManager addAccountAsync error: %1$s", result.getStatus()));
+                } else {
+                    Log.d(TAG, String.format("AccountManager addAccountAsync error: %1$s, with throwable: %2$s", result.getStatus(), throwable.getMessage()));
+                }
             }
         });
     }
@@ -264,7 +274,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     public UUID send(NearSharePeer peer, Entity entity) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareSendingWorker.class)
                 .setInputData(genSendingInputData(peer, entity))
-//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST) // FIXME: 3/20/22
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
@@ -274,7 +284,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     public UUID send(NearSharePeer peer, List<Entity> entities) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareMultiSendingWorker.class)
                 .setInputData(genSendingInputData(peer, (Entity[]) entities.toArray()))
-//                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)// FIXME: 3/20/22
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
@@ -292,6 +302,4 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     public boolean isInitialized() {
         return mInitialized;
     }
-
-
 }

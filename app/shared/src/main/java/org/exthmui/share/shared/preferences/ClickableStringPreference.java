@@ -27,7 +27,8 @@ public class ClickableStringPreference extends Preference {
 
     public void setValue(String val) {
         mValue = val;
-        persistString(val);
+        if (callChangeListener(val))
+            persistString(val);
     }
 
     public String getValue() {

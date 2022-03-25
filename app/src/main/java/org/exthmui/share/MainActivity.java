@@ -1,30 +1,27 @@
 package org.exthmui.share;
 
 import android.app.PendingIntent;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import org.exthmui.share.databinding.ActivityMainBinding;
 import org.exthmui.share.shared.ReceiverUtils;
 
 public class MainActivity extends AppCompatActivity {
-    ActivityMainBinding binding;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
-        binding.button.setOnClickListener(new View.OnClickListener() {
+        setContentView(R.layout.activity_main);
+        Button button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    ReceiverUtils.buildDialogPendingIntent(MainActivity.this, "sfs", "dfs", "sfddsaf", "fsfdef.file", 219201, 100).send();
-                } catch (PendingIntent.CanceledException e) {
-                    e.printStackTrace();
-                }
+                Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                startActivity(intent);
             }
         });
     }

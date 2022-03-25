@@ -32,7 +32,7 @@ public class DirectUtils {
     public static int getServerPort(Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_server_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_server_port));
         if (!isServerPortValid(context, port) | port == -1) {
-            Log.e(TAG, "Got a illegal port, regenerating port in range of 5001-65565");
+            Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort();
         }
         return port;

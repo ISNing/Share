@@ -7,6 +7,8 @@ import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -15,13 +17,10 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.ReceiverUtils;
-import org.exthmui.share.shared.databinding.FragmentAcceptationBinding;
 
 public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFragment {
 
     private static final String TAG = "AcceptationRequestBottomSheetFragment";
-
-    FragmentAcceptationBinding binding;
 
     private final String mPluginCode;
     private final String mPeerName;
@@ -29,6 +28,11 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
     private final long mFileSize;
     private final String mRequestId;
     private final int mNotificationId;
+
+    private TextView mTitle;
+    private TextView mSize;
+    private Button mAcceptButton;
+    private Button mRejectButton;
 
     public AcceptationRequestBottomSheetFragment(String pluginCode, String peerName, String fileName, long fileSize, String requestId, int notificationId) {
         this.mPluginCode = pluginCode;
@@ -39,36 +43,26 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
         this.mNotificationId = notificationId;
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-    }
-
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
-        binding = FragmentAcceptationBinding.inflate(inflater, container, false);
-        return binding.getRoot();
+        return inflater.inflate(R.layout.fragment_acceptation, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        binding.fragmentAcceptationTitle.setText(String.format(requireContext().getString(R.string.dialog_title_accept_or_reject_request), mPeerName, mFileName));
-        binding.fragmentAcceptationSize.setText(String.format(requireContext().getString(R.string.dialog_accept_or_reject_request_size), Formatter.formatFileSize(requireContext(), mFileSize)));
 
-        binding.fragmentAcceptationAcceptButton.setOnClickListener(v -> {
+        mTitle = view.findViewById(R.id.fragment_acceptation_title);
+        mSize = view.findViewById(R.id.fragment_acceptation_size);
+        mAcceptButton = view.findViewById(R.id.fragment_acceptation_accept_button);
+        mRejectButton = view.findViewById(R.id.fragment_acceptation_reject_button);
+
+        mTitle.setText(requireContext().getString(R.string.dialog_title_accept_or_reject_request, mPeerName, mFileName));
+        mSize.setText(requireContext().getString(R.string.dialog_accept_or_reject_request_size, Formatter.formatFileSize(requireContext(), mFileSize)));
+
+        mAcceptButton.setOnClickListener(v -> {
             PendingIntent pendingIntent = ReceiverUtils.buildAcceptPendingIntent(requireContext(), mPluginCode, mRequestId, mNotificationId);
             try {
                 pendingIntent.send();
@@ -78,7 +72,7 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
             }
         });
 
-        binding.fragmentAcceptationRejectButton.setOnClickListener(v -> {
+        mRejectButton.setOnClickListener(v -> {
             PendingIntent pendingIntent = ReceiverUtils.buildRejectPendingIntent(requireContext(), mPluginCode, mRequestId, mNotificationId);
             try {
                 pendingIntent.send();

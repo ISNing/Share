@@ -59,12 +59,16 @@ public abstract class ReceivingWorker extends Worker {
         return Result.failure(genFailureData(errCode, message));
     }
 
+    protected Result genRejectedResult() {
+        return genFailureResult(Constants.TransmissionStatus.REJECTED.getNumVal(), "User rejected receiving file");
+    }
+
     protected Result genSenderCancelledResult() {
-        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Sender cancelled");
+        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Remote system(aka sender) canceled sending file");
     }
 
     protected Result genReceiverCancelledResult() {
-        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "Receiver cancelled");
+        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka receiver) canceled receiving file");
     }
 
     private Data genProgressData(int statusCode, long totalBytesToSend, long bytesReceived) {

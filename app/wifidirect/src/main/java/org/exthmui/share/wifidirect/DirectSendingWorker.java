@@ -25,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.StackTraceUtils;
+import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
@@ -262,13 +263,13 @@ public class DirectSendingWorker extends SendingWorker {
         };
 
         try {
-
             // Initial fileTransfer object
             entity.calculateMD5(getApplicationContext());
             FileTransfer fileTransfer = new FileTransfer();
             fileTransfer.setFileName(entity.getFileName());
             fileTransfer.setFileSize(entity.getFileSize());
-            fileTransfer.setPeerName(/* TODO:getSelfName */"ISNing's Phone");
+            fileTransfer.setPeerName(Utils.getSelfName(getApplicationContext()));
+            fileTransfer.setPeerId(Utils.getSelfId(getApplicationContext()));
             fileTransfer.setMd5(fileTransfer.getMd5());
             fileTransfer.setClientPort(clientPort);
 

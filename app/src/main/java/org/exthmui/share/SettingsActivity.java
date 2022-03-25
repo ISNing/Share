@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.service.quicksettings.TileService;
+import android.view.MenuItem;
+import android.widget.LinearLayout;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,7 +15,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.preference.PreferenceManager;
 
-import org.exthmui.share.databinding.SettingsActivityBinding;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.DiscoverableTileService;
@@ -29,8 +30,6 @@ import java.util.Set;
 
 public class SettingsActivity extends AppCompatActivity {
 
-    SettingsActivityBinding binding;
-
     private final ServiceUtils.MyServiceConnection mDiscoverConnection = new ServiceUtils.MyServiceConnection();
     @Nullable
     private DiscoverService mDiscoverService;
@@ -43,15 +42,20 @@ public class SettingsActivity extends AppCompatActivity {
     private GlobalSettingsFragment mGlobalSettingsFragment;
     private final List<Fragment> mFragmentList = new ArrayList<>();
 
+    LinearLayout mPreferencesContainer;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = SettingsActivityBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        setContentView(R.layout.settings_activity);
+
+        mPreferencesContainer = findViewById(R.id.preferences_container);
         // Bind Service
         mDiscoverConnection.registerOnServiceConnectedListener(service -> mDiscoverService = (DiscoverService) service);
+        mDiscoverConnection.registerOnServiceDisconnectedListener(name -> mDiscoverService = null);
         bindService(new Intent(SettingsActivity.this, DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
         mReceiveConnection.registerOnServiceConnectedListener(service -> mReceiveService = (ReceiveService) service);
+        mReceiveConnection.registerOnServiceDisconnectedListener(name -> mReceiveService = null);
         bindService(new Intent(SettingsActivity.this, ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
 
         if (savedInstanceState == null) {
@@ -77,7 +81,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     public void addFragment(@NonNull Fragment fragment) {
         getSupportFragmentManager().beginTransaction()
-                .add(binding.preferencesContainer.getId(), fragment)
+                .add(mPreferencesContainer.getId(), fragment)
                 .commit();
         mFragmentList.add(fragment);
         if (PluginPreferenceFragmentCompat.class.isAssignableFrom(fragment.getClass())) {
@@ -164,7 +168,21 @@ public class SettingsActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (mDiscoverService != null) {
+            mDiscoverService.beforeUnbind();
+        }
         unbindService(mDiscoverConnection);
+        if (mReceiveService != null) {
+            mReceiveService.beforeUnbind();
+        }
         unbindService(mReceiveConnection);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            onBackPressed();
+        }
+        return super.onOptionsItemSelected(item);
     }
 }

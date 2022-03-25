@@ -7,6 +7,7 @@ import android.graphics.drawable.Icon;
 import android.os.IBinder;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
+import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -21,17 +22,22 @@ import java.util.Set;
 
 public class DiscoverableTileService extends TileService {
     private static final String TAG = "DiscoverableTileService";
-    private final Set<BaseEventListener> mListenersReceiveService = new HashSet<>();
-    private final MyServiceConnection mConnection = new MyServiceConnection();
+    private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
     @Nullable
     private ReceiveService mService;
 
     public DiscoverableTileService() {
+        mConnection.registerOnServiceConnectedListener(service -> {
+            mService = (ReceiveService) service;
+            refreshState();
+        });
+        mConnection.registerOnServiceDisconnectedListener(name -> mService = null);
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        bindService(new Intent(getApplicationContext(), ReceiveService.class), mConnection, BIND_AUTO_CREATE);
     }
 
     @Override
@@ -41,12 +47,13 @@ public class DiscoverableTileService extends TileService {
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
+        Log.d(TAG, "Service going down(onDestroy), unbinding ReceiveService");
         if (mService != null) {
-            mService.unregisterReceiverListeners(mListenersReceiveService);
-            unbindService(mConnection);
-            mService = null;
+            mService.beforeUnbind();
         }
+        unbindService(mConnection);
+        mService = null;
+        super.onDestroy();
     }
 
     @Override
@@ -57,45 +64,38 @@ public class DiscoverableTileService extends TileService {
     @Override
     public void onStartListening() {
         super.onStartListening();
-        bindService(new Intent(getApplicationContext(), ReceiveService.class), mConnection, BIND_AUTO_CREATE);
         refreshState();
     }
 
     @Override
     public void onStopListening() {
         super.onStopListening();
-        if (mService != null) {
-            mService.unregisterReceiverListeners(mListenersReceiveService);
-            unbindService(mConnection);
-            mService = null;
-        }
     }
 
     @Override
     public void onClick() {
         super.onClick();
+        refreshState();
         int state = getQsTile().getState();
         switch (state) {
             case Tile.STATE_ACTIVE:
                 if (mService == null) {
-                    mConnection.registerOnServiceConnectedListener(new OnServiceConnectedListener() {
+                    mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
-                        public void onServiceConnected() {
+                        public void onServiceConnected(ServiceUtils.MyService service) {
                             mService.stopReceivers();
-                            mService.stopForeground();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
                     });
                 } else {
                     mService.stopReceivers();
-                    mService.stopForeground();
                 }
                 break;
             case Tile.STATE_INACTIVE:
                 if (mService == null) {
-                    mConnection.registerOnServiceConnectedListener(new OnServiceConnectedListener() {
+                    mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
-                        public void onServiceConnected() {
+                        public void onServiceConnected(ServiceUtils.MyService service) {
                             mService.startReceivers();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
@@ -146,39 +146,5 @@ public class DiscoverableTileService extends TileService {
                 break;
         }
         tile.updateTile();
-    }
-
-    interface OnServiceConnectedListener extends EventListener {
-        void onServiceConnected();
-    }
-
-    class MyServiceConnection implements ServiceConnection {
-        private final Set<OnServiceConnectedListener> mOnServiceConnectedListeners = new HashSet<>();
-
-        private void registerOnServiceConnectedListener(OnServiceConnectedListener listener) {
-            mOnServiceConnectedListeners.add(listener);
-        }
-
-        private void unregisterOnServiceConnectedListener(OnServiceConnectedListener listener) {
-            mOnServiceConnectedListeners.remove(listener);
-        }
-
-        @Override
-        public void onServiceConnected(ComponentName name, IBinder service) {
-            ServiceUtils.MyService.MyBinder binder = (ServiceUtils.MyService.MyBinder) service;
-            mService = (ReceiveService) binder.getService();
-            for (OnServiceConnectedListener l :
-                    mOnServiceConnectedListeners) {
-                l.onServiceConnected();
-            }
-            refreshState();
-        }
-
-        @Override
-        public void onServiceDisconnected(ComponentName name) {
-            assert mService != null;
-            mService.unregisterReceiverListeners(mListenersReceiveService);
-            mService = null;
-        }
     }
 }

@@ -166,7 +166,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 dataOutputStream.writeUTF(COMMAND_REJECT);
                 Log.d(TAG, "User rejected receiving file");
-                return genFailureResult(Constants.TransmissionStatus.REJECTED.getNumVal(), "Remote system rejected receiving file");
+                return genRejectedResult();
             }
             dataOutputStream.writeUTF(COMMAND_ACCEPT + "\n");
             dataOutputStream.close();
@@ -176,7 +176,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
             // Check if remote cancelled
             if (canceledBySender[0].isDone()) {
                 Log.d(TAG, "Remote cancelled receiving file");
-                return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                return genSenderCancelledResult();
             }
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
@@ -187,7 +187,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
                 dataOutputStream = null;
-                return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                return genReceiverCancelledResult();
             }
 
             DocumentFile destinationDirectory = Utils.getDestinationDirectory(getApplicationContext());
@@ -221,7 +221,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     // Check if remote cancelled
                     if (canceledBySender[0].isDone()) {
                         Log.d(TAG, "Remote cancelled receiving file");
-                        return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "Remote system(aka receiver) canceled receiving file");
+                        return genSenderCancelledResult();
                     }
                     // Check if user cancelled
                     if (getForegroundInfoAsync().isCancelled()) {
@@ -234,7 +234,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                         dataOutputStream = null;
                         // Delete file
                         file.delete();
-                        return genFailureResult(Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");
+                        genReceiverCancelledResult();
                     }
                 }
                 outputStream.close();

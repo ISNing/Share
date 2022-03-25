@@ -24,6 +24,7 @@ import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Objects;
+import java.util.UUID;
 
 public class Utils {
     private static final String TAG = "Utils";
@@ -97,8 +98,8 @@ public class Utils {
         return destinationDirectory;
     }
 
-    public static @NonNull
-    String getDefaultFileName(@NonNull Context context) {
+    @NonNull
+    public static String getDefaultFileName(@NonNull Context context) {
         String defaultValue = context.getString(R.string.prefs_default_global_default_file_name);
         String defaultFileName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
         if (defaultFileName == null | TextUtils.isEmpty(defaultFileName)) {
@@ -106,6 +107,44 @@ public class Utils {
             defaultFileName = defaultValue;
         }
         return defaultFileName;
+    }
+
+    public static String getDeviceNameOnBoard(Context context) {
+        String deviceName;
+//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
+//            deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
+//        } else
+            deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
+        return deviceName;
+    }
+
+    @NonNull
+    public static String getSelfName(@NonNull Context context) {
+        String defaultValue = getDeviceNameOnBoard(context);
+        String deviceName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
+        if (deviceName == null | TextUtils.isEmpty(deviceName)) {
+            Log.e(TAG, String.format("Got invalid device name, returning default value \"%s\".", defaultValue));
+            deviceName = defaultValue;
+        }
+        return deviceName;
+    }
+
+    @NonNull
+    public static String getSelfId(@NonNull Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String key = context.getString(R.string.prefs_key_global_default_file_name);
+        String peerId = sharedPreferences.getString(key, null);
+        if (peerId == null | TextUtils.isEmpty(peerId)) {
+            peerId = genPeerId();
+            sharedPreferences.edit().putString(key, peerId).apply();
+            Log.e(TAG, String.format("Got invalid device name, regenerated and saved a new value: %s.", peerId));
+        }
+        return peerId;
+    }
+
+    @NonNull
+    public static String genPeerId() {
+        return UUID.randomUUID().toString();
     }
 
     public static SharedPreferences getDefaultSharedPreferences(Context context) {

@@ -39,6 +39,8 @@ public interface IReceiveService extends ComponentCallbacks2 {
 
     void registerInternalListeners();
 
+    void registerInternalListeners(Receiver receiver);
+
     void addReceiver(String code);
 
     void notifyListeners(EventObject event);

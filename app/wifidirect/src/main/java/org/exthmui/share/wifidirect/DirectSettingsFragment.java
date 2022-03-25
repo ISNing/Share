@@ -44,7 +44,7 @@ public class DirectSettingsFragment extends PluginPreferenceFragmentCompat {
             serverPortPrefs.setSummary(newValStr);
             return true;
         });
-        serverPortPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
+        serverPortPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED));
         assert clientPortPrefs != null;
         clientPortPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             String newValStr = (String) newValue;

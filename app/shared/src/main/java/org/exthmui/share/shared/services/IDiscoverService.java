@@ -38,6 +38,8 @@ public interface IDiscoverService extends ComponentCallbacks2 {
 
     void addDiscoverers();
 
+    void registerInternalListeners(Discoverer discoverer);
+
     void registerInternalListeners();
 
     void notifyListeners(EventObject event);

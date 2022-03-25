@@ -8,19 +8,27 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.InputType;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.ReceiveService;
 import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.preferences.ClickableStringPreference;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
@@ -28,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     MultiSelectListPreference pluginsEnabledPrefs;
@@ -55,6 +64,16 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             summary = new StringBuilder(getString(R.string.prefs_summary_global_plugins_enabled_none));
         } else summary.append(" ").append(summarySuffix);
         return summary.toString();
+    }
+
+
+    @NonNull
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View ret = super.onCreateView(inflater, container, savedInstanceState);
+        RecyclerView listView = getListView();
+        listView.setNestedScrollingEnabled(false);// Disable nested scrolling
+        return ret;
     }
 
     @Override
@@ -97,7 +116,9 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                                 mDiscoverService.removeDiscoverer(code);
                             for (String code : whatAdded)
                                 mDiscoverService.addDiscoverer(code);
-                            activity.unbindService(mDiscoverConnection);
+                            mDiscoverService.beforeUnbind();
+                            requireContext().unbindService(mDiscoverConnection);
+                            mDiscoverService = null;
                         }
 
                         @Override
@@ -115,7 +136,9 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                                 mReceiveService.removeReceiver(code);
                             for (String code : whatAdded)
                                 mReceiveService.addReceiver(code);
-                            activity.unbindService(mReceiveConnection);
+                            mReceiveService.beforeUnbind();
+                            requireContext().unbindService(mReceiveConnection);
+                            mReceiveService = null;
                         }
 
                         @Override
@@ -123,8 +146,8 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                             mReceiveService = null;
                         }
                     };
-                    activity.bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
-                    activity.bindService(new Intent(getContext(), ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
+                    requireContext().bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
+                    requireContext().bindService(new Intent(getContext(), ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
                     for (String code : whatRemoved) {
                         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
                         if (type == null) continue;
@@ -164,6 +187,50 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             return true;
         });
         defaultFileNamePrefs.setSummary(defaultFileNamePrefs.getText());
+
+        EditTextPreference deviceNamePrefs = findPreference(getString(R.string.prefs_key_global_device_name));
+        assert deviceNamePrefs != null;
+        deviceNamePrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT));
+        deviceNamePrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+            if (newValue != null){
+                String newValueStr = (String) newValue;
+                if (!newValueStr.isEmpty()) {
+                    deviceNamePrefs.setSummary(newValueStr);
+                    return true;
+                } else {
+                    deviceNamePrefs.setText(null);
+                    deviceNamePrefs.callChangeListener(null);
+                    return false;
+                }
+            } else {
+                deviceNamePrefs.setSummary(Utils.getDeviceNameOnBoard(requireContext()));
+                return true;
+            }
+        });
+        if (deviceNamePrefs.getText() != null)
+            deviceNamePrefs.setSummary(deviceNamePrefs.getText());
+        else deviceNamePrefs.setSummary(Utils.getDeviceNameOnBoard(requireContext()));
+
+        ClickableStringPreference peerIdPrefs = findPreference(getString(R.string.prefs_key_global_peer_id));
+        assert peerIdPrefs != null;
+        peerIdPrefs.setOnPreferenceClickListener(preference -> {
+            peerIdPrefs.setValue(Utils.genPeerId());
+            int duration = Toast.LENGTH_SHORT;
+
+            Toast toast = Toast.makeText(requireContext(),
+                    getString(R.string.toast_global_peer_id_regenerated), duration);
+            toast.show();
+            return true;
+        });
+        peerIdPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+            if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
+                peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
+            return true;
+        });
+        if (peerIdPrefs.getValue() == null)
+            peerIdPrefs.setValue(Utils.genPeerId());
+        if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
+            peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
     }
 
     @Override

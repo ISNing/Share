@@ -13,9 +13,12 @@ import java.util.Set;
 
 public class ServiceUtils {
 
-
     public interface OnServiceConnectedListener extends EventListener {
         void onServiceConnected(MyService service);
+    }
+
+    public interface OnServiceDisconnectedListener extends EventListener {
+        void onServiceDisconnected(ComponentName name);
     }
 
     public static abstract class MyService extends Service {
@@ -41,6 +44,7 @@ public class ServiceUtils {
 
     public static class MyServiceConnection implements ServiceConnection {
         private final Set<OnServiceConnectedListener> mOnServiceConnectedListeners = new HashSet<>();
+        private final Set<OnServiceDisconnectedListener> mOnServiceDisconnectedListeners = new HashSet<>();
 
         public void registerOnServiceConnectedListener(OnServiceConnectedListener listener) {
             mOnServiceConnectedListeners.add(listener);
@@ -48,6 +52,14 @@ public class ServiceUtils {
 
         public void unregisterOnServiceConnectedListener(OnServiceConnectedListener listener) {
             mOnServiceConnectedListeners.remove(listener);
+        }
+
+        public void registerOnServiceDisconnectedListener(OnServiceDisconnectedListener listener) {
+            mOnServiceDisconnectedListeners.add(listener);
+        }
+
+        public void unregisterOnServiceDisconnectedListener(OnServiceDisconnectedListener listener) {
+            mOnServiceDisconnectedListeners.remove(listener);
         }
 
         private MyService mService;
@@ -65,6 +77,10 @@ public class ServiceUtils {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             mService=null;
+            for (OnServiceDisconnectedListener l:
+                    mOnServiceDisconnectedListeners) {
+                l.onServiceDisconnected(name);
+            }
         }
     }
 }

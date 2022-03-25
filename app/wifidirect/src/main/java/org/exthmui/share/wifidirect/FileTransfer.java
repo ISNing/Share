@@ -10,6 +10,7 @@ public class FileTransfer implements Serializable {
     @Nullable private String fileName;
     private long fileSize;
     private String peerName;
+    private String peerId;
     private String md5;
     @IntRange(from = 5000, to = 65535) private int clientPort;
 
@@ -51,7 +52,15 @@ public class FileTransfer implements Serializable {
         return peerName;
     }
 
-    public void setPeerName(String peerName) {
+    public void setPeerName(@NonNull String peerName) {
         this.peerName = peerName;
+    }
+
+    public String getPeerId() {
+        return peerId;
+    }
+
+    public void setPeerId(@NonNull String peerId) {
+        this.peerId = peerId;
     }
 }

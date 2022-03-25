@@ -30,8 +30,10 @@ public class WaveView extends View {
     private static final float DEFAULT_LENGTH_DIP = 200;
     private final float DEFAULT_LENGTH_PX = TypedValue.applyDimension(COMPLEX_UNIT_DIP, 200f, getResources().getDisplayMetrics());
 
-    private final ScalingTimerTask scalingTask = new ScalingTimerTask();
+    private ScalingTimerTask scalingTask;
     private final Timer mTimer = new Timer();
+
+    private boolean mWaving;
 
     private int mWaveNum;
     private float mRadiusMin;
@@ -97,19 +99,15 @@ public class WaveView extends View {
         return (flagSet | flag) == flagSet;
     }
 
-
-
     public int getShortEdgeLength() {
         int width = getWidth();
         int height = getHeight();
         return Math.min(width, height);
     }
 
-
     public void setWaveNum(int waveNum) {
         this.mWaveNum = waveNum;
     }
-
 
     public WaveView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -175,7 +173,8 @@ public class WaveView extends View {
         for (int i = 1; i < list.size(); i++) {
             newList.add(list.get(i));
         }
-        newList.add(list.get(0));
+        if (list.size() != 0)
+            newList.add(list.get(0));
 
         return newList;
     }
@@ -186,11 +185,18 @@ public class WaveView extends View {
     }
 
     public void startWave() {
-        mTimer.schedule(scalingTask, 0, mMillisecondsPerFrame);
+        if (!mWaving) {
+            scalingTask = new ScalingTimerTask();
+            mTimer.schedule(scalingTask, 0, mMillisecondsPerFrame);
+            mWaving = true;
+        }
     }
 
     public void stopWave() {
-        scalingTask.stop();
+        if (mWaving) {
+            scalingTask.cancel();
+            mWaving = false;
+        }
     }
 
     public void forceStopWave() {

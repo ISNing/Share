@@ -27,16 +27,18 @@ import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.BaseEventListenersUtils;
 import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.ReceivingWorker;
 import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.base.events.ReceiverErrorOccurredEvent;
 import org.exthmui.share.shared.base.events.ReceiverStartedEvent;
 import org.exthmui.share.shared.base.events.ReceiverStoppedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
+import org.exthmui.share.shared.base.listeners.OnReceiverErrorOccurredListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.base.listeners.OnReceiverStoppedListener;
 
@@ -45,6 +47,7 @@ import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -59,7 +62,8 @@ public class DirectReceiver implements Receiver {
                     OnReceiverStartedListener.class,
                     OnReceiverStoppedListener.class,
                     OnReceiveActionAcceptListener.class,
-                    OnReceiveActionRejectListener.class
+                    OnReceiveActionRejectListener.class,
+                    OnReceiverErrorOccurredListener.class
             };
 
     private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + CONNECTION_CODE_WIFIDIRECT;
@@ -68,14 +72,12 @@ public class DirectReceiver implements Receiver {
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;
-    private final Map<String, PeerInfo> mPeers = new HashMap<>();
     private boolean mReceiverStarted;
     private boolean mInitialized;
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
     private WifiP2pDnsSdServiceInfo mServiceInfo;
-    private DirectBroadcastReceiver mBroadcastReceiver;
 
     private DirectReceiver(Context context) {
         this.mContext = context.getApplicationContext();
@@ -116,9 +118,7 @@ public class DirectReceiver implements Receiver {
         permissions.add(Manifest.permission.CHANGE_WIFI_STATE);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
-        permissions.add(Manifest.permission.CHANGE_NETWORK_STATE);
         permissions.add(Manifest.permission.INTERNET);
-        permissions.add(Manifest.permission.ACCESS_NETWORK_STATE);
         return permissions;
     }
 
@@ -141,8 +141,7 @@ public class DirectReceiver implements Receiver {
     @Override
     public void initialize() {
         mWifiP2pManager = (WifiP2pManager) mContext.getSystemService(Context.WIFI_P2P_SERVICE);
-        mChannel = mWifiP2pManager.initialize(mContext, Looper.getMainLooper(), () -> {
-        });
+        mChannel = mWifiP2pManager.initialize(mContext, Looper.getMainLooper(), () -> {});
         WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observeForever(workInfo -> {
             boolean isRunning = false;
             for (WorkInfo info : workInfo) {
@@ -170,8 +169,6 @@ public class DirectReceiver implements Receiver {
     @Override
     public void startReceive() {
         try {
-            // register BroadcastReceiver
-            mContext.registerReceiver(mBroadcastReceiver, DirectBroadcastReceiver.getIntentFilter());
             mReceiverStarted = true;
 
             startWork();
@@ -182,10 +179,10 @@ public class DirectReceiver implements Receiver {
             Map<String, String> record = new HashMap<>();
             record.put(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION_1);
             record.put(RECORD_KEY_SERVER_PORT, String.valueOf(serverPort));
-            record.put(RECORD_KEY_DISPLAY_NAME, "");
-            record.put(RECORD_KEY_PEER_ID, "");// Without prefix
-            record.put(RECORD_KEY_UID, "");
-            record.put(RECORD_KEY_ACCOUNT_SERVER_SIGN, "");
+            record.put(RECORD_KEY_DISPLAY_NAME, Utils.getSelfName(mContext));
+            record.put(RECORD_KEY_PEER_ID, Utils.getSelfId(mContext));// Without prefix
+            record.put(RECORD_KEY_UID, "");// TODO: get it from account sdk
+            record.put(RECORD_KEY_ACCOUNT_SERVER_SIGN, ""); // TODO: get it from account sdk
 
             // Service information
             mServiceInfo = WifiP2pDnsSdServiceInfo.newInstance(
@@ -203,7 +200,10 @@ public class DirectReceiver implements Receiver {
                 @Override
                 public void onFailure(int arg0) {
                     stopReceive();
-                    Log.e(TAG, String.format("LocalService add failed: %d", arg0));
+                    String message = String.format(Locale.ENGLISH, "LocalService add failed: %d", arg0);
+                    String messageLocalized = mContext.getString(R.string.error_wifidirect_local_service_add_failed, arg0);
+                    notifyListeners(new ReceiverErrorOccurredEvent(DirectReceiver.this, message, messageLocalized));
+                    Log.e(TAG, message);
                 }
             });
 
@@ -223,7 +223,6 @@ public class DirectReceiver implements Receiver {
 
     @Override
     public void stopReceive() {
-        if (mBroadcastReceiver != null) mContext.unregisterReceiver(mBroadcastReceiver);
         mReceiverStarted = false;
         try {
             List<WorkInfo> workInfo = WorkManager.getInstance(mContext).getWorkInfosForUniqueWork(WORK_UNIQUE_NAME).get();
@@ -247,7 +246,10 @@ public class DirectReceiver implements Receiver {
 
             @Override
             public void onFailure(int arg0) {
-                Log.e(TAG, String.format("LocalService remove failed: %d", arg0));
+                String message = String.format(Locale.ENGLISH, "LocalService remove failed: %d", arg0);
+                String messageLocalized = mContext.getString(R.string.error_wifidirect_local_service_remove_failed, arg0);
+                notifyListeners(new ReceiverErrorOccurredEvent(DirectReceiver.this, message, messageLocalized));
+                Log.e(TAG, message);
             }
         });
         mServiceInfo = null;

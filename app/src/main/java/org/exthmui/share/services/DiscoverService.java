@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
 import android.service.quicksettings.TileService;
+import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
@@ -21,12 +23,15 @@ import org.exthmui.share.shared.SenderUtils;
 import org.exthmui.share.shared.ServiceUtils;
 import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.base.listeners.OnSenderErrorOccurredListener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -46,17 +51,25 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
             {
                     OnDiscovererStartedListener.class,
-                    OnDiscovererStoppedListener.class
+                    OnDiscovererStoppedListener.class,
+                    OnPeerAddedListener.class,
+                    OnPeerUpdatedListener.class,
+                    OnPeerRemovedListener.class
             };
     private static DiscoverService instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 
+    @IntRange(from = 0)
+    private int mBindNumber = 0;
+
     private final Set<Discoverer> mDiscovererList = new HashSet<>();
+    private final Set<BaseEventListener> mInternalListenerList = new HashSet<>();
     private final Set<BaseEventListener> mDiscovererListenerList = new HashSet<>();
     private final Map<String, PeerInfo> mPeerInfoMap = new HashMap<>();
 
     public DiscoverService() {
+        initializeInternalListeners();
     }
 
     public static DiscoverService getInstance() {
@@ -91,8 +104,52 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     @Override
     public void onDestroy() {
         super.onDestroy();
+        unregisterDiscoverersListeners(mInternalListenerList);
         unregisterDiscoverersListeners(mDiscovererListenerList);
+        Log.d(TAG, "Service going down(onDestroy), stopping discoverers");
         stopDiscoverers();
+    }
+
+    private void initializeInternalListeners() {
+        mInternalListenerList.add((OnDiscovererStartedListener) event -> {
+            updateTileState();
+            notifyListeners(event);
+        });
+        mInternalListenerList.add((OnDiscovererStoppedListener) event -> {
+            updateTileState();
+            if (isAllDiscoverersStopped()) {
+                notifyListeners(new DiscovererStoppedEvent(DiscoverService.this));
+                stopForeground();
+            }
+        });
+        mInternalListenerList.add((OnPeerAddedListener) event -> {
+            mPeerInfoMap.put(event.getPeer().getId(), event.getPeer());
+            notifyListeners(event);
+        });
+        mInternalListenerList.add((OnPeerUpdatedListener) event -> {
+            mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());
+            notifyListeners(event);
+        });
+        mInternalListenerList.add((OnPeerRemovedListener) event -> {
+            mPeerInfoMap.remove(event.getPeer().getId(), event.getPeer());
+            notifyListeners(event);
+        });
+        mInternalListenerList.add((OnDiscovererErrorOccurredListener) event -> {
+            int duration = Toast.LENGTH_LONG;
+
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    getString(R.string.toast_discover_error_occurred_with_message,
+                            event.getMessageLocalized()), duration);
+            toast.show();
+        });
+        mInternalListenerList.add((OnSenderErrorOccurredListener) event -> {
+            int duration = Toast.LENGTH_LONG;
+
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    getString(R.string.toast_send_error_occurred_with_message,
+                            event.getMessageLocalized()), duration);
+            toast.show();
+        });
     }
 
     @Override
@@ -102,7 +159,6 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
                 discoverer.unregisterListener(listener);
             }
         }
-        registerInternalListeners();
     }
 
     @Override
@@ -134,23 +190,17 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
+    public void registerInternalListeners(Discoverer discoverer) {
+        for (BaseEventListener listener: mInternalListenerList) {
+            discoverer.registerListener(listener);
+        }
+    }
+
+    @Override
     public void registerInternalListeners() {
-        Set<BaseEventListener> listeners = new HashSet<>();
-        listeners.add((OnDiscovererStartedListener) event -> {
-            updateTileState();
-            notifyListeners(event);
-        });
-        listeners.add((OnDiscovererStoppedListener) event -> {
-            updateTileState();
-            if (isAllDiscoverersStopped()) {
-                notifyListeners(event);
-                stopForeground();
-            }
-        });
-        listeners.add((OnPeerAddedListener) event -> mPeerInfoMap.put(event.getPeer().getId(), event.getPeer()));
-        listeners.add((OnPeerUpdatedListener) event -> mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer()));
-        listeners.add((OnPeerRemovedListener) event -> mPeerInfoMap.remove(event.getPeer().getId(), event.getPeer()));
-        registerDiscoverersListeners(listeners);
+        for (Discoverer discoverer : mDiscovererList) {
+            registerInternalListeners(discoverer);
+        }
     }
 
     @Override
@@ -165,10 +215,11 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public void registerDiscoverersListeners(Collection<? extends BaseEventListener> listeners) {
-        for (Discoverer discoverer : mDiscovererList) {
-            for (BaseEventListener listener : listeners) {
+        for (BaseEventListener listener : listeners) {
+            for (Discoverer discoverer : mDiscovererList) {
                 discoverer.registerListener(listener);
             }
+            mDiscovererListenerList.add(listener);
         }
     }
 
@@ -188,6 +239,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
             Method method = type.getDiscovererClass().getDeclaredMethod("getInstance", Context.class);
             Discoverer discoverer = (Discoverer) method.invoke(null, this);
             mDiscovererList.add(discoverer);
+            registerInternalListeners(discoverer);
             updateTileState();
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
@@ -338,29 +390,52 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         TileService.requestListeningState(this, new ComponentName(BuildConfig.APPLICATION_ID, DiscoveringTileService.class.getName()));
     }
 
-    public void startForeground() {
+    private void startForeground() {
         Notification notification = SenderUtils.buildServiceNotification(this);
-
         startForeground(this.hashCode(), notification);
     }
 
-    public void stopForeground() {
+    private void stopForeground() {
         stopForeground(true);
     }
 
     @Override
     public void onBind(Intent intent, Object ignored) {
+        Log.d(TAG, "Service going to be bound(onBind)");
+        mBindNumber++;
         stopForeground();
     }
 
     @Override
-    public boolean onUnbind(Intent intent) {
+    public void onRebind(Intent intent) {
+        Log.d(TAG, "Service going to be rebound(onRebind)");
+        super.onRebind(intent);
+        mBindNumber++;
+        stopForeground();
+    }
+
+    /**
+     * IMPORTANT: To keep service alive when discoverer running, MUST be called before unbind service.
+     */
+    public void beforeUnbind() {
+        if (mBindNumber > 1) return;
+        Log.d(TAG, "Checking whether to start service and in foreground or in background(beforeUnbind)");
         if (isAnyDiscovererStarted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Log.d(TAG, String.format("Discoverer running, API newer than %d starting service in foreground", Build.VERSION_CODES.O));
                 startForegroundService(new Intent(getApplicationContext(), DiscoverService.class));
                 startForeground();
-            } else startService(new Intent(getApplicationContext(), DiscoverService.class));
+            } else {
+                Log.d(TAG, String.format("Discoverer running, API lower than %d, starting service in background", Build.VERSION_CODES.O));
+                startService(new Intent(getApplicationContext(), DiscoverService.class));
+            }
         }
-        return super.onUnbind(intent);
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.d(TAG, "Service going to be unbound(onUnbind)");
+        mBindNumber--;
+        return true;
     }
 }
