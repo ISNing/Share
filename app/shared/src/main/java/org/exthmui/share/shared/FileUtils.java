@@ -185,9 +185,9 @@ public class FileUtils {
     }
 
     /**
-     * 判断文件是否存在
-     * @param path 文件的路径
-     * @return
+     * Judge whether the file exists
+     * @param path The path of file
+     * @return Whether the file exists
      */
     public static boolean isExists(String path) {
         File file = new File(path);

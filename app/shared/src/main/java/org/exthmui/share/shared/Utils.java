@@ -51,11 +51,11 @@ public class Utils {
     }
 
     /**
-     * 判断数值是否属于枚举类的值
+     * Judge whether the value is included in enum clazz
      *
-     * @param clazz 枚举类 Enum
-     * @param code
-     * @return
+     * @param clazz Enum class
+     * @param code The value to be found
+     * @return Whether the value is included in enum clazz
      */
     public static boolean isInclude(@NonNull Class<?> clazz, Integer code) {
         boolean include = false;

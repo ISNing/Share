@@ -175,6 +175,15 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             mDestinationDirectoryActivityResultLauncher.launch(null);
             return true;
         });
+        mDestinationDirectoryPrefs.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+            @Override
+            public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
+                if (newValue == null) {
+                    mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
+                } else mDestinationDirectoryPrefs.setSummary((String) newValue);
+                return true;
+            }
+        });
         if (mDestinationDirectoryPrefs.getValue() == null) {
             mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
         } else mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
@@ -237,8 +246,8 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
-            mDestinationDirectoryPrefs.setValue(uri.toString());
-            mDestinationDirectoryPrefs.setSummary(uri.toString());
+            if (uri == null) mDestinationDirectoryPrefs.setValue(null);
+            else mDestinationDirectoryPrefs.setValue(uri.toString());
         });
     }
 }

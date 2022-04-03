@@ -15,39 +15,48 @@ import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.FloatRange;
 import androidx.annotation.IntDef;
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 
 import com.google.android.material.tabs.TabLayout;
+
+import org.exthmui.share.shared.CrossFadeUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 
-public class BadgeHelper extends View {// TODO: fix needed. Not working.
+public class BadgeHelper extends View {
     private static final String TAG = "BadgeHelper";
-    private float density;
-    private Paint mTextPaint;
-    private Paint mBackgroundPaint;
-    private String text = "0";
-    private int number;
+    private float mDensity;
+    private final Paint mTextPaint;
+    private final Paint mBackgroundPaint;
+    @NonNull
+    private String mText = "0";
 
     @Type
-    private int type = Type.TYPE_POINT;
-    private boolean isOverlap;
-    private final RectF rect = new RectF();
+    private int mType = Type.TYPE_POINT;
+    private boolean mIsOverlap;
+    private final RectF mRect = new RectF();
     @ColorInt
-    private int badgeColor = 0xFFD3321B;
-    private int textColor = 0xFFFFFFff;
-    private float textSize;
-    private int w;
-    private int h;
-    private boolean isSetup;
+    private int mBadgeColor = 0xFFD3321B;
+    @ColorInt
+    private int mTextColor = 0xFFFFFFff;
+    @FloatRange(from = 0f)
+    private float mTextSize;
+    @IntRange(from = -1)
+    private int mWidth = -1;
+    @IntRange(from = -1)
+    private int mHeight = -1;
+    private boolean mIsViewBound;
     private boolean mIgnoreTargetPadding;
-    private boolean isCenterVertical;
-    private int leftMargin;
-    private int topMargin;
-    private int rightMargin;
-    private int bottomMargin;
+    private boolean mIsCenterVertical;
+    private int mLeftMargin;
+    private int mTopMargin;
+    private int mRightMargin;
+    private int mBottomMargin;
 
     @IntDef({Type.TYPE_POINT, Type.TYPE_TEXT})
     @Retention(RetentionPolicy.SOURCE)
@@ -56,90 +65,47 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
         int TYPE_TEXT = 1;
     }
 
-
     public BadgeHelper(Context context) {
         super(context);
+        mBackgroundPaint = new Paint();
+        mBackgroundPaint.setStyle(Paint.Style.FILL);
+        mBackgroundPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+        mTextPaint = new Paint();
+        mTextPaint.setStyle(Paint.Style.FILL);
+        mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
     }
-
 
     private void init(@Type int type, boolean isOverlap) {
-        this.type = type;
-        this.isOverlap = isOverlap;
-        density = getResources().getDisplayMetrics().density;
-
-        switch (type) {
-            case Type.TYPE_POINT:
-                mBackgroundPaint = new Paint();
-                mBackgroundPaint.setStyle(Paint.Style.FILL);
-                mBackgroundPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-                mBackgroundPaint.setColor(badgeColor);
-                //计算小红点无文本情况下的小红点大小,  按屏幕像素计算, 如果你有你自己认为更好的算法, 改这里即可
-                w = h = Math.round(density * 7f);
-                break;
-            case Type.TYPE_TEXT:
-                mBackgroundPaint = new Paint();
-                mBackgroundPaint.setStyle(Paint.Style.FILL);
-                mBackgroundPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-                mBackgroundPaint.setColor(badgeColor);
-
-                mTextPaint = new Paint();
-                mTextPaint.setStyle(Paint.Style.FILL);
-                mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-                mTextPaint.setColor(textColor);//文本颜色
-                if (textSize == 0) {
-                    mTextPaint.setTextSize(density * 10);//文本大小按屏幕像素 计算, 没写死是为了适配各种屏幕,  但如果你有你认为更合理的计算方式 你可以改这里
-                } else {
-                    mTextPaint.setTextSize(textSize);//使用自定义大小
-                }
-
-                //计算小红点有文本情况下的小红点大小,  按文本宽高计算, 如果你有你自己认为更好的算法, 改这里即可
-                float textWidth = getTextWidth("99", mTextPaint);
-                w = h = Math.round(textWidth * 1.4f);//让背景比文本大一点
-                break;
-        }
+        this.mType = type;
+        this.mIsOverlap = isOverlap;
+        mDensity = getResources().getDisplayMetrics().density;
     }
 
-    /**
-     * 设置Margin 可用于做偏移
-     * @param left
-     * @param top
-     * @param right
-     * @param bottom
-     * @return
-     */
     public BadgeHelper setBadgeMargins(int left, int top, int right, int bottom) {
-        leftMargin = left;
-        topMargin = top;
-        rightMargin = right;
-        bottomMargin = bottom;
+        mLeftMargin = left;
+        mTopMargin = top;
+        mRightMargin = right;
+        mBottomMargin = bottom;
         return this;
     }
-    /**
-     * 设置Gravity居中
 
-     * @return
-     */
     public BadgeHelper setBadgeCenterVertical(  ) {
-        isCenterVertical = true;
+        mIsCenterVertical = true;
         return this;
     }
 
     /**
-     * 设置小红点类型
+     * Set the type of badge
      *
-     * @param type
-     * @return
+     * @param type {@link Type}
      */
     public BadgeHelper setBadgeType(@Type int type) {
-        this.type = type;
+        this.mType = type;
         return this;
     }
 
     /**
-     * 设置小红点大小, 默认自动适配
-     *
-     * @param textSize
-     * @return
+     * Set the size of text
      */
     public BadgeHelper setBadgeTextSize(int textSize) {
         Context c = getContext();
@@ -149,96 +115,89 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
         } else {
             r = c.getResources();
         }
-        this.textSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSize, r.getDisplayMetrics());
+        this.mTextSize = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, textSize, r.getDisplayMetrics());
         return this;
     }
 
 
     /**
-     * 设置小红点文字颜色, 默认白
-     *
-     * @param textColor
-     * @return
+     * Set the color of text
      */
-    public BadgeHelper setBadgeTextColor(int textColor) {
-        this.textColor = textColor;
+    public BadgeHelper setBadgeTextColor(@ColorInt int textColor) {
+        this.mTextColor = textColor;
         return this;
     }
 
     /**
-     * 设置重叠模式, 默认是false(不重叠)
+     * Set the overlap mode, false by default
      *
-     * @param isOverlap 是否把小红点重叠到目标View之上
-     * @return
+     * @param isOverlap Whether to make the view overlapped on target view
      */
     public BadgeHelper setBadgeOverlap(boolean isOverlap) {
-        return setBadgeOverlap(isOverlap, false);
+        this.mIsOverlap = isOverlap;
+        return this;
     }
 
     /**
-     * 设置重叠模式, 默认是false(不重叠)
+     * Set whether to ignore the padding of target view, false by default
      *
-     * @param isOverlap             是否把小红点重叠到目标View之上
-     * @param isIgnoreTargetPadding 是否忽略目标View的padding
-     * @return
+     * @param isIgnoreTargetPadding Whether to ignore the padding of target view
      */
-    public BadgeHelper setBadgeOverlap(boolean isOverlap, boolean isIgnoreTargetPadding) {
-        this.isOverlap = isOverlap;
+    public BadgeHelper setIgnoreTargetPadding(boolean isIgnoreTargetPadding) {
         this.mIgnoreTargetPadding = isIgnoreTargetPadding;
-        if (!isOverlap && isIgnoreTargetPadding) {
-            Log.w(TAG, "警告:只有重叠模式isOverlap=true 设置mIgnoreTargetPadding才有意义");
+        if (!mIsOverlap && isIgnoreTargetPadding) {
+            Log.w(TAG, "The ignoreTargetPadding only makes difference in overlap mode");
         }
         return this;
     }
 
     /**
-     * 设置小红点颜色
+     * Set the color of the badge itself
      *
-     * @param mBadgeColor
-     * @return
+     * @param badgeColor The color of badge itself
      */
-    public BadgeHelper setBadgeColor(int mBadgeColor) {
-        this.badgeColor = mBadgeColor;
+    public BadgeHelper setBadgeColor(int badgeColor) {
+        this.mBadgeColor = badgeColor;
         return this;
     }
 
     /**
-     * 设置小红点大小
+     * Set the size of badge
      *
-     * @param w
-     * @param h
-     * @return
+     * @param width Width
+     * @param height Height
      */
-    public BadgeHelper setBadgeSize(int w, int h) {
-        this.w = w;
-        this.h = h;
+    public BadgeHelper setBadgeSize(int width, int height) {
+        this.mWidth = width;
+        this.mHeight = height;
         return this;
     }
 
     /**
-     * 是否显示
-     * @param enable
+     * Set whether to show the badge
+     * @param enabled Whether to show the badge
      */
-    public BadgeHelper setBadgeEnable(boolean enable) {
-        setVisibility(enable?VISIBLE:INVISIBLE);
+    public BadgeHelper setBadgeEnabled(boolean enabled) {
+
+        long duration = getResources().getInteger(
+                android.R.integer.config_shortAnimTime);
+        if (!mIsViewBound) setVisibility(enabled?VISIBLE:INVISIBLE);
+        else {
+            if (enabled && getVisibility() != VISIBLE) CrossFadeUtils.fadeIn(this, duration);
+            else if (!enabled && getVisibility() == VISIBLE) CrossFadeUtils.fadeOut(this, duration);
+        }
         return this;
     }
 
 
     /**
-     * 设置小红点的文字
+     * Set the text of badge
      *
-     * @param number
+     * @param text The text of badge
      */
-    public BadgeHelper setBadgeNumber(int number) {
-        this.number = number;
-        this.text = String.valueOf(number);
-        if (isSetup) {
-            if(number==0){
-                setVisibility(INVISIBLE);
-            }else{
-                setVisibility(VISIBLE);
-            }
+    public BadgeHelper setBadgeText(@NonNull String text) {
+        this.mText = text;
+        if (mIsViewBound) {
             invalidate();
         }
         return this;
@@ -272,12 +231,12 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
 
 
     /**
-     * 绑定小红点到目标View的右上角
+     * Bind badge to the target view
      *
-     * @param target
+     * @param target Target view
      */
     public void bindToTargetView(View target) {
-        init(type, isOverlap);
+        init(mType, mIsOverlap);
         if (getParent() != null) {
             ((ViewGroup) getParent()).removeView(this);
         }
@@ -290,7 +249,7 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
             int groupIndex = parent.indexOfChild(target);
             parent.removeView(target);
 
-            if (isOverlap) {//[小红点与目标View重叠]模式
+            if (mIsOverlap) {// Overlap mode
                 FrameLayout badgeContainer = new FrameLayout(getContext());
                 ViewGroup.LayoutParams targetLayoutParams = target.getLayoutParams();
                 badgeContainer.setLayoutParams(targetLayoutParams);
@@ -303,19 +262,18 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
                 badgeContainer.addView(this);
 
                 FrameLayout.LayoutParams layoutParams = (FrameLayout.LayoutParams) getLayoutParams();
-                if(isCenterVertical) {
+                if(mIsCenterVertical) {
                     layoutParams.gravity =  Gravity.CENTER_VERTICAL ;
                 }else{
                     layoutParams.gravity = Gravity.END | Gravity.TOP;
                 }
                 if (mIgnoreTargetPadding) {
-                    layoutParams.rightMargin = target.getPaddingRight() - w;
-                    layoutParams.topMargin = target.getPaddingTop() - h / 2;
-
+                    layoutParams.rightMargin = target.getPaddingRight() - mWidth;
+                    layoutParams.topMargin = target.getPaddingTop() - mHeight / 2;
                 }
 
                 setLayoutParams(layoutParams);
-            } else {//[小红点放右侧]模式
+            } else {// Non-overlap mode
                 LinearLayout badgeContainer = new LinearLayout(getContext());
                 badgeContainer.setOrientation(LinearLayout.HORIZONTAL);
                 ViewGroup.LayoutParams targetLayoutParams = target.getLayoutParams();
@@ -327,53 +285,80 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
                 parent.addView(badgeContainer, groupIndex, targetLayoutParams);
                 badgeContainer.addView(target);
                 badgeContainer.addView(this);
-                if(isCenterVertical) {
+                if(mIsCenterVertical) {
                     badgeContainer.setGravity(Gravity.CENTER_VERTICAL);
                 }
             }
-            boolean hasSetMargin = leftMargin>0||topMargin>0||rightMargin>0||bottomMargin>0;
+            boolean hasSetMargin = mLeftMargin >0|| mTopMargin >0|| mRightMargin >0|| mBottomMargin >0;
             if (hasSetMargin&&getLayoutParams() instanceof ViewGroup.MarginLayoutParams) {
                 ViewGroup.MarginLayoutParams p = (ViewGroup.MarginLayoutParams) getLayoutParams();
-                p.setMargins(leftMargin, topMargin, rightMargin, bottomMargin);
+                p.setMargins(mLeftMargin, mTopMargin, mRightMargin, mBottomMargin);
                 setLayoutParams(p);
             }
-            isSetup = true;
+            mIsViewBound = true;
         } else if (target.getParent() == null) {
-            throw new IllegalStateException("目标View不能没有父布局!");
+            throw new IllegalStateException("Target view MUST have a parent layout!");
         }
-
-        if(number==0){
-            setVisibility(INVISIBLE);
-        }else{
-            setVisibility(VISIBLE);
-        }
-
     }
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (w > 0 && h > 0) {
-            setMeasuredDimension(w, h);
-        } else {
-            throw new IllegalStateException("如果你自定义了小红点的宽高,就不能设置其宽高小于0 ,否则请不要设置!");
+        if (mWidth >= 0 && mHeight >= 0) {// Size specified
+            setMeasuredDimension(mWidth, mHeight);
+            return;
         }
+
+        int width = 0,height = 0;
+        switch (mType) {
+            case Type.TYPE_POINT:
+                // Calculate the size of point badge
+                width = height = Math.round(mDensity * 7f);
+                break;
+            case Type.TYPE_TEXT:
+                // Calculate the size of text
+                if (mTextSize == 0) {
+                    mTextPaint.setTextSize(mDensity * 10);
+                } else {
+                    mTextPaint.setTextSize(mTextSize);
+                }
+
+                // Calculate the size of text badge
+                width = Math.round(getBadgeWidth());
+                height = Math.round(getBadgeHeight());
+                break;
+        }
+        setMeasuredDimension(width, height);
     }
 
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        rect.left = 0;
-        rect.top = 0;
-        rect.right = getWidth();
-        rect.bottom = getHeight();
-        canvas.drawRoundRect(rect, getWidth() / 2f, getWidth() / 2f, mBackgroundPaint);
+        mBackgroundPaint.setColor(mBadgeColor);
+        mTextPaint.setColor(mTextColor);
+        mRect.left = 0;
+        mRect.top = 0;
+        mRect.right = getWidth();
+        mRect.bottom = getHeight();
+        canvas.drawRoundRect(mRect, getRadius(), getRadius(), mBackgroundPaint);
 
-        if (type == Type.TYPE_TEXT) {
-            float textWidth = getTextWidth(text, mTextPaint);
-            float textHeight = getTextHeight(text, mTextPaint);
-            canvas.drawText(text, getWidth() / 2f - textWidth / 2, getHeight() / 2f + textHeight / 2, mTextPaint);
+        if (mType == Type.TYPE_TEXT) {
+            float textWidth = getTextWidth(mText, mTextPaint);
+            Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
+            float distance = (fontMetrics.bottom - fontMetrics.top)/2 - fontMetrics.bottom;
+            canvas.drawText(mText, getWidth() / 2f - textWidth / 2, mRect.centerY() + distance, mTextPaint);
         }
+    }
+
+    private float getRadius() {
+        return getBadgeHeight() / 2;
+    }
+    private float getBadgeWidth() {
+        return getTextWidth(mText, mTextPaint) + getRadius() * 2;
+    }
+    private float getBadgeHeight() {
+        // Make the background a little bigger than text
+        return getTextHeight(mText, mTextPaint) * 1.2f;
     }
 
     private float getTextWidth(String text, Paint p) {
@@ -385,8 +370,6 @@ public class BadgeHelper extends View {// TODO: fix needed. Not working.
         p.getTextBounds(text, 0, text.length(), rect);
         return rect.height();
     }
-
-
 }
 
 

@@ -25,11 +25,9 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 
 import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.ui.BadgeHelper;
 
-import java.util.List;
 import java.util.Map;
 
 public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> {
@@ -143,7 +141,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             mPeerProgressBar = mView.findViewById(R.id.peer_progress_bar);
             mPeerIcon = mView.findViewById(R.id.peer_icon);
 
-            badgeHelper = new BadgeHelper(view.getContext()).setBadgeEnable(false);
+            badgeHelper = new BadgeHelper(view.getContext()).setBadgeEnabled(false);
             badgeHelper.bindToTargetView(mPeerIconContainer);
         }
 
@@ -240,19 +238,21 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             badgeHelper
                     .setBadgeColor(color)
                     .setBadgeType(BadgeHelper.Type.TYPE_POINT)
-                    .setBadgeOverlap(true, true)
-                    .setBadgeEnable(true);
+                    .setBadgeOverlap(true)
+                    .setIgnoreTargetPadding(true)
+                    .setBadgeEnabled(true);
         }
         void addBadge(@ColorInt int color, int number){
             badgeHelper
                     .setBadgeColor(color)
                     .setBadgeType(BadgeHelper.Type.TYPE_TEXT)
-                    .setBadgeOverlap(true, true)
-                    .setBadgeNumber(number)
-                    .setBadgeEnable(true);
+                    .setBadgeOverlap(true)
+                    .setIgnoreTargetPadding(true)
+                    .setBadgeText(String.valueOf(number))
+                    .setBadgeEnabled(true);
         }
         void removeBadge(){
-            badgeHelper.setBadgeEnable(false);
+            badgeHelper.setBadgeEnabled(false);
         }
     }
 

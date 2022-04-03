@@ -41,7 +41,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (!TextUtils.isEmpty(intent.getAction())) {
             switch (intent.getAction()) {
-                // 用于指示 Wifi P2P 是否可用
+                // Whether WiFi P2P is available
                 case WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION: {
                     int state = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, -1);
                     if (state == WifiP2pManager.WIFI_P2P_STATE_ENABLED) {
@@ -62,7 +62,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
                     // Here shouldn't cause any exception, we should only register BroadcastReceiver after permissions are granted.
                     break;
                 }
-                // Wifi P2P 的连接状态发生了改变
+                // The connection status of WiFi P2P has changed
                 case WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION: {
                     @SuppressWarnings("deprecated") NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
                     if (networkInfo.isConnected()) {
@@ -72,7 +72,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
                     }
                     break;
                 }
-                //本设备的设备信息发生了变化
+                // The information of current device has changed
                 case WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION: {
                     mDirectActionListener.onSelfDeviceChanged(intent.getParcelableExtra(WifiP2pManager.EXTRA_WIFI_P2P_DEVICE));
                     break;
@@ -80,6 +80,5 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
             }
         }
     }
-
 }
 
