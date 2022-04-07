@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Preference Header -->
     <string name="prefs_header_msnearshare">Microsoft Nearshare</string>
 
@@ -7,4 +7,7 @@
     <string name="prefs_title_msnearshare_proximal_mode">Use proximal mode</string>
     <string name="prefs_summary_msnearshare_proximal_mode_on">Run in PROXIMAL mode</string>
     <string name="prefs_summary_msnearshare_proximal_mode_off">Run in SPATIALLY_PROXIMAL mode</string>
+
+    <string name="error_msnearshare_create_add_anonymous_account_failed">AccountManager addAccountAsync error: <xliff:g id="status" example="ERROR_UNKNOWN">%1$s</xliff:g></string>
+    <string name="error_msnearshare_create_add_anonymous_account_failed_with_throwable">AccountManager addAccountAsync error: <xliff:g id="status" example="ERROR_UNKNOWN">%1$s</xliff:g>, with throwable: <xliff:g id="throwable_message" example="Throwable message">%2$s</xliff:g></string>
 </resources>

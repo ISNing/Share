@@ -37,6 +37,7 @@ import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
+import org.exthmui.share.shared.base.events.DiscovererErrorOccurredEvent;
 import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.base.events.PeerAddedEvent;
@@ -58,32 +59,29 @@ import java.util.EventObject;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@SuppressWarnings("unchecked")
+
 public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     public static final String TAG = "NearShareManager";
 
-    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+            {
+                    OnDiscovererStartedListener.class,
+                    OnDiscovererStoppedListener.class,
+                    OnPeerAddedListener.class,
+                    OnPeerUpdatedListener.class,
+                    OnPeerRemovedListener.class,
+                    OnDiscovererErrorOccurredListener.class,
+                    OnSenderErrorOccurredListener.class
+            };
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
-
-    static {
-        LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
-                {
-                        OnDiscovererStartedListener.class,
-                        OnDiscovererStoppedListener.class,
-                        OnPeerAddedListener.class,
-                        OnPeerUpdatedListener.class,
-                        OnPeerRemovedListener.class,
-                        OnDiscovererErrorOccurredListener.class,
-                        OnSenderErrorOccurredListener.class
-                };
-    }
-
 
     private static NearShareManager instance;
     private final Context mContext;
@@ -150,14 +148,20 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     private void createAndAddAnonymousAccount(ConnectedDevicesPlatform platform) {
         ConnectedDevicesAccount account = ConnectedDevicesAccount.getAnonymousAccount();
         platform.getAccountManager().addAccountAsync(account).whenComplete((ConnectedDevicesAddAccountResult result, Throwable throwable) -> {
-            if (result.getStatus() == ConnectedDevicesAccountAddedStatus.SUCCESS){
+            if (result.getStatus() == ConnectedDevicesAccountAddedStatus.SUCCESS) {
                 Log.d(TAG, "AccountManager: Added account successfully");
-            } else {//TODO:Localize
+            } else {
+                String message;
+                String messageLocalized;
                 if (throwable == null) {
-                    Log.d(TAG, String.format("AccountManager addAccountAsync error: %1$s", result.getStatus()));
+                    message = String.format(Locale.ENGLISH, "AccountManager addAccountAsync error: %1$s", result.getStatus());
+                    messageLocalized = mContext.getString(R.string.error_msnearshare_create_add_anonymous_account_failed, result.getStatus());
                 } else {
-                    Log.d(TAG, String.format("AccountManager addAccountAsync error: %1$s, with throwable: %2$s", result.getStatus(), throwable.getMessage()));
+                    message = String.format(Locale.ENGLISH, "AccountManager addAccountAsync error: %1$s, with throwable: %2$s", result.getStatus(), throwable.getMessage());
+                    messageLocalized = mContext.getString(R.string.error_msnearshare_create_add_anonymous_account_failed_with_throwable, result.getStatus(), throwable.getLocalizedMessage());
                 }
+                notifyListeners(new DiscovererErrorOccurredEvent(this, message, messageLocalized));
+                Log.e(TAG, message);
             }
         });
     }
