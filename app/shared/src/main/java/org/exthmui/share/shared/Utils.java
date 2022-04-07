@@ -1,6 +1,5 @@
 package org.exthmui.share.shared;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -29,12 +28,8 @@ import java.util.UUID;
 public class Utils {
     public static final String TAG = "Utils";
 
-    @SuppressLint("ObsoleteSdkInt")
     public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1)
-            return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
-        else
-            return (Settings.Secure.getInt(cr, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
+        return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
     }
 
     public Bitmap Drawable2Bitmap(Drawable img) {

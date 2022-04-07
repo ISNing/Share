@@ -46,6 +46,7 @@ public class NearShareSendingWorker extends SendingWorker {
     public Result doWork() {
         Data input = getInputData();
         String uriString = input.getString(Entity.FILE_URI);
+        String fileName = input.getString(Entity.FILE_NAME);
         if (uriString == null)
             return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
         Uri uri = Uri.parse(uriString);
@@ -69,7 +70,7 @@ public class NearShareSendingWorker extends SendingWorker {
 
         operation = mNearShareSender.sendFileAsync(connectionRequest, fileProvider);
 
-        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileProvider.getFileName(), peer.getDisplayName()));
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileName, peer.getDisplayName()));
 
         operation.whenComplete((status, tr) -> {
             if (status == NearShareStatus.COMPLETED) {

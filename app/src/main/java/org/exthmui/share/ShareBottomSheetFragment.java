@@ -97,7 +97,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                 if (state != PeerChooserView.STATE_ENABLED &&
                         state != PeerChooserView.STATE_ENABLED_NO_PEER) {
                     Map<String, PeerInfo> peers = mService.getPeerInfoMap();
-                    mPeerChooser.setData(peers);
+                    requireActivity().runOnUiThread(() -> mPeerChooser.setData(peers));
                 }
             });
             mServiceListeners.add((OnDiscovererStoppedListener) event -> {
@@ -106,13 +106,13 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                 else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
             });
             mServiceListeners.add((OnPeerAddedListener) event -> {
-                mPeerChooser.addPeer(event.getPeer());
+                requireActivity().runOnUiThread(() -> mPeerChooser.addPeer(event.getPeer()));
             });
             mServiceListeners.add((OnPeerUpdatedListener) event -> {
-                mPeerChooser.updatePeer(event.getPeer());
+                requireActivity().runOnUiThread(() -> mPeerChooser.updatePeer(event.getPeer()));
             });
             mServiceListeners.add((OnPeerRemovedListener) event -> {
-                mPeerChooser.removePeer(event.getPeer());
+                requireActivity().runOnUiThread(() -> mPeerChooser.removePeer(event.getPeer()));
             });
             for (BaseEventListener listener : mServiceListeners)
                 mService.registerListener(listener);
