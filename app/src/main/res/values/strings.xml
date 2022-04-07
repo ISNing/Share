@@ -1,8 +1,8 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">Share</string>
-    <string name="status_sending_progress" formatted="true">%1$s/%2$s</string>
-    <string name="title_send_file" formatted="true">Send file \"%1$s\" to:</string>
-    <string name="title_send_files" formatted="true" tools:ignore="PluralsCandidate">Send \"%1$s\" and %2$d more files to:</string>
+    <string name="status_sending_progress" formatted="true"><xliff:g id="a" example="1.86MB">%1$s</xliff:g>/<xliff:g id="b" example="3.2GB">%2$s</xliff:g></string>
+    <string name="title_send_file" formatted="true">Send file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" to:</string>
+    <string name="title_send_files" formatted="true" tools:ignore="PluralsCandidate">Send \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%2$d</xliff:g> more files to:</string>
 
     <string name="tile_scanning_default">Scanning</string>
     <string name="tile_scanning_enabled">Scanning</string>
@@ -21,9 +21,9 @@
     <string name="button_non_scanning_place_holder_enable">Start to scan peers</string>
 
     <string name="toast_no_file">No file was selected</string>
-    <string name="toast_send_error_occurred_with_message" formatted="true">An error occurred when sending: %1$s</string>
-    <string name="toast_discover_error_occurred_with_message" formatted="true">An error occurred when discovering: %1$s</string>
-    <string name="toast_receive_error_occurred_with_message" formatted="true">An error occurred when receiving: %1$s</string>
+    <string name="toast_send_error_occurred_with_message" formatted="true">An error occurred when sending: <xliff:g id="error_message">%1$s</xliff:g></string>
+    <string name="toast_discover_error_occurred_with_message" formatted="true">An error occurred when discovering: <xliff:g id="error_message">%1$s</xliff:g></string>
+    <string name="toast_receive_error_occurred_with_message" formatted="true">An error occurred when receiving: <xliff:g id="error_message">%1$s</xliff:g></string>
 
     <!-- Settings Activity Title -->
     <string name="title_activity_settings">Settings</string>
@@ -35,4 +35,19 @@
     <string name="prefs_summary_global_plugins_enabled_none">No plugins enabled</string>
     <string name="content_description_peer_icon">Peer Icon</string>
 
+    <string name="transition_name_peer_icon_container" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_name_icon_container</string>
+    <string name="transition_name_peer_progress_bar" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_progress_bar</string>
+    <string name="transition_name_peer_icon" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_name_icon</string>
+    <string name="transition_name_peer_name_text" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_name_text</string>
+    <string name="transition_name_peer_device_type_text" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_device_type_text</string>
+    <string name="transition_name_peer_plugin_text" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_plugin_text</string>
+    <string name="transition_name_peer_detail_text" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g>_peer_detail_text</string>
+
+    <string name="content_description_view_peer_information_back_button">Back</string>
+
+    <string name="fragment_share_action_button_send">Send</string>
+    <string name="fragment_share_cancel_button">Cancel</string>
+
+    <string name="view_peer_information_peer_device_type_tag_text">Device type:&#160;</string>
+    <string name="view_peer_information_peer_plugin_tag_text">From plugin:&#160;</string>
 </resources>

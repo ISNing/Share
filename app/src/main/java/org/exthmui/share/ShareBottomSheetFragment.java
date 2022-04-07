@@ -1,7 +1,6 @@
 package org.exthmui.share;
 
 import static android.content.Context.BIND_AUTO_CREATE;
-import static org.exthmui.share.PeersAdapter.REQUEST_CODE_PICK_FILE;
 
 import android.content.Context;
 import android.content.Intent;
@@ -16,7 +15,6 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
@@ -45,24 +43,18 @@ import java.util.Set;
 
 public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 
-    private static final String TAG = "ShareBottomSheetFragment";
+    public static final String TAG = "ShareBottomSheetFragment";
 
     public void setEntities(List<Entity> entities) {
-        if(mEntities != null) mEntities = entities;
+        if (mEntities != null) mEntities = entities;
     }
-
-    public enum ClickAction{
-        SEND_ENTITIES,
-        CHOOSE_ENTITIES
-    }
-
-    private ClickAction CLICK_ACTION;
 
     private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
-    private @Nullable DiscoverService mService;
+    @Nullable
+    private DiscoverService mService;
 
     private final Set<BaseEventListener> mServiceListeners = new HashSet<>();
-    
+
     private PeerChooserView mPeerChooser;
     private Button mCancelButton;
     private TextView mTitle;
@@ -101,7 +93,12 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
             else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
 
             mServiceListeners.add((OnDiscovererStartedListener) event -> {
-                mPeerChooser.discoverStarted();
+                int state = mPeerChooser.getState();
+                if (state != PeerChooserView.STATE_ENABLED &&
+                        state != PeerChooserView.STATE_ENABLED_NO_PEER) {
+                    Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+                    mPeerChooser.setData(peers);
+                }
             });
             mServiceListeners.add((OnDiscovererStoppedListener) event -> {
                 if (!mService.isDiscoverersAvailable())
@@ -117,7 +114,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
             mServiceListeners.add((OnPeerRemovedListener) event -> {
                 mPeerChooser.removePeer(event.getPeer());
             });
-            for (BaseEventListener listener: mServiceListeners)
+            for (BaseEventListener listener : mServiceListeners)
                 mService.registerListener(listener);
 
             mPeerChooser.setEnableButtonOnClickListener(var1 -> mService.startDiscoverers());
@@ -130,7 +127,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
     public void onDestroy() {
         super.onDestroy();
         if (mService != null) {
-            for (BaseEventListener listener: mServiceListeners)
+            for (BaseEventListener listener : mServiceListeners)
                 mService.unregisterListener(listener);
             mService.beforeUnbind();
         }
@@ -149,17 +146,18 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
         super.onViewCreated(view, savedInstanceState);
 
         mPeerChooser = view.findViewById(R.id.fragment_share_peer_chooser);
+        mPeerChooser.initialize(getChildFragmentManager());
         mTitle = view.findViewById(R.id.fragment_share_title);
         mCancelButton = view.findViewById(R.id.fragment_share_cancel_button);
         mActionButton = view.findViewById(R.id.fragment_share_action_button);
 
         mCancelButton.setOnClickListener(v -> onCancel());
 
-        if(mEntities.isEmpty()) {
+        if (mEntities.isEmpty()) {
             Log.w(TAG, "No file was selected");
             Toast.makeText(getContext(), R.string.toast_no_file, Toast.LENGTH_SHORT).show();
-            requireActivity().finish();
-        } else if(mEntities.size() == 1) {
+            dismiss();
+        } else if (mEntities.size() == 1) {
             mTitle.setText(getString(R.string.title_send_file, mEntities.get(0).getFileName()));
         } else {
             mTitle.setText(getString(R.string.title_send_files, mEntities.get(0).getFileName(), mEntities.size() - 1));
@@ -180,7 +178,7 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                 }
             }
 
-            public void sendTo(@NonNull PeerInfo target, @NonNull List<Entity> entities){
+            public void sendTo(@NonNull PeerInfo target, @NonNull List<Entity> entities) {
                 Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
                 if (connectionType == null) return;// TODO: handle failure
                 try {
@@ -192,75 +190,44 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
                     exception.printStackTrace();
                 }
             }
+
             @Override
             public void onClick(View v) {
-                if (CLICK_ACTION == ClickAction.CHOOSE_ENTITIES) {//TODO: remove it?
-                    Intent requestIntent = new Intent(Intent.ACTION_GET_CONTENT)
-                            .addCategory(Intent.CATEGORY_OPENABLE)
-                            .setType("*/*")
-                            .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                    ActivityCompat.startActivityForResult(requireActivity(), Intent.createChooser(requestIntent, "File"), REQUEST_CODE_PICK_FILE, null);
-                } else if (CLICK_ACTION == ClickAction.SEND_ENTITIES) {
-                    if (mEntities == null) throw new NoEntityPassedException();
-                    if (mService == null) mConnection.registerOnServiceConnectedListener(s -> {
-                        DiscoverService service = (DiscoverService) s;
-                        PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
-                        if (peer == null) return; // TODO: handle failure
-                        if (mEntities.size() == 1) {
-                            sendTo(peer, mEntities.get(0));
-                        } else {
-                            sendTo(peer, mEntities);
-                        }
-                    });
-                    else {
-                        PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
-                        if (peer == null) return; // TODO: handle failure
-                        if (mEntities.size() == 1) {
-                            sendTo(peer, mEntities.get(0));
-                        } else {
-                            sendTo(peer, mEntities);
-                        }
+                if (mEntities == null) throw new NoEntityPassedException();
+                if (mService == null) mConnection.registerOnServiceConnectedListener(s -> {
+                    DiscoverService service = (DiscoverService) s;
+                    PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+                    if (peer == null) return; // TODO: handle failure
+                    if (mEntities.size() == 1) {
+                        sendTo(peer, mEntities.get(0));
+                    } else {
+                        sendTo(peer, mEntities);
                     }
+                    dismiss();
+                });
+                else {
+                    PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+                    if (peer == null) {
+                        handleError(requireContext(), "Peer disappeared");// TODO:handle failure
+                        return;
+                    }
+                    if (mEntities.size() == 1) {
+                        sendTo(peer, mEntities.get(0));
+                    } else {
+                        sendTo(peer, mEntities);
+                    }
+                    dismiss();
                 }
             }
         });
     }
 
-//    @Override
-//    public void onResume() {
-//        super.onResume();
-//
-//        mWifiStateMonitor.register(getContext());
-//        mBluetoothStateMonitor.register(getContext());
-//
-//        if (setupIfNeeded()) {
-//            return;
-//        }
-//
-//        if (!mIsDiscovering) {
-//            mAirDropManager.startDiscover(this);
-//            mNearShareManager.startDiscover(this);
-//            mIsDiscovering = true;
-//        }
-//    }
-//
-//    @Override
-//    public void onPause() {
-//        super.onPause();
-//
-//        if (mIsDiscovering && !mShouldKeepDiscovering) {
-//            mAirDropManager.stopDiscover();
-//            mNearShareManager.stopDiscover();
-//            mIsDiscovering = false;
-//        }
-//
-//        mWifiStateMonitor.unregister(getContext());
-//        mBluetoothStateMonitor.unregister(getContext());
-//    }
-//
+    private void handleError(Context context, String message) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
+    }
 
     public void onCancel() {
-        requireActivity().finish();
+        dismiss();
     }
 
     @Override

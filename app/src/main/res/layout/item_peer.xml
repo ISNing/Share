@@ -8,22 +8,20 @@
     android:orientation="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/peer_icon_container"
-            android:layout_width="@dimen/peer_icon_container_length"
-            android:layout_height="@dimen/peer_icon_container_length"
-            android:layout_margin="8dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+        android:id="@+id/peer_icon_container"
+        android:layout_width="@dimen/peer_icon_container_length"
+        android:layout_height="@dimen/peer_icon_container_length"
+        android:layout_margin="8dp">
 
         <ProgressBar
-                android:id="@+id/peer_progress_bar"
-                android:layout_width="0dp"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                style="@android:style/Widget.Material.Light.ProgressBar.Large" />
+            android:id="@+id/peer_progress_bar"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            style="@android:style/Widget.Material.Light.ProgressBar.Large" />
 
         <ImageView
             android:id="@+id/peer_icon"
@@ -46,11 +44,8 @@
         android:ellipsize="end"
         android:maxWidth="64dp"
         android:maxLines="2"
-        android:textColor="?android:attr/textColorSecondary"
+        android:textColor="?android:attr/textColorPrimary"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="@id/peer_icon_container"
-        app:layout_constraintStart_toStartOf="@id/peer_icon_container"
-        app:layout_constraintTop_toBottomOf="@id/peer_icon_container"
         tools:text="Peer" />
 
     <TextView
@@ -60,11 +55,8 @@
         android:layout_gravity="center"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textColor="?android:attr/textColorTertiary"
+        android:textColor="?android:attr/textColorSecondary"
         android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="@id/peer_icon_container"
-        app:layout_constraintStart_toStartOf="@id/peer_icon_container"
-        app:layout_constraintTop_toBottomOf="@id/peer_name_text"
         tools:text="192.168.0.8"
         tools:visibility="visible" />
 </LinearLayout>

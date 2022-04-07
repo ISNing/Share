@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class NearShareSendingWorker extends SendingWorker {
 
-    private static final String TAG = "NearShareSendingWorker";
+    public static final String TAG = "NearShareSendingWorker";
 
     private NearShareSender mNearShareSender;
 

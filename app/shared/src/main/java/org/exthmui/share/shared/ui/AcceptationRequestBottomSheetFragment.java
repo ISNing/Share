@@ -1,7 +1,6 @@
 package org.exthmui.share.shared.ui;
 
 import android.app.PendingIntent;
-import android.content.Context;
 import android.os.Bundle;
 import android.text.format.Formatter;
 import android.view.LayoutInflater;
@@ -20,7 +19,7 @@ import org.exthmui.share.shared.ReceiverUtils;
 
 public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFragment {
 
-    private static final String TAG = "AcceptationRequestBottomSheetFragment";
+    public static final String TAG = "AcceptationRequestBottomSheetFragment";
 
     private final String mPluginCode;
     private final String mPeerName;
@@ -81,6 +80,10 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
                 e.printStackTrace();
             }
         });
+    }
+
+    public void onCancel() {
+        dismiss();
     }
 
     @Override

@@ -55,7 +55,7 @@ import java.util.concurrent.ExecutionException;
 
 public class DirectReceivingWorker extends ReceivingWorker {
 
-    private static final String TAG = "DirectReceivingWorker";
+    public static final String TAG = "DirectReceivingWorker";
 
     public DirectReceivingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);

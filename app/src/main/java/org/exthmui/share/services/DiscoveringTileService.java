@@ -1,10 +1,7 @@
 package org.exthmui.share.services;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.graphics.drawable.Icon;
-import android.os.IBinder;
 import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 import android.util.Log;
@@ -14,14 +11,9 @@ import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
 import org.exthmui.share.shared.ServiceUtils;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
-
-import java.util.EventListener;
-import java.util.HashSet;
-import java.util.Set;
 
 public class DiscoveringTileService extends TileService {
-    private static final String TAG = "DiscoveringTileService";
+    public static final String TAG = "DiscoveringTileService";
 
     private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
     @Nullable private DiscoverService mService;

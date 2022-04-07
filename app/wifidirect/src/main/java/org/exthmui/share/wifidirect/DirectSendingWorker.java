@@ -57,7 +57,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class DirectSendingWorker extends SendingWorker {
 
-    private static final String TAG = "DirectSendingWorker";
+    public static final String TAG = "DirectSendingWorker";
 
     public DirectSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);

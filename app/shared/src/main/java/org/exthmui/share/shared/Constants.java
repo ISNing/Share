@@ -53,15 +53,18 @@ public class Constants {
     }
 
     public enum DeviceType {
-        DESKTOP(1, R.drawable.ic_desktop),LAPTOP(2, R.drawable.ic_laptop),
-        PHONE(3, R.drawable.ic_phone),TABLET(4, R.drawable.ic_tablet),
-        UNKNOWN(0, R.drawable.ic_device_unknown);
+        DESKTOP(1, R.string.device_type_desktop, R.drawable.ic_desktop), LAPTOP(2, R.string.device_type_laptop, R.drawable.ic_laptop),
+        PHONE(3, R.string.device_type_phone, R.drawable.ic_phone), TABLET(4, R.string.device_type_tablet, R.drawable.ic_tablet),
+        UNKNOWN(0, R.string.device_type_unknown, R.drawable.ic_device_unknown);
         private final int numVal;
+        @StringRes
+        private final int friendlyNameRes;
         @DrawableRes
         private final int imgRes;
 
-        DeviceType(int numVal, int imgRes) {
+        DeviceType(int numVal, @StringRes int friendlyNameRes, @DrawableRes int imgRes) {
             this.numVal = numVal;
+            this.friendlyNameRes = friendlyNameRes;
             this.imgRes = imgRes;
         }
 
@@ -77,7 +80,12 @@ public class Constants {
         public int getNumVal() {
             return numVal;
         }
-        public int getImgRes(){
+
+        public int getFriendlyNameRes() {
+            return friendlyNameRes;
+        }
+
+        public int getImgRes() {
             return imgRes;
         }
     }
@@ -88,9 +96,10 @@ public class Constants {
         TRANSMITTING(3, R.string.connection_status_transmitting),
         UNKNOWN(0, R.string.connection_status_unknown);
         private final int numVal;
+        @StringRes
         private final int strRes;
 
-        ConnectionStatus(int numVal, int strRes) {
+        ConnectionStatus(int numVal, @StringRes int strRes) {
             this.numVal = numVal;
             this.strRes = strRes;
         }
@@ -99,6 +108,7 @@ public class Constants {
             return numVal;
         }
 
+        @StringRes
         public int getStrRes() {
             return strRes;
         }
@@ -126,7 +136,7 @@ public class Constants {
         @StringRes
         private final int friendlyStringRes;
 
-        TransmissionStatus(int numVal, int friendlyStringRes) {
+        TransmissionStatus(int numVal, @StringRes int friendlyStringRes) {
             this.numVal = numVal;
             this.friendlyStringRes = friendlyStringRes;
         }

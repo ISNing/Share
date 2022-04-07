@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     MultiSelectListPreference pluginsEnabledPrefs;
@@ -246,8 +245,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
-            if (uri == null) mDestinationDirectoryPrefs.setValue(null);
-            else mDestinationDirectoryPrefs.setValue(uri.toString());
+            if (uri != null) mDestinationDirectoryPrefs.setValue(uri.toString());
         });
     }
 }

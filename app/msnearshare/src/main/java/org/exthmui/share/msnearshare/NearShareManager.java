@@ -65,7 +65,7 @@ import java.util.UUID;
 @SuppressWarnings("unchecked")
 public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
-    private static final String TAG = "NearShareManager";
+    public static final String TAG = "NearShareManager";
 
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED;
 
@@ -93,13 +93,15 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
 
     private ConnectedDevicesPlatform mPlatform;
-    @Nullable private RemoteSystemWatcher mRemoteSystemWatcher;
+    @Nullable
+    private RemoteSystemWatcher mRemoteSystemWatcher;
 
     @Override
     public void registerListener(BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
+
     @Override
     public void unregisterListener(BaseEventListener listener) {
         mListeners.remove(listener);

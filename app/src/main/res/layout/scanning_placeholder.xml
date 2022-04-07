@@ -2,12 +2,13 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="center"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <org.exthmui.share.ui.WaveView
         android:id="@+id/scanning_placeholder_wave_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="@dimen/view_peer_chooser_min_height"
         android:paddingHorizontal="16dp"
         app:gravity="center_vertical|inner_start"
         app:layout_constraintBottom_toBottomOf="parent"

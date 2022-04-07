@@ -2,8 +2,15 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    app:layout_constraintHorizontal_weight="0.5">
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/code_auth_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Code Auth Title"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <include
         layout="@layout/code_view"
@@ -13,6 +20,6 @@
         android:layout_marginBottom="@dimen/code_auth_margin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/code_auth_title" />
+        app:layout_constraintTop_toBottomOf="@id/code_auth_title" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

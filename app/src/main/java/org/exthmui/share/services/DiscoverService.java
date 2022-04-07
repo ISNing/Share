@@ -45,7 +45,7 @@ import java.util.Set;
 
 public class DiscoverService extends ServiceUtils.MyService implements org.exthmui.share.shared.services.IDiscoverService {
 
-    private static final String TAG = "DiscoverService";
+    public static final String TAG = "DiscoverService";
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]

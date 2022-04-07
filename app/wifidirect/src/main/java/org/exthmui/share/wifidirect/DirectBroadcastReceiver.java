@@ -14,7 +14,7 @@ import java.util.List;
 
 public class DirectBroadcastReceiver extends BroadcastReceiver {
 
-    private static final String TAG = "DirectBroadcastReceiver";
+    public static final String TAG = "DirectBroadcastReceiver";
 
     private final WifiP2pManager mWifiP2pManager;
 

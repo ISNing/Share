@@ -11,7 +11,7 @@ import com.yanzhenjie.andserver.Server;
 import java.util.concurrent.TimeUnit;
 
 public class WebServerService extends Service {
-    private static final String TAG = "WebServerService";
+    public static final String TAG = "WebServerService";
     private static Server mServer;
     private static WebServerService sInstance;
 

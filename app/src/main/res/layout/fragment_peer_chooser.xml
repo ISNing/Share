@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:minHeight="@dimen/view_peer_chooser_min_height"
+    tools:context=".ui.PeerChooserFragment">
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/fragment_peer_chooser_recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:paddingHorizontal="8dp"
+        android:visibility="gone"
+        tools:itemCount="1"
+        tools:listitem="@layout/item_peer"
+        tools:visibility="visible" />
+
+    <include
+        android:id="@+id/fragment_peer_chooser_scanning_placeholder"
+        layout="@layout/scanning_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
+
+    <include
+        android:id="@+id/fragment_peer_chooser_non_scanning_placeholder"
+        layout="@layout/non_scanning_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
+
+    <include
+        android:id="@+id/fragment_peer_chooser_unavailable_placeholder"
+        layout="@layout/unavailable_placeholder"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        tools:visibility="gone" />
+
+</FrameLayout>

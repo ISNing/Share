@@ -29,7 +29,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
 
 public class BadgeHelper extends View {
-    private static final String TAG = "BadgeHelper";
+    public static final String TAG = "BadgeHelper";
     private float mDensity;
     private final Paint mTextPaint;
     private final Paint mBackgroundPaint;
@@ -312,7 +312,7 @@ public class BadgeHelper extends View {
         switch (mType) {
             case Type.TYPE_POINT:
                 // Calculate the size of point badge
-                width = height = Math.round(mDensity * 7f);
+                width = height = Math.round(getBadgeHeight());
                 break;
             case Type.TYPE_TEXT:
                 // Calculate the size of text
@@ -351,14 +351,30 @@ public class BadgeHelper extends View {
     }
 
     private float getRadius() {
-        return getBadgeHeight() / 2;
+        return getHeight() / 2f;
     }
     private float getBadgeWidth() {
-        return getTextWidth(mText, mTextPaint) + getRadius() * 2;
+        switch (mType) {
+            case Type.TYPE_POINT:
+                return mDensity * 7f;
+            case Type.TYPE_TEXT:
+                return getTextWidth(mText, mTextPaint) + getRadius() * 2;
+            default:
+                Log.e(TAG, "Invalid type!");
+                return 0;
+        }
     }
     private float getBadgeHeight() {
-        // Make the background a little bigger than text
-        return getTextHeight(mText, mTextPaint) * 1.2f;
+        switch (mType) {
+            case Type.TYPE_POINT:
+                return mDensity * 7f;
+            case Type.TYPE_TEXT:
+                // Make the background a little bigger than text
+                return getTextHeight(mText, mTextPaint) * 1.2f;
+            default:
+                Log.e(TAG, "Invalid type!");
+                return 0;
+        }
     }
 
     private float getTextWidth(String text, Paint p) {

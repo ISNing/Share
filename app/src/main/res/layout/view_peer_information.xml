@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp"
+    android:background="?android:attr/selectableItemBackgroundBorderless"
+    android:orientation="vertical"
+    tools:context=".ui.PeerInformationView">
+
+    <ImageView
+        android:id="@+id/peer_icon"
+        android:transitionName="peer_icon"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:contentDescription="@string/content_description_peer_icon"
+        android:src="@drawable/ic_phone"
+        app:layout_constraintStart_toEndOf="@id/view_peer_information_back_button"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/peer_name_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="?android:attr/textColorPrimary"
+        style="?android:attr/textAppearanceLarge"
+        app:layout_constraintStart_toEndOf="@id/peer_icon"
+        app:layout_constraintTop_toTopOf="@id/peer_icon"
+        tools:text="Peer" />
+
+    <TextView
+        android:id="@+id/peer_device_type_tag_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/view_peer_information_peer_device_type_tag_text"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintStart_toEndOf="@id/peer_icon"
+        app:layout_constraintTop_toBottomOf="@id/peer_name_text" />
+
+    <TextView
+        android:id="@+id/peer_device_type_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintStart_toEndOf="@id/peer_device_type_tag_text"
+        app:layout_constraintTop_toBottomOf="@id/peer_name_text"
+        tools:text="Phone" />
+
+    <TextView
+        android:id="@+id/peer_plugin_tag_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/view_peer_information_peer_plugin_tag_text"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintStart_toEndOf="@id/peer_icon"
+        app:layout_constraintTop_toBottomOf="@id/peer_device_type_text" />
+
+    <TextView
+        android:id="@+id/peer_plugin_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintStart_toEndOf="@id/peer_plugin_tag_text"
+        app:layout_constraintTop_toBottomOf="@id/peer_device_type_text"
+        tools:text="WiFi Direct" />
+
+    <TextView
+        android:id="@+id/peer_detail_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="?android:attr/textColorSecondary"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/peer_icon"
+        app:layout_constraintTop_toBottomOf="@id/peer_plugin_text"
+        tools:text="IP:192.168.0.8" />
+
+    <ImageButton
+        android:id="@+id/view_peer_information_back_button"
+        style="@style/Widget.Material3.Button.IconButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/content_description_view_peer_information_back_button"
+        android:minWidth="48dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="?attr/actionModeCloseDrawable" />
+</androidx.constraintlayout.widget.ConstraintLayout>

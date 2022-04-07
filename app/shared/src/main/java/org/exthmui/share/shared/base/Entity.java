@@ -30,7 +30,7 @@ import java.io.InputStream;
 
 public class Entity {
 
-    private static final String TAG = "Entity";
+    public static final String TAG = "Entity";
 
     public static final String FILE_URI = "FILE_URI";
     public static final String FILE_URIS = "FILE_URIS";

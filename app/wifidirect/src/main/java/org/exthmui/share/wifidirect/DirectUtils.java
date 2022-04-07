@@ -11,7 +11,7 @@ import org.exthmui.share.shared.Utils;
 import java.util.Random;
 
 public class DirectUtils {
-    private static final String TAG = "DirectUtils";
+    public static final String TAG = "DirectUtils";
     public static int generatePort(int except){
         int port;
         do {

@@ -17,7 +17,6 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
-import android.net.wifi.p2p.nsd.WifiP2pServiceRequest;
 import android.os.Looper;
 import android.util.Log;
 
@@ -63,7 +62,7 @@ import java.util.UUID;
 
 public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
-    private static final String TAG = "DirectManager";
+    public static final String TAG = "DirectManager";
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
@@ -345,7 +344,11 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
     @Override
     public void stopDiscover() {
-        mContext.unregisterReceiver(mBroadcastReceiver);
+        try {
+            mContext.unregisterReceiver(mBroadcastReceiver);
+        } catch (IllegalArgumentException e) {
+            Log.e(TAG, "Failed unregistering BroadcastReceiver");
+        }
 
         mWifiP2pManager.removeServiceRequest(mChannel, mServiceRequest, new WifiP2pManager.ActionListener() {
             @Override

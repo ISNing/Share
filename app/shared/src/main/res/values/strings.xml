@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="content_uri_authority">org.exthmui.share.files</string>
     <string name="connection_status_available">Available</string>
     <string name="connection_status_unavailable">Unavailable</string>
@@ -26,12 +26,12 @@
     <string name="prefs_title_global_peer_id">Device ID</string>
     <string name="prefs_default_global_peer_id" translatable="false">@null</string>
     <string name="prefs_summary_global_peer_id_hidden">Tap here to regenerate your identity</string>
-    <string name="prefs_summary_global_peer_id_show" formatted="true">%1$s (Tap here to regenerate)</string>
+    <string name="prefs_summary_global_peer_id_show" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g> (Tap here to regenerate)</string>
     <string name="toast_global_peer_id_regenerated" formatted="true">Device ID regenerated</string>
 
-    <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for %1$s(Discover)</string>
+    <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
-    <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for %1$s(Receive)</string>
+    <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Receive)</string>
     <string name="prefs_summary_global_permissions_not_granted_receive">Touch here to grant for permission for receiving</string>
 
     <string name="notification_channel_group_progress_name">Progresses</string>
@@ -58,7 +58,7 @@
     <string name="notification_action_reject">Reject</string>
 
     <string name="notification_title_receive_request">Share Request</string>
-    <string name="notification_content_receive_request" formatted="true">\"%1$s\" want\'s to share \"%2$s\" with you\nSize: %3$s</string>
+    <string name="notification_content_receive_request" formatted="true">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" with you\nSize: <xliff:g id="file_size" example="1.86MB">%3$s</xliff:g></string>
 
     <string name="notification_channel_send_name">Send</string>
     <string name="notification_channel_send_description">Show you sending progress</string>
@@ -68,19 +68,19 @@
 
     <string name="notification_title_send_service">Discover/Sender Service running</string>
 
-    <string name="notification_title_sending" formatted="true">Sending file \"%1$s\" to %2$s</string>
-    <string name="notification_title_sending_two" formatted="true">Sending \"%1$s\", \"%2$s\" to %3$s</string>
-    <string name="notification_title_sending_multi" formatted="true" tools:ignore="PluralsCandidate">Sending \"%1$s\", \"%2$s\" and %3$d more files to %4$s</string>
+    <string name="notification_title_sending" formatted="true">Sending file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%2$s</xliff:g></string>
+    <string name="notification_title_sending_two" formatted="true">Sending \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%3$s</xliff:g></string>
+    <string name="notification_title_sending_multi" formatted="true" tools:ignore="PluralsCandidate">Sending \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files to <xliff:g id="target_name" example="ISNing's Tablet">%4$s</xliff:g></string>
     <string name="notification_action_cancel">Cancel</string>
 
-    <string name="dialog_title_accept_or_reject_request" formatted="true">%1$s request to send you file \"%2$s\"</string>
-    <string name="dialog_accept_or_reject_request_size" formatted="true">Size: %1$s</string>
+    <string name="dialog_title_accept_or_reject_request" formatted="true"><xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g> request to send you file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</string>
+    <string name="dialog_accept_or_reject_request_size" formatted="true">Size: <xliff:g id="file_size" example="1.86MB">%1$s</xliff:g></string>
     <string name="dialog_action_accept">Accept</string>
     <string name="dialog_action_reject">Reject</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
-    <string name="notification_title_receive_receiving" formatted="true">Receiving file \"%1$s\" from %2$s</string>
-    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"%1$s\", \"%2$s\" to %3$s</string>
-    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"%1$s\", \"%2$s\" and %3$d more files to %4$s</string>
+    <string name="notification_title_receive_receiving" formatted="true">Receiving file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" from <xliff:g id="sender_name" example="ISNing's Phone">%2$s</xliff:g></string>
+    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\ from <xliff:g id="sender_name" example="ISNing's Phone">%2$s</xliff:g></string>
+    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files from %<xliff:g id="sender_name" example="ISNing's Phone">%4$s</xliff:g></string>
     <string name="notification_placeholder_unknown">Unknown</string>
 
     <!-- Transmission Status Friendly -->
@@ -101,4 +101,10 @@
     <string name="transmission_status_no_enough_space">No enough disk space</string>
     <string name="transmission_status_remote_error">Remote unknown error</string>
     <string name="transmission_status_peer_disappeared">Peer disappeared</string>
+
+    <string name="device_type_desktop">Desktop</string>
+    <string name="device_type_laptop">Laptop</string>
+    <string name="device_type_phone">Phone</string>
+    <string name="device_type_tablet">Tablet</string>
+    <string name="device_type_unknown">Unknown</string>
 </resources>

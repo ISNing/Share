@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 public class Utils {
-    private static final String TAG = "Utils";
+    public static final String TAG = "Utils";
 
     @SuppressLint("ObsoleteSdkInt")
     public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
@@ -149,5 +149,15 @@ public class Utils {
 
     public static SharedPreferences getDefaultSharedPreferences(Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context);
+    }
+
+    public static int dip2px(Context context, float dpValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (dpValue * scale + 0.5f);
+    }
+
+    public static int px2dip(Context context, float pxValue) {
+        final float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (pxValue / scale + 0.5f);
     }
 }

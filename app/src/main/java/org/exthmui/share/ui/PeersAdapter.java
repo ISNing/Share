@@ -1,4 +1,4 @@
-package org.exthmui.share;
+package org.exthmui.share.ui;
 
 import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_SENT;
 import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_TOTAL;
@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.MutableLiveData;
@@ -24,9 +25,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.Data;
 import androidx.work.WorkInfo;
 
+import org.exthmui.share.R;
 import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.ui.BadgeHelper;
 
 import java.util.Map;
 
@@ -34,16 +35,28 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
 
     public static final int REQUEST_CODE_PICK_FILE = 0;
 
-    private final LayoutInflater mInflater;
+    private LayoutInflater mInflater;
     private final ArrayMap<String, PeerInfo> mPeers = new ArrayMap<>();
 
-    private final Context mContext;
+    @Nullable
+    private OnPeerSelectedListener mOnPeerSelectedListener;
 
     private final MutableLiveData<String> mPeerSelectedLiveData = new MutableLiveData<>(null);
 
-    public PeersAdapter(Context context) {
-        mContext = context;
+    public PeersAdapter() {
+    }
+
+    public void initialize(Context context) {
         mInflater = LayoutInflater.from(context);
+    }
+
+    public void setOnPeerSelectedListener(@Nullable OnPeerSelectedListener onPeerSelectedListener) {
+        this.mOnPeerSelectedListener = onPeerSelectedListener;
+    }
+
+    @Override
+    public void onAttachedToRecyclerView(@NonNull RecyclerView recyclerView) {
+        super.onAttachedToRecyclerView(recyclerView);
     }
 
     @Override
@@ -65,7 +78,11 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
         holder.setPeer(peer);
         final boolean selected = id.equals(mPeerSelectedLiveData.getValue());
         holder.itemView.setSelected(selected);
-        holder.itemView.setOnClickListener(view -> mPeerSelectedLiveData.setValue(peer.getId()));
+        holder.itemView.setOnClickListener(view -> {
+            if (mOnPeerSelectedListener == null || mOnPeerSelectedListener.onPeerSelected(peer, holder)) {
+                mPeerSelectedLiveData.setValue(peer.getId());
+            }
+        });
     }
 
     @Override
@@ -118,17 +135,16 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
         private PeerInfo peer;
-        private BadgeHelper badgeHelper;
-        private boolean selected;
+        private final BadgeHelper badgeHelper;
 
         LifecycleOwner mLifecycleOwner;
 
-        private View mView;
-        private ConstraintLayout mPeerIconContainer;
-        private TextView mPeerNameText;
-        private TextView mPeerDetailText;
-        private ProgressBar mPeerProgressBar;
-        private ImageView mPeerIcon;
+        private final View mView;
+        private final ConstraintLayout mPeerIconContainer;
+        private final TextView mPeerNameText;
+        private final TextView mPeerDetailText;
+        private final ProgressBar mPeerProgressBar;
+        private final ImageView mPeerIcon;
 
         ViewHolder(View view) {
             super(view);
@@ -141,20 +157,54 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             mPeerProgressBar = mView.findViewById(R.id.peer_progress_bar);
             mPeerIcon = mView.findViewById(R.id.peer_icon);
 
-            badgeHelper = new BadgeHelper(view.getContext()).setBadgeEnabled(false);
-            badgeHelper.bindToTargetView(mPeerIconContainer);
+            badgeHelper = new BadgeHelper(view.getContext())
+                    .setBadgeOverlap(true)
+                    .setBadgeType(BadgeHelper.Type.TYPE_POINT)
+                    .setBadgeEnabled(true);
+            badgeHelper.bindToTargetView(mPeerIcon);
+        }
+
+        public View getView() {
+            return mView;
+        }
+
+        public ConstraintLayout getPeerIconContainer() {
+            return mPeerIconContainer;
+        }
+
+        public TextView getPeerNameText() {
+            return mPeerNameText;
+        }
+
+        public TextView getPeerDetailText() {
+            return mPeerDetailText;
+        }
+
+        public ProgressBar getPeerProgressBar() {
+            return mPeerProgressBar;
+        }
+
+        public ImageView getPeerIcon() {
+            return mPeerIcon;
         }
 
         public PeerInfo getPeer() {
             return peer;
         }
 
-        public void setPeer(PeerInfo peer) {
+        public void setPeer(@NonNull PeerInfo peer) {
             this.peer = peer;
+
+            // Set transition name
+            mPeerIconContainer.setTransitionName(mView.getContext().getString(R.string.transition_name_peer_icon_container, peer.getId()));
+            mPeerProgressBar.setTransitionName(mView.getContext().getString(R.string.transition_name_peer_progress_bar, peer.getId()));
+            mPeerIcon.setTransitionName(mView.getContext().getString(R.string.transition_name_peer_icon, peer.getId()));
+            mPeerNameText.setTransitionName(mView.getContext().getString(R.string.transition_name_peer_name_text, peer.getId()));
+            mPeerDetailText.setTransitionName(mView.getContext().getString(R.string.transition_name_peer_detail_text, peer.getId()));
+
             mPeerNameText.setText(peer.getDisplayName());
             Constants.DeviceType deviceType = Constants.DeviceType.parse(peer.getDeviceType());
-            if(deviceType != null) mPeerIcon.setImageResource(deviceType.getImgRes());
-
+            if (deviceType != null) mPeerIcon.setImageResource(deviceType.getImgRes());
 
             int cStatus = peer.getConnectionStatus();
             int tStatus = peer.getTransmissionStatus();
@@ -178,7 +228,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                                         Data progress_data = workInfo.getProgress();
                                         bytesSent += progress_data.getLong(P_BYTES_SENT, 0);
                                         bytesTotal += progress_data.getLong(P_BYTES_TOTAL, 0);
-                                        if(bytesSent == -1 | bytesTotal == -1) {
+                                        if (bytesSent == -1 | bytesTotal == -1) {
                                             bytesSent++;
                                             bytesTotal++;
                                         }
@@ -229,12 +279,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             }
         }
 
-        void setSelected(boolean selected) {
-            this.selected = selected;
-            // TODO: add selected icon
-        }
-
-        void addBadge(@ColorInt int color){
+        void addBadge(@ColorInt int color) {
             badgeHelper
                     .setBadgeColor(color)
                     .setBadgeType(BadgeHelper.Type.TYPE_POINT)
@@ -242,7 +287,8 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                     .setIgnoreTargetPadding(true)
                     .setBadgeEnabled(true);
         }
-        void addBadge(@ColorInt int color, int number){
+
+        void addBadge(@ColorInt int color, int number) {
             badgeHelper
                     .setBadgeColor(color)
                     .setBadgeType(BadgeHelper.Type.TYPE_TEXT)
@@ -251,9 +297,19 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                     .setBadgeText(String.valueOf(number))
                     .setBadgeEnabled(true);
         }
-        void removeBadge(){
+
+        void removeBadge() {
             badgeHelper.setBadgeEnabled(false);
         }
     }
 
+    public interface OnPeerSelectedListener {
+        /**
+         * On peer selected
+         *
+         * @param peer The peer requested to be selected
+         * @return Whether to select the peer
+         */
+        boolean onPeerSelected(PeerInfo peer, ViewHolder viewHolder);
+    }
 }

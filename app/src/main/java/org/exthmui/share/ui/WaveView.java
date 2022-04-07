@@ -130,16 +130,17 @@ public class WaveView extends View {
 
         float centerX = getCircleCenterCoordinateX();
         float centerY = getCircleCenterCoordinateY();
+
         mPaint.setColor(getWaveColor());
-        for (int i = 0; i < mRadii.size(); i++) {
-            mPaint.setAlpha(calcAlpha(mRadii.get(i)));
-            canvas.drawCircle(centerX, centerY, mRadii.get(i), mPaint);
+        for (float radius : mRadii) {
+            mPaint.setAlpha(calcAlpha(radius));
+            canvas.drawCircle(centerX, centerY, radius, mPaint);
         }
         mPaint.setAlpha(mInnerCircleAlpha);
         canvas.drawCircle(centerX, centerY, getRadiusMin(), mPaint);
         if (mWaveCenterImage != null) {
             mWaveCenterImage.setBounds((int) (centerX - getRadiusMin()), (int) (centerY - getRadiusMin()), (int) (centerX + getRadiusMin()), (int) (centerY + getRadiusMin()));
-            if(mWaveCenterImageTint != -1) {
+            if (mWaveCenterImageTint != -1) {
                 mWaveCenterImage.setTint(mWaveCenterImageTint);
                 mWaveCenterImage.setTintMode(mWaveCenterImageTintMode);
             }
@@ -195,6 +196,7 @@ public class WaveView extends View {
     public void stopWave() {
         if (mWaving) {
             scalingTask.cancel();
+            resetWave();
             mWaving = false;
         }
     }

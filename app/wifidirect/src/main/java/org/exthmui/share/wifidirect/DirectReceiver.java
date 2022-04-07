@@ -54,7 +54,7 @@ import java.util.concurrent.ExecutionException;
 
 public class DirectReceiver implements Receiver {
 
-    private static final String TAG = "DirectReceiver";
+    public static final String TAG = "DirectReceiver";
 
     @SuppressWarnings("unchecked")
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]

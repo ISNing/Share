@@ -41,4 +41,5 @@ dependencies {
     implementation project(path: ':app:msnearshare')
     implementation 'androidx.preference:preference:1.2.0'
     implementation project(path: ':app:wifidirect')
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
 }

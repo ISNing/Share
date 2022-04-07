@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Preference Header -->
     <string name="prefs_header_wifidirect">Wifi Direct</string>
 
@@ -18,10 +18,10 @@
     <string name="prefs_title_wifidirect_timeout">Timeout (ms)</string>
     <string name="prefs_tip_wifidirect_timeout_invalid">Invalid value</string>
 
-    <string name="error_wifidirect_service_request_add_failed" formatted="true">Service request add failed: %1$d</string>
-    <string name="error_wifidirect_service_request_remove_failed" formatted="true">Service request add failed: %1$d</string>
-    <string name="error_wifidirect_service_discovering_start_failed" formatted="true">Service discover start failed: %1$d</string>
-    <string name="error_wifidirect_service_discovering_stop_failed" formatted="true">Service discover stop failed: %1$d</string>
-    <string name="error_wifidirect_local_service_add_failed" formatted="true">LocalService add failed: %1$d</string>
-    <string name="error_wifidirect_local_service_remove_failed" formatted="true">LocalService remove failed: %1$d</string>
+    <string name="error_wifidirect_service_request_add_failed" formatted="true">Service request add failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_wifidirect_service_request_remove_failed" formatted="true">Service request add failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_wifidirect_service_discovering_start_failed" formatted="true">Service discover start failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_wifidirect_service_discovering_stop_failed" formatted="true">Service discover stop failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_wifidirect_local_service_add_failed" formatted="true">LocalService add failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_wifidirect_local_service_remove_failed" formatted="true">LocalService remove failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
 </resources>
