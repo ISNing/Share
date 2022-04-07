@@ -98,7 +98,7 @@ public class PeerInformationView extends ConstraintLayout {
         } else Log.e(TAG, "Got null connectionType!");
 
         if (peer.getDetailMessage() == null || peer.getDetailMessage().isEmpty())
-            mPeerDetailText.setText("af\n\n\nsf\n\n\n\n\n\n\n\n\n\nsfd");
+            mPeerDetailText.setText("");
         else {
             mPeerDetailText.setText(peer.getDetailMessage());
         }

@@ -95,6 +95,15 @@
             android:name=".shared.ui.AcceptationRequestActivity"
             android:exported="false"
             android:theme="@style/AppTheme.Share" />
-    </application>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="org.exthmui.share.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+    </application>
 </manifest>

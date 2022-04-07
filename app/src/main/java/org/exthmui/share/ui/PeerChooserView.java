@@ -1,7 +1,6 @@
 package org.exthmui.share.ui;
 
 import android.content.Context;
-import android.net.wifi.p2p.WifiP2pDevice;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -16,7 +15,6 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.exthmui.share.R;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.wifidirect.DirectPeer;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -113,17 +111,6 @@ public class PeerChooserView extends FrameLayout {
     }
 
     public void setData(Map<String, PeerInfo> peers) {
-        WifiP2pDevice device = new WifiP2pDevice();// TODO: Remove
-        device.deviceName = "Hello";
-        device.deviceAddress = "address";
-        device.primaryDeviceType = "1-32-9";
-        peers.put("peerid", new DirectPeer(device, "1.0", 5033, "peerid", 1, "servesign"));
-        device = new WifiP2pDevice();// TODO: Remove
-        device.deviceName = "Hello2";
-        device.deviceAddress = "address2";
-        device.primaryDeviceType = "1-3323-9";
-        peers.put("peerid2", new DirectPeer(device, "1.0", 5033, "peerid2", 1, "servesign"));
-
         mPeerChooserFragment.setData(peers);
         if (peers.isEmpty()) {
             setState(STATE_ENABLED_NO_PEER);

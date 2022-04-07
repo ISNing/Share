@@ -30,7 +30,7 @@ public class ShareActivity extends AppCompatActivity {
             for (int i = 0; i < clipData.getItemCount(); i++) {
                 Entity entity = null;
                 try {
-                    entity = new Entity(this, clipData.getItemAt(i).getUri());
+                    entity = new Entity(getApplicationContext(), clipData.getItemAt(i).getUri());
                 } catch (FailedResolvingUriException e) {
                     e.printStackTrace();
                 }
@@ -43,7 +43,7 @@ public class ShareActivity extends AppCompatActivity {
         } else {
             Entity entity = null;
             try {
-                entity = new Entity(this, getIntent().getData(), FileUtils.getFileTypeByMime(mimeType).getNumVal());
+                entity = new Entity(getApplicationContext(), getIntent().getData(), FileUtils.getFileTypeByMime(mimeType).getNumVal());
             } catch (FailedResolvingUriException e) {
                 e.printStackTrace();
             }

@@ -385,6 +385,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
                 outputStream = socketToServer.getOutputStream();
                 inputStream = entity.getInputStream(getApplicationContext());
+                if (inputStream == null)
+                    return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), String.format("Failed opening file: %s: Got null InputStream", entity.getFileName()));
                 byte[] buf = new byte[bufferSize];
                 int len;
                 while ((len = inputStream.read(buf)) != -1) {

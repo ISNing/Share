@@ -2,6 +2,7 @@ package org.exthmui.share.shared.base;
 
 import static android.content.ContentResolver.SCHEME_CONTENT;
 import static android.content.ContentResolver.SCHEME_FILE;
+import static androidx.core.content.FileProvider.getUriForFile;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -11,7 +12,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.work.Data;
 
 import org.exthmui.share.shared.Constants;
@@ -23,7 +23,6 @@ import org.exthmui.share.shared.base.exceptions.FileNotExistsException;
 import org.exthmui.share.shared.base.exceptions.UnknownUriSchemeException;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,33 +43,32 @@ public class Entity {
     public static final String FILE_SIZES = "FILE_SIZES";
 
     @NonNull
-    private final Uri uri;
+    private final Uri uri; // Content uri only
     private final boolean initialized;
     @Nullable
     private final String fileName;
     @Nullable
     private String filePath = null;
-    private final int fileType;
+    private int fileType;
     private final long fileSize;
     private String MD5;
 
+    /**
+     * Instantiate an Entity
+     *
+     * @param context Context
+     * @param uri     Content uri or File uri required
+     * @throws FailedResolvingUriException Failed resolving uri
+     */
     public Entity(Context context, @NonNull Uri uri) throws FailedResolvingUriException {
         switch (uri.getScheme()) {
             case SCHEME_FILE:
-                final String path = uri.getPath();
-                if (path.isEmpty()) {
-                    Log.e(TAG, "Failed resolving Uri: Empty path. Uri:" + uri);
-                    this.initialized = false;
-                    throw new EmptyPathException();
+                try {
+                    uri = generateContentUri(context, uri);
+                } catch (FailedResolvingUriException e) {
+                    initialized = false;
+                    throw e;
                 }
-
-                final File file = new File(path);
-                if (!file.exists()) {
-                    Log.e(TAG, "Failed resolving Uri: File not exists. Uri:" + uri);
-                    this.initialized = false;
-                    throw new FileNotExistsException();
-                }
-                uri = FileProvider.getUriForFile(context, context.getString(R.string.content_uri_authority), file);
                 break;
             case SCHEME_CONTENT:
                 break;
@@ -106,57 +104,17 @@ public class Entity {
         this.initialized = true;
     }
 
-    public Entity(Context context, Uri uri, int type) throws FailedResolvingUriException {
+    /**
+     * Instantiate an Entity
+     *
+     * @param context Context
+     * @param uri     Content uri or File uri required
+     * @param type    File type
+     * @throws FailedResolvingUriException Failed resolving uri
+     */
+    public Entity(Context context, @NonNull Uri uri, int type) throws FailedResolvingUriException {
+        this(context, uri);
         this.fileType = type;
-
-        switch (uri.getScheme()) {
-            case SCHEME_FILE:
-                final String path = uri.getPath();
-                if (path.isEmpty()) {
-                    Log.e(TAG, "Failed resolving Uri: Empty path. Uri:" + uri);
-                    this.initialized = false;
-                    throw new EmptyPathException();
-                }
-
-                final File file = new File(path);
-                if (!file.exists()) {
-                    Log.e(TAG, "Failed resolving Uri: File not exists. Uri:" + uri);
-                    this.initialized = false;
-                    throw new FileNotExistsException();
-                }
-                uri = FileProvider.getUriForFile(context, context.getString(R.string.content_uri_authority), file);
-                break;
-            case SCHEME_CONTENT:
-                break;
-            default:
-                this.initialized = false;
-                throw new UnknownUriSchemeException();
-        }
-
-        Cursor cursor;
-        try {
-            cursor = context.getContentResolver().query(
-                    uri, null, null, null, null);
-        } catch (SecurityException e) {
-            Log.e(TAG, "Failed resolving Uri: " + uri, e);
-            this.initialized = false;
-            throw new FailedResolvingUriException(e);
-        }
-
-        if (cursor == null) {
-            Log.w(TAG, "Failed resolving Uri: Got a null cursor, ignoring. Uri: " + uri);
-            this.initialized = true;
-            throw new FailedResolvingUriException();
-        }
-
-        cursor.moveToFirst();
-
-        fileName = cursor.getString(cursor.getColumnIndexOrThrow(OpenableColumns.DISPLAY_NAME));
-        final int sizeIndex = cursor.getColumnIndexOrThrow(OpenableColumns.SIZE);
-        fileSize = cursor.isNull(sizeIndex) ? -1 : cursor.getLong(sizeIndex);
-        cursor.close();
-        this.uri = uri;
-        this.initialized = true;
     }
 
     private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath, int fileType, long fileSize) {
@@ -168,29 +126,26 @@ public class Entity {
         this.initialized = true;
     }
 
-    public @NonNull
-    InputStream getInputStream(@NonNull Context context) throws FileNotFoundException {
-        InputStream inputStream = null;
-        FileNotFoundException exception = null;
-        if (filePath != null) {
-            File file = new File(filePath);
-            try {
-                inputStream = new FileInputStream(file);
-            } catch (FileNotFoundException e) {
-                exception = e;
-            }
+    private Uri generateContentUri(Context context, Uri uri) throws EmptyPathException, FileNotExistsException {
+        final String path = uri.getPath();
+        if (path.isEmpty()) {
+            Log.e(TAG, "Failed resolving Uri: Empty path. Uri:" + uri);
+            throw new EmptyPathException();
         }
-        if (inputStream == null) {
-            try {
-                inputStream = context.getContentResolver().openInputStream(uri);
-            } catch (FileNotFoundException e) {
-                exception = e;
-            }
+
+        final File file = new File(path);
+        if (!file.exists()) {
+            Log.e(TAG, "Failed resolving Uri: File not exists. Uri:" + uri);
+            throw new FileNotExistsException();
         }
-        if (inputStream == null) {
-            if (exception != null) throw exception;
-            else throw new FileNotFoundException();
-        }
+
+        return getUriForFile(context, context.getString(R.string.content_uri_authority), file);
+    }
+
+    @Nullable
+    public InputStream getInputStream(@NonNull Context context) throws FileNotFoundException {
+        InputStream inputStream;
+        inputStream = context.getContentResolver().openInputStream(uri);
         return inputStream;
     }
 
@@ -201,6 +156,10 @@ public class Entity {
      */
     public void calculateMD5(@NonNull Context context) throws IOException {
         InputStream inputStream = getInputStream(context);
+        if (inputStream == null) {
+            Log.e(TAG, String.format("Failed to calculate MD5 for %s due to got null InoutStream", fileName));
+            return;
+        }
         this.MD5 = FileUtils.getMD5(inputStream);
     }
 

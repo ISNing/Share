@@ -354,6 +354,8 @@ public class DirectSendingWorker extends SendingWorker {
             // Start send file
             updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, entity.getFileName(), peer.getDisplayName());
             inputStream = entity.getInputStream(getApplicationContext());
+            if (inputStream == null)
+                return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), String.format("Failed opening file: %s: Got null InputStream", entity.getFileName()));
             byte[] buf = new byte[bufferSize];
             int len;
             while ((len = inputStream.read(buf)) != -1) {
