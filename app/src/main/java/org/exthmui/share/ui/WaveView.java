@@ -439,8 +439,14 @@ public class WaveView extends View {
         @Override
         public void run() {
             for (int i = 0; i < mRadii.size(); i++) {
-                mRadii.set(i, mRadii.get(i) + mDistancePerFrame);
-                if (i < mRadii.size() - 1 & mRadii.get(i) < getRadiusMin() + getWaveInterval()) {
+                float curVal;
+                try {
+                    curVal = mRadii.get(i);
+                } catch (IndexOutOfBoundsException ignored) {
+                    continue;
+                }
+                mRadii.set(i, curVal + mDistancePerFrame);
+                if (i < mRadii.size() - 1 & curVal < getRadiusMin() + getWaveInterval()) {
                     mRadii.set(i + 1, getRadiusMin());
                     break;
                 }

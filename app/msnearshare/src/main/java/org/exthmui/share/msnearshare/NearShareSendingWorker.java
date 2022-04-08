@@ -114,7 +114,7 @@ public class NearShareSendingWorker extends SendingWorker {
         });
 
         // Block until finished
-        while (finished.get()) {
+        while (!finished.get()) {
             if (getForegroundInfoAsync().isCancelled()) {
                 operation.cancel(true);
                 return genFailureResult(Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), "User(aka sender) canceled sending file");

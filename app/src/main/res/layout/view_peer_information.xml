@@ -83,7 +83,6 @@
 
     <ImageButton
         android:id="@+id/view_peer_information_back_button"
-        style="@style/Widget.Material3.Button.IconButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackgroundBorderless"
