@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class WaveView extends View {
     public static final int WAVING_MODE_LIMITED = 0x01;
@@ -80,7 +81,7 @@ public class WaveView extends View {
         ta.recycle();
         mPaint = new Paint();
         mPaint.setAntiAlias(true);
-        mRadii = new ArrayList<>(getWaveNum());
+        mRadii = new CopyOnWriteArrayList<>();
         initRadius();
     }
 
@@ -170,7 +171,7 @@ public class WaveView extends View {
     }
 
     private List<Float> transList(List<Float> list) {
-        ArrayList<Float> newList = new ArrayList<>(getWaveNum());
+        List<Float> newList = new ArrayList<>(getWaveNum());
         for (int i = 1; i < list.size(); i++) {
             newList.add(list.get(i));
         }
@@ -439,12 +440,7 @@ public class WaveView extends View {
         @Override
         public void run() {
             for (int i = 0; i < mRadii.size(); i++) {
-                float curVal;
-                try {
-                    curVal = mRadii.get(i);
-                } catch (IndexOutOfBoundsException ignored) {
-                    continue;
-                }
+                float curVal = mRadii.get(i);
                 mRadii.set(i, curVal + mDistancePerFrame);
                 if (i < mRadii.size() - 1 & curVal < getRadiusMin() + getWaveInterval()) {
                     mRadii.set(i + 1, getRadiusMin());
