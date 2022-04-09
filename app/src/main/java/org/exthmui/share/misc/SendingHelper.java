@@ -7,7 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.UUID;
-import org.exthmui.share.exceptions.FailedInvokingSendingMethod;
+import org.exthmui.share.exceptions.FailedInvokingSendingMethodException;
 import org.exthmui.share.exceptions.FailedStartSendingException;
 import org.exthmui.share.exceptions.InvalidConnectionTypeException;
 import org.exthmui.share.exceptions.InvalidSenderException;
@@ -43,7 +43,7 @@ public class SendingHelper {
             return sender.sendToPeerInfo(target, entity);
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            throw new FailedInvokingSendingMethod(e);
+            throw new FailedInvokingSendingMethodException(e);
         }
     }
 
@@ -64,7 +64,7 @@ public class SendingHelper {
             return sender.sendToPeerInfo(target, entities);
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            throw new FailedInvokingSendingMethod(e);
+            throw new FailedInvokingSendingMethodException(e);
         }
     }
 }
