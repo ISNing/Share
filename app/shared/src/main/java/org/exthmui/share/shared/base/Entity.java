@@ -7,14 +7,18 @@ import static androidx.core.content.FileProvider.getUriForFile;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build.VERSION;
+import android.os.Build.VERSION_CODES;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.provider.OpenableColumns;
 import android.util.Log;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.work.Data;
-
-import org.exthmui.share.shared.Constants;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import org.exthmui.share.shared.FileUtils;
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.base.exceptions.EmptyPathException;
@@ -22,12 +26,7 @@ import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
 import org.exthmui.share.shared.base.exceptions.FileNotExistsException;
 import org.exthmui.share.shared.base.exceptions.UnknownUriSchemeException;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
-public class Entity {
+public class Entity implements Parcelable {
 
     public static final String TAG = "Entity";
 
@@ -44,7 +43,6 @@ public class Entity {
 
     @NonNull
     private final Uri uri; // Content uri only
-    private final boolean initialized;
     @Nullable
     private final String fileName;
     @Nullable
@@ -52,6 +50,19 @@ public class Entity {
     private int fileType;
     private final long fileSize;
     private String MD5;
+    private final boolean initialized;
+
+    private static final Creator<Entity> CREATOR = new Creator<>() {
+        @Override
+        public Entity createFromParcel(Parcel source) {
+            return new Entity(source);
+        }
+
+        @Override
+        public Entity[] newArray(int size) {
+            return new Entity[size];
+        }
+    };
 
     /**
      * Instantiate an Entity
@@ -117,16 +128,53 @@ public class Entity {
         this.fileType = type;
     }
 
-    private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath, int fileType, long fileSize) {
+    private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath,
+        int fileType, long fileSize, String MD5) {
         this.uri = uri;
         this.fileName = fileName;
         this.filePath = filePath;
         this.fileType = fileType;
         this.fileSize = fileSize;
+        this.MD5 = MD5;
         this.initialized = true;
     }
 
-    private Uri generateContentUri(Context context, Uri uri) throws EmptyPathException, FileNotExistsException {
+    private Entity(@NonNull Parcel source) {
+        this.uri = source.readParcelable(Uri.class.getClassLoader());
+        this.fileName = source.readString();
+        this.filePath = source.readString();
+        this.fileType = source.readInt();
+        this.fileSize = source.readLong();
+        this.MD5 = source.readString();
+        if (VERSION.SDK_INT >= VERSION_CODES.Q) {
+            this.initialized = source.readBoolean();
+        } else {
+            this.initialized = source.readInt() != 0;
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+        parcel.writeParcelable(uri, 0);
+        parcel.writeString(fileName);
+        parcel.writeString(filePath);
+        parcel.writeInt(fileType);
+        parcel.writeLong(fileSize);
+        parcel.writeString(MD5);
+        if (VERSION.SDK_INT >= VERSION_CODES.Q) {
+            parcel.writeBoolean(initialized);
+        } else {
+            parcel.writeInt(initialized ? 1 : 0);
+        }
+    }
+
+    private Uri generateContentUri(Context context, Uri uri)
+        throws EmptyPathException, FileNotExistsException {
         final String path = uri.getPath();
         if (path.isEmpty()) {
             Log.e(TAG, "Failed resolving Uri: Empty path. Uri:" + uri);
@@ -196,22 +244,5 @@ public class Entity {
 
     public void setMD5(String MD5) {
         this.MD5 = MD5;
-    }
-
-    public static Entity fromData(Data data) {
-        return new Entity(Uri.parse(data.getString(FILE_URI)),
-                data.getString(FILE_NAME), data.getString(FILE_PATH),
-                data.getInt(FILE_TYPE, Constants.FileTypes.UNKNOWN.getNumVal()),
-                data.getLong(FILE_SIZE, -1));
-    }
-
-    public Data toData() {
-        return new Data.Builder()
-                .putString(FILE_URI, uri.toString())
-                .putString(FILE_NAME, fileName)
-                .putString(FILE_PATH, filePath)
-                .putInt(FILE_TYPE, fileType)
-                .putLong(FILE_SIZE, fileSize)
-                .build();
     }
 }

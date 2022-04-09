@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true">
+  style="@style/AppTheme.Share"
+  android:animateLayoutChanges="true">
 
     <TextView
         android:id="@+id/fragment_share_title"

@@ -12,18 +12,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-
-import org.exthmui.share.misc.Constants;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import org.exthmui.share.exceptions.InvalidPeerException;
+import org.exthmui.share.misc.SendingHelper;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.exceptions.NoEntityPassedException;
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
 import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
@@ -31,36 +32,44 @@ import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.ui.BaseBottomSheetFragment;
 import org.exthmui.share.ui.PeerChooserView;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
 
-public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
+  public static final String TAG = "ShareBottomSheetFragment";
 
-    public static final String TAG = "ShareBottomSheetFragment";
+  private static final String KEY_ENTITIES_SAVED = "URIS_SAVED";
 
-    public void setEntities(List<Entity> entities) {
-        if (mEntities != null) mEntities = entities;
+  public void setEntities(ArrayList<Entity> entities) {
+    if (mEntities == null) {
+      return;
     }
+    mEntities = entities;
 
-    private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
-    @Nullable
-    private DiscoverService mService;
+    if (mTitle != null) {
+      if (mEntities.size() == 1) {
+        mTitle.setText(getString(R.string.title_send_file, mEntities.get(0).getFileName()));
+      } else {
+        mTitle.setText(getString(R.string.title_send_files, mEntities.get(0).getFileName(),
+            mEntities.size() - 1));
+      }
+    }
+  }
 
-    private final Set<BaseEventListener> mServiceListeners = new HashSet<>();
+  private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();
+  @Nullable
+  private DiscoverService mService;
 
-    private PeerChooserView mPeerChooser;
-    private Button mCancelButton;
-    private TextView mTitle;
-    private Button mActionButton;
+  private final Set<BaseEventListener> mServiceListeners = new HashSet<>();
 
-    private List<Entity> mEntities = new ArrayList<>();
+  private PeerChooserView mPeerChooser;
+  private Button mCancelButton;
+  private TextView mTitle;
+  private Button mActionButton;
+  private SendingHelper mSendingHelper;
+
+  private ArrayList<Entity> mEntities = new ArrayList<>();
 
 //    private final WifiStateMonitor mWifiStateMonitor = new WifiStateMonitor() {
 //        @Override
@@ -76,163 +85,161 @@ public class ShareBottomSheetFragment extends BottomSheetDialogFragment {
 //        }
 //    };
 
-    public ShareBottomSheetFragment() {
+  public ShareBottomSheetFragment() {
+  }
+
+  @Override
+  public void onCreate(@Nullable Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+
+    if (savedInstanceState != null) {
+      mEntities = savedInstanceState.getParcelableArrayList(KEY_ENTITIES_SAVED);
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    mConnection.registerOnServiceConnectedListener(service -> {
+      mService = (DiscoverService) service;
+      if (mService.isAnyDiscovererStarted()) {
+        Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+        mPeerChooser.setData(peers);
+      } else if (!mService.isDiscoverersAvailable()) {
+        mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
+      } else {
+        mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
+      }
 
-        mConnection.registerOnServiceConnectedListener(service -> {
-            mService = (DiscoverService) service;
-            if (mService.isAnyDiscovererStarted()) {
-                Map<String, PeerInfo> peers = mService.getPeerInfoMap();
-                mPeerChooser.setData(peers);
-            } else if (!mService.isDiscoverersAvailable())
-                mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
-            else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
-
-            mServiceListeners.add((OnDiscovererStartedListener) event -> {
-                int state = mPeerChooser.getState();
-                if (state != PeerChooserView.STATE_ENABLED &&
-                        state != PeerChooserView.STATE_ENABLED_NO_PEER) {
-                    Map<String, PeerInfo> peers = mService.getPeerInfoMap();
-                    requireActivity().runOnUiThread(() -> mPeerChooser.setData(peers));
-                }
-            });
-            mServiceListeners.add((OnDiscovererStoppedListener) event -> {
-                if (!mService.isDiscoverersAvailable())
-                    mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
-                else mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
-            });
-            mServiceListeners.add((OnPeerAddedListener) event -> {
-                requireActivity().runOnUiThread(() -> mPeerChooser.addPeer(event.getPeer()));
-            });
-            mServiceListeners.add((OnPeerUpdatedListener) event -> {
-                requireActivity().runOnUiThread(() -> mPeerChooser.updatePeer(event.getPeer()));
-            });
-            mServiceListeners.add((OnPeerRemovedListener) event -> {
-                requireActivity().runOnUiThread(() -> mPeerChooser.removePeer(event.getPeer()));
-            });
-            for (BaseEventListener listener : mServiceListeners)
-                mService.registerListener(listener);
-
-            mPeerChooser.setEnableButtonOnClickListener(var1 -> mService.startDiscoverers());
-        });
-        mConnection.registerOnServiceDisconnectedListener(name -> mService = null);
-        requireContext().bindService(new Intent(requireContext(), DiscoverService.class), mConnection, BIND_AUTO_CREATE);
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        if (mService != null) {
-            for (BaseEventListener listener : mServiceListeners)
-                mService.unregisterListener(listener);
-            mService.beforeUnbind();
+      mServiceListeners.add((OnDiscovererStartedListener) event -> {
+        int state = mPeerChooser.getState();
+        if (state != PeerChooserView.STATE_ENABLED &&
+            state != PeerChooserView.STATE_ENABLED_NO_PEER) {
+          Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+          requireActivity().runOnUiThread(() -> mPeerChooser.setData(peers));
         }
-        requireContext().unbindService(mConnection);
-    }
-
-    @Nullable
-    @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-                             @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_share, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-
-        mPeerChooser = view.findViewById(R.id.fragment_share_peer_chooser);
-        mPeerChooser.initialize(getChildFragmentManager());
-        mTitle = view.findViewById(R.id.fragment_share_title);
-        mCancelButton = view.findViewById(R.id.fragment_share_cancel_button);
-        mActionButton = view.findViewById(R.id.fragment_share_action_button);
-
-        mCancelButton.setOnClickListener(v -> onCancel());
-
-        if (mEntities.isEmpty()) {
-            Log.w(TAG, "No file was selected");
-            Toast.makeText(getContext(), R.string.toast_no_file, Toast.LENGTH_SHORT).show();
-            dismiss();
-        } else if (mEntities.size() == 1) {
-            mTitle.setText(getString(R.string.title_send_file, mEntities.get(0).getFileName()));
+      });
+      mServiceListeners.add((OnDiscovererStoppedListener) event -> {
+        if (!mService.isDiscoverersAvailable()) {
+          mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
         } else {
-            mTitle.setText(getString(R.string.title_send_files, mEntities.get(0).getFileName(), mEntities.size() - 1));
+          mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
         }
+      });
+      mServiceListeners.add((OnPeerAddedListener) event -> {
+        requireActivity().runOnUiThread(() -> mPeerChooser.addPeer(event.getPeer()));
+      });
+      mServiceListeners.add((OnPeerUpdatedListener) event -> {
+        requireActivity().runOnUiThread(() -> mPeerChooser.updatePeer(event.getPeer()));
+      });
+      mServiceListeners.add((OnPeerRemovedListener) event -> {
+        requireActivity().runOnUiThread(() -> mPeerChooser.removePeer(event.getPeer()));
+      });
+      for (BaseEventListener listener : mServiceListeners) {
+        mService.registerListener(listener);
+      }
 
-        mPeerChooser.getPeerSelectedLiveData().observe(this, s -> mActionButton.setClickable(s != null));
-        mActionButton.setOnClickListener(new View.OnClickListener() {
-            public void sendTo(@NonNull PeerInfo target, @NonNull Entity entity) {
-                Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
-                if (connectionType == null) return;// TODO: handle failure
-                try {
-                    Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
-                    Sender<?> sender = (Sender<?>) method.invoke(null, requireContext());
-                    if (sender == null) return;// TODO: handle failure
-                    sender.sendToPeerInfo(target, entity);
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
-                    exception.printStackTrace();
-                }
+      mPeerChooser.setEnableButtonOnClickListener(var1 -> mService.startDiscoverers());
+    });
+    mConnection.registerOnServiceDisconnectedListener(name -> mService = null);
+    requireContext()
+        .bindService(new Intent(requireContext(), DiscoverService.class), mConnection,
+            BIND_AUTO_CREATE);
+
+    mSendingHelper = new SendingHelper(requireContext());
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+    if (mService != null) {
+      for (BaseEventListener listener : mServiceListeners) {
+        mService.unregisterListener(listener);
+      }
+      mService.beforeUnbind();
+    }
+    requireContext().unbindService(mConnection);
+  }
+
+  @Nullable
+  @Override
+  public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+      @Nullable Bundle savedInstanceState) {
+    return inflater.inflate(R.layout.fragment_share, container, false);
+  }
+
+  @Override
+  public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+
+    mPeerChooser = view.findViewById(R.id.fragment_share_peer_chooser);
+    mPeerChooser.initialize(getChildFragmentManager());
+    mTitle = view.findViewById(R.id.fragment_share_title);
+    mCancelButton = view.findViewById(R.id.fragment_share_cancel_button);
+    mActionButton = view.findViewById(R.id.fragment_share_action_button);
+
+    mCancelButton.setOnClickListener(v -> cancel());
+
+    if (!mEntities.isEmpty()) {
+      setEntities(mEntities);
+    }
+
+    mPeerChooser.getPeerSelectedLiveData()
+        .observe(this, s -> mActionButton.setClickable(s != null));
+    mActionButton.setOnClickListener(new View.OnClickListener() {
+
+      @Override
+      public void onClick(View v) {
+        if (mEntities == null) {
+          throw new NoEntityPassedException();
+        }
+        if (mService == null) {
+          mConnection.registerOnServiceConnectedListener(s -> {
+            DiscoverService service = (DiscoverService) s;
+            PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+            try {
+              if (peer == null) {
+                throw new InvalidPeerException("Peer is null");
+              }
+              if (mEntities.size() == 1) {
+                mSendingHelper.send(peer, mEntities.get(0));
+              } else {
+                mSendingHelper.send(peer, mEntities);
+              }
+            } catch (Throwable tr) {
+              handleError(requireContext(), tr);
             }
-
-            public void sendTo(@NonNull PeerInfo target, @NonNull List<Entity> entities) {
-                Constants.ConnectionType connectionType = Constants.ConnectionType.parseFromCode(target.getConnectionType());
-                if (connectionType == null) return;// TODO: handle failure
-                try {
-                    Method method = connectionType.getSenderClass().getDeclaredMethod("getInstance", Context.class);
-                    Sender<?> sender = (Sender<?>) method.invoke(null, requireContext());
-                    if (sender == null) return;// TODO: handle failure
-                    sender.sendToPeerInfo(target, entities);
-                } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
-                    exception.printStackTrace();
-                }
+            dismiss();
+          });
+        } else {
+          PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+          try {
+            if (peer == null) {
+              throw new InvalidPeerException("Peer is null");
             }
-
-            @Override
-            public void onClick(View v) {
-                if (mEntities == null) throw new NoEntityPassedException();
-                if (mService == null) mConnection.registerOnServiceConnectedListener(s -> {
-                    DiscoverService service = (DiscoverService) s;
-                    PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
-                    if (peer == null) return; // TODO: handle failure
-                    if (mEntities.size() == 1) {
-                        sendTo(peer, mEntities.get(0));
-                    } else {
-                        sendTo(peer, mEntities);
-                    }
-                    dismiss();
-                });
-                else {
-                    PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
-                    if (peer == null) {
-                        handleError(requireContext(), "Peer disappeared");// TODO:handle failure
-                        return;
-                    }
-                    if (mEntities.size() == 1) {
-                        sendTo(peer, mEntities.get(0));
-                    } else {
-                        sendTo(peer, mEntities);
-                    }
-                    dismiss();
-                }
+            if (mEntities.size() == 1) {
+              mSendingHelper.send(peer, mEntities.get(0));
+            } else {
+              mSendingHelper.send(peer, mEntities);
             }
-        });
-    }
+          } catch (Throwable tr) {
+            handleError(requireContext(), tr);
+          }
+          dismiss();
+        }
+      }
+    });
+  }
 
-    private void handleError(Context context, String message) {
-        Toast.makeText(context, message, Toast.LENGTH_SHORT).show();
-    }
+  @Override
+  public void onSaveInstanceState(@NonNull Bundle outState) {
+    outState.putParcelableArrayList(KEY_ENTITIES_SAVED, mEntities);
+    super.onSaveInstanceState(outState);
+  }
 
-    public void onCancel() {
-        dismiss();
-    }
+  private void handleError(Context context, String message, String localizedMessage) {
+    Toast.makeText(context, localizedMessage, Toast.LENGTH_SHORT).show();
+    Log.e(TAG, message);
+  }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        requireActivity().finish();
-    }
+  private void handleError(@NonNull Context context, @NonNull Throwable throwable) {
+    handleError(context, throwable.getMessage(), throwable.getLocalizedMessage());
+    Log.e(TAG, StackTraceUtils.getStackTraceString(throwable.getStackTrace()));
+  }
 }

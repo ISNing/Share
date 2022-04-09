@@ -4,29 +4,28 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-
 import androidx.appcompat.app.AppCompatActivity;
-
+import java.util.ArrayList;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ShareActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ShareBottomSheetFragment shareFragment = new ShareBottomSheetFragment();
-        shareFragment.setEntities(getEntities());
-        shareFragment.show(getSupportFragmentManager(), shareFragment.getTag());
+        if (savedInstanceState == null) {
+            ShareBottomSheetFragment shareFragment = new ShareBottomSheetFragment();
+            shareFragment.show(getSupportFragmentManager(), shareFragment.getTag());
+            shareFragment.setEntities(getEntities());
+        }
         grantUriPermissions();
     }
 
-    private List<Entity> getEntities() {
-        final List<Entity> entities = new ArrayList<>();
+    private ArrayList<Entity> getEntities() {
+        final ArrayList<Entity> entities = new ArrayList<>();
+        // From ClipData
         final ClipData clipData = getIntent().getClipData();
         if (clipData != null) {
             for (int i = 0; i < clipData.getItemCount(); i++) {
@@ -43,6 +42,7 @@ public class ShareActivity extends AppCompatActivity {
                 }
             }
         } else {
+            // From Intent Data
             Entity entity = null;
             try {
                 entity = new Entity(getApplicationContext(), getIntent().getData());
@@ -80,4 +80,6 @@ public class ShareActivity extends AppCompatActivity {
         intent.setClipData(data);
         startService(intent);
     }
+
+
 }

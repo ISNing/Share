@@ -8,16 +8,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-
-import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
-
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.ReceiverUtils;
 
-public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFragment {
+public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragment {
 
     public static final String TAG = "AcceptationRequestBottomSheetFragment";
 
@@ -65,7 +61,7 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
             PendingIntent pendingIntent = ReceiverUtils.buildAcceptPendingIntent(requireContext(), mPluginCode, mRequestId, mNotificationId);
             try {
                 pendingIntent.send();
-                requireActivity().finish();
+                dismiss();
             } catch (PendingIntent.CanceledException e) {
                 e.printStackTrace();
             }
@@ -75,20 +71,10 @@ public class AcceptationRequestBottomSheetFragment extends BottomSheetDialogFrag
             PendingIntent pendingIntent = ReceiverUtils.buildRejectPendingIntent(requireContext(), mPluginCode, mRequestId, mNotificationId);
             try {
                 pendingIntent.send();
-                requireActivity().finish();
+                dismiss();
             } catch (PendingIntent.CanceledException e) {
                 e.printStackTrace();
             }
         });
-    }
-
-    public void onCancel() {
-        dismiss();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        requireActivity().finish();
     }
 }
