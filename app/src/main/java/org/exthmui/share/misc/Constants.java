@@ -9,16 +9,22 @@ import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
-public class Constants {
+public abstract class Constants {
     public enum ConnectionType implements org.exthmui.share.shared.misc.IConnectionType {
         MSNEARSHARE(new org.exthmui.share.msnearshare.Metadata()),
         WIFIDIRECT(new org.exthmui.share.wifidirect.Metadata());
-        @NonNull private final String friendlyName;
-        @NonNull private final String code;
-        @NonNull private final Class<? extends Sender<? extends PeerInfo>> senderClass;
-        @NonNull private final Class<? extends Discoverer> discovererClass;
-        @NonNull private final Class<? extends Receiver> receiverClass;
-        @NonNull private final Class<? extends PeerInfo> peerClass;
+        @NonNull
+        private final String friendlyName;
+        @NonNull
+        private final String code;
+        @NonNull
+        private final Class<? extends Sender<? extends PeerInfo>> senderClass;
+        @NonNull
+        private final Class<? extends Discoverer> discovererClass;
+        @NonNull
+        private final Class<? extends Receiver> receiverClass;
+        @NonNull
+        private final Class<? extends PeerInfo> peerClass;
         // IMPORTANT: preferenceFragmentClass must have a public non-argument constructor
         @NonNull private final Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass;
 

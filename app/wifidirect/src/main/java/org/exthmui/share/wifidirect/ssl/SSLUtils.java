@@ -18,7 +18,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-public class SSLUtils {
+public abstract class SSLUtils {
     public static SSLServerSocket genMutualServerSocket(Context context) throws UnrecoverableKeyException, CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
         return SSLUtils.genSSLServerSocket(Auth.getSSLContextServer(context, true), true);
     }

@@ -4,7 +4,7 @@ import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
 import androidx.annotation.StringRes;
 
-public class Constants {
+public abstract class Constants {
     /**
      * First placeholder: Code of connection type
      * Second placeholder: customized identifier

@@ -20,16 +20,26 @@ public abstract class PorterDuffUtils {
                 return 5;
             case DST_IN:
                 return 6;
-            case SRC_OUT: return 7;
-            case DST_OUT: return 8;
-            case SRC_ATOP: return 9;
-            case DST_ATOP: return 10;
-            case XOR: return 11;
-            case DARKEN: return 16;
-            case LIGHTEN: return 17;
-            case MULTIPLY: return 13;
-            case SCREEN: return 14;
-            case ADD: return 12;
+            case SRC_OUT:
+                return 7;
+            case DST_OUT:
+                return 8;
+            case SRC_ATOP:
+                return 9;
+            case DST_ATOP:
+                return 10;
+            case XOR:
+                return 11;
+            case DARKEN:
+                return 16;
+            case LIGHTEN:
+                return 17;
+            case MULTIPLY:
+                return 13;
+            case SCREEN:
+                return 14;
+            case ADD:
+                return 12;
             case OVERLAY: return 15;
         }
     }
