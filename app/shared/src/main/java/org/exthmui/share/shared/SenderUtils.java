@@ -14,7 +14,7 @@ import androidx.work.WorkManager;
 
 import java.util.UUID;
 
-public class SenderUtils {
+public abstract class SenderUtils {
     private static final String SEND_PROGRESS_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND";
     private static final String SEND_SERVICE_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND_SERVICE";
 

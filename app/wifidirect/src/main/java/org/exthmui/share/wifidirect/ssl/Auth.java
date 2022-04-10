@@ -29,7 +29,6 @@ public class Auth {
         String algorithm = properties.getProperty("algorithm");
         String protocol = properties.getProperty("protocol");
         String sCertificatePwd = properties.getProperty("serverCertificatePwd");
-        String sMainPwd = properties.getProperty("serverMainPwd");
         String cCertificatePwd = properties.getProperty("clientCertificatePwd");
         String cMainPwd = properties.getProperty("clientMainPwd");
 
@@ -82,7 +81,6 @@ public class Auth {
         String sCertificatePwd = properties.getProperty("serverCertificatePwd");
         String sMainPwd = properties.getProperty("serverMainPwd");
         String cCertificatePwd = properties.getProperty("clientCertificatePwd");
-        String cMainPwd = properties.getProperty("clientMainPwd");
 
         //KeyStore class is used to save certificate.
         char[] c_pwd = sCertificatePwd.toCharArray();

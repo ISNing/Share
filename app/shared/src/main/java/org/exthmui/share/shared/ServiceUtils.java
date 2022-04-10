@@ -11,7 +11,7 @@ import java.util.EventListener;
 import java.util.HashSet;
 import java.util.Set;
 
-public class ServiceUtils {
+public abstract class ServiceUtils {
 
     public interface OnServiceConnectedListener extends EventListener {
         void onServiceConnected(MyService service);

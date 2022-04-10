@@ -10,10 +10,6 @@ import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER_END;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
-import android.net.wifi.WpsInfo;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -65,34 +61,6 @@ public class DirectSendingWorker extends SendingWorker {
 
     final AtomicReference<ServerSocket> serverSocketToClientReference = new AtomicReference<>(null);
 
-    private void connect(DirectPeer peer, CountDownLatch latch) {
-        WifiP2pDevice targetDevice = peer.getWifiP2pDevice();
-        DirectManager manager = DirectManager.getInstance(getApplicationContext());
-        WifiP2pManager wifiP2pManager = manager.getWifiP2pManager();
-        WifiP2pManager.Channel channel = manager.getChannel();
-        WifiP2pConfig config = new WifiP2pConfig();
-        if (config.deviceAddress != null && targetDevice != null) {
-            config.deviceAddress = targetDevice.deviceAddress;
-            config.wps.setup = WpsInfo.PBC;
-            try {
-                wifiP2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
-                    @Override
-                    public void onSuccess() {
-                        peer.notifyPeerUpdated();
-                        latch.countDown();
-                    }
-
-                    @Override
-                    public void onFailure(int reason) {
-
-                    }
-                });
-            } catch (SecurityException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     @SuppressLint("RestrictedApi")
     @NonNull
     @Override
@@ -117,7 +85,7 @@ public class DirectSendingWorker extends SendingWorker {
         {
             CountDownLatch latch = new CountDownLatch(1);
 
-            connect(peer, latch);
+            DirectUtils.connectPeer(getApplicationContext(), peer, latch);
             updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, entity.getFileName(), peer.getDisplayName());
             try {
                 latch.await();

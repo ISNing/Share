@@ -2,17 +2,24 @@ package org.exthmui.share.shared;
 
 import android.graphics.PorterDuff.Mode;
 
-public class PorterDuffUtils {
+public abstract class PorterDuffUtils {
     public static int modeToInt(Mode val) {
         switch (val) {
             default:
-            case CLEAR: return 0;
-            case SRC: return 1;
-            case DST: return 2;
-            case SRC_OVER: return 3;
-            case DST_OVER: return 4;
-            case SRC_IN: return 5;
-            case DST_IN: return 6;
+            case CLEAR:
+                return 0;
+            case SRC:
+                return 1;
+            case DST:
+                return 2;
+            case SRC_OVER:
+                return 3;
+            case DST_OVER:
+                return 4;
+            case SRC_IN:
+                return 5;
+            case DST_IN:
+                return 6;
             case SRC_OUT: return 7;
             case DST_OUT: return 8;
             case SRC_ATOP: return 9;

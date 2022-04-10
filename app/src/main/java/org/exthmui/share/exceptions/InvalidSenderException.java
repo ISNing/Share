@@ -2,9 +2,6 @@ package org.exthmui.share.exceptions;
 
 public class InvalidSenderException extends FailedStartSendingException {
 
-  public InvalidSenderException() {
-  }
-
   public InvalidSenderException(String message) {
     super(message);
   }

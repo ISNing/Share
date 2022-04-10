@@ -174,7 +174,7 @@ public class FileManager {
         if (files != null) {
             for (java.io.File file : files) {
                 String path = file.getAbsolutePath();
-                if (FileUtils.getFileType(path) == Constants.FileTypes.IMAGE) {
+                if (FileUtils.getFileType(path) == Constants.FileType.IMAGE) {
                     imgPaths.add(path);
                 }
             }

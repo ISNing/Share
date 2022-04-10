@@ -9,26 +9,26 @@
 
     <!-- Shared Preference Information -->
     <string name="prefs_key_global_destination_directory" translatable="false">global_destination_directory</string>
-    <string name="prefs_title_global_destination_directory">Destination Directory</string>
+    <string name="prefs_title_global_destination_directory" tools:ignore="UnusedResources">Destination Directory</string>
     <string name="prefs_default_global_destination_directory" translatable="false">@null</string>
-    <string name="prefs_summary_global_destination_directory_default" translatable="false">Download Directory</string>
+    <string name="prefs_summary_global_destination_directory_default" translatable="false" tools:ignore="UnusedResources">Download Directory</string>
 
     <string name="prefs_key_global_default_file_name" translatable="false">global_default_file_name</string>
-    <string name="prefs_title_global_default_file_name">Default file name</string>
+    <string name="prefs_title_global_default_file_name" tools:ignore="UnusedResources">Default file name</string>
     <string name="prefs_default_global_default_file_name" translatable="false">unknown</string>
-    <string name="prefs_summary_global_default_file_name_default" translatable="false">unknown</string>
+    <string name="prefs_summary_global_default_file_name_default" translatable="false" tools:ignore="UnusedResources">unknown</string>
 
-    <string name="prefs_key_global_device_name" translatable="false">global_device_name</string>
-    <string name="prefs_title_global_device_name">Device name</string>
-    <string name="prefs_default_global_device_name">@null</string>
-    <string name="prefs_summary_global_device_name_default">Your device name</string>
+    <string name="prefs_key_global_device_name" translatable="false" tools:ignore="UnusedResources">global_device_name</string>
+    <string name="prefs_title_global_device_name" tools:ignore="UnusedResources">Device name</string>
+    <string name="prefs_default_global_device_name" tools:ignore="UnusedResources">@null</string>
+    <string name="prefs_summary_global_device_name_default" tools:ignore="UnusedResources">Your device name</string>
 
-    <string name="prefs_key_global_peer_id" translatable="false">global_peer_id</string>
-    <string name="prefs_title_global_peer_id">Device ID</string>
-    <string name="prefs_default_global_peer_id" translatable="false">@null</string>
-    <string name="prefs_summary_global_peer_id_hidden">Tap here to regenerate your identity</string>
-    <string name="prefs_summary_global_peer_id_show" formatted="true"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g> (Tap here to regenerate)</string>
-    <string name="toast_global_peer_id_regenerated" formatted="true">Device ID regenerated</string>
+    <string name="prefs_key_global_peer_id" translatable="false" tools:ignore="UnusedResources">global_peer_id</string>
+    <string name="prefs_title_global_peer_id" tools:ignore="UnusedResources">Device ID</string>
+    <string name="prefs_default_global_peer_id" translatable="false" tools:ignore="UnusedResources">@null</string>
+    <string name="prefs_summary_global_peer_id_hidden" tools:ignore="UnusedResources">Tap here to regenerate your identity</string>
+    <string name="prefs_summary_global_peer_id_show" formatted="true" tools:ignore="UnusedResources"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g> (Tap here to regenerate)</string>
+    <string name="toast_global_peer_id_regenerated" formatted="true" tools:ignore="UnusedResources">Device ID regenerated</string>
 
     <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
@@ -80,8 +80,8 @@
     <string name="dialog_action_reject">Reject</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
     <string name="notification_title_receive_receiving" formatted="true">Receiving file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" from <xliff:g id="sender_name" example="ISNing's Phone">%2$s</xliff:g></string>
-    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\ from <xliff:g id="sender_name" example="ISNing's Phone">%2$s</xliff:g></string>
-    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files from %<xliff:g id="sender_name" example="ISNing's Phone">%4$s</xliff:g></string>
+    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\ from <xliff:g id="sender_name" example="ISNing's Phone">%3$s</xliff:g></string>
+    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files from <xliff:g id="sender_name" example="ISNing's Phone">%4$s</xliff:g></string>
     <string name="notification_placeholder_unknown">Unknown</string>
 
     <!-- Transmission Status Friendly -->

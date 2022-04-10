@@ -1,6 +1,5 @@
 package org.exthmui.share.shared;
 
-import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -8,7 +7,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Environment;
 import android.provider.Settings;
 import android.text.TextUtils;
@@ -25,53 +23,11 @@ import java.lang.reflect.Method;
 import java.util.Objects;
 import java.util.UUID;
 
-public class Utils {
+public abstract class Utils {
     public static final String TAG = "Utils";
 
-    public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
-        return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
-    }
-
-    public Bitmap Drawable2Bitmap(Drawable img) {
-        return ((BitmapDrawable) img).getBitmap();
-    }
-
-    @TargetApi(Build.VERSION_CODES.FROYO)
-    public String Bitmap2StrByBase64(@NonNull Bitmap bm) {
-        int compressQuality = Constants.COMPRESS_QUALITY;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        bm.compress(Bitmap.CompressFormat.PNG, compressQuality, bos);
-        byte[] bytes = bos.toByteArray();
-        return Base64.encodeToString(bytes, Base64.DEFAULT);
-    }
-
-    /**
-     * Judge whether the value is included in enum clazz
-     *
-     * @param clazz Enum class
-     * @param code The value to be found
-     * @return Whether the value is included in enum clazz
-     */
-    public static boolean isInclude(@NonNull Class<?> clazz, Integer code) {
-        boolean include = false;
-        if (clazz.isEnum()) {
-            Object[] enumConstants = clazz.getEnumConstants();
-            try {
-                Method getCode = clazz.getMethod("getCode");
-                for (Object enumConstant : Objects.requireNonNull(enumConstants)) {
-                    if (Objects.requireNonNull(getCode.invoke(enumConstant)).equals(code)) {
-                        include = true;
-                        break;
-                    }
-                }
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
-            }
-        }
-
-        return include;
-    }
-
-    public static @NonNull DocumentFile getDestinationDirectory(Context context) {
+    public static @NonNull
+    DocumentFile getDestinationDirectory(Context context) {
         String destinationDirectoryUri = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
 
         DocumentFile downloadsDirectory = DocumentFile.fromFile(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS));
@@ -109,7 +65,7 @@ public class Utils {
 //        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
 //            deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
 //        } else
-            deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
+        deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
         return deviceName;
     }
 
@@ -146,13 +102,45 @@ public class Utils {
         return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
-    public static int dip2px(Context context, float dpValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (dpValue * scale + 0.5f);
+    public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
+        return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
     }
 
-    public static int px2dip(Context context, float pxValue) {
-        final float scale = context.getResources().getDisplayMetrics().density;
-        return (int) (pxValue / scale + 0.5f);
+    /**
+     * Judge whether the value is included in enum clazz
+     *
+     * @param clazz Enum class
+     * @param code  The value to be found
+     * @return Whether the value is included in enum clazz
+     */
+    public static boolean isInclude(@NonNull Class<?> clazz, Integer code) {
+        boolean include = false;
+        if (clazz.isEnum()) {
+            Object[] enumConstants = clazz.getEnumConstants();
+            try {
+                Method getCode = clazz.getMethod("getCode");
+                for (Object enumConstant : Objects.requireNonNull(enumConstants)) {
+                    if (Objects.requireNonNull(getCode.invoke(enumConstant)).equals(code)) {
+                        include = true;
+                        break;
+                    }
+                }
+            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+            }
+        }
+
+        return include;
+    }
+
+    public Bitmap Drawable2Bitmap(Drawable img) {
+        return ((BitmapDrawable) img).getBitmap();
+    }
+
+    public String Bitmap2StrByBase64(@NonNull Bitmap bm) {
+        int compressQuality = Constants.COMPRESS_QUALITY;
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        bm.compress(Bitmap.CompressFormat.PNG, compressQuality, bos);
+        byte[] bytes = bos.toByteArray();
+        return Base64.encodeToString(bytes, Base64.DEFAULT);
     }
 }

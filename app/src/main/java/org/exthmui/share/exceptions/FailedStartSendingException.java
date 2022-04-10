@@ -1,24 +1,55 @@
 package org.exthmui.share.exceptions;
 
-public class FailedStartSendingException extends Exception {
+import android.content.Context;
 
-    public FailedStartSendingException() {
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+public class FailedStartSendingException extends LocalizedException {
+
+    public FailedStartSendingException(@NonNull Context context) {
+        super(context);
     }
 
-    public FailedStartSendingException(String message) {
+    public FailedStartSendingException(Context context, Throwable cause) {
+        super(context, cause);
+    }
+
+    public FailedStartSendingException(@Nullable String message) {
         super(message);
     }
 
-    public FailedStartSendingException(String message, Throwable cause) {
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage) {
+        super(message, localizedMessage);
+    }
+
+    public FailedStartSendingException(@Nullable String message, Throwable cause) {
         super(message, cause);
+    }
+
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
+        super(message, localizedMessage, cause);
     }
 
     public FailedStartSendingException(Throwable cause) {
         super(cause);
     }
 
-    public FailedStartSendingException(String message, Throwable cause, boolean enableSuppression,
-        boolean writableStackTrace) {
+    public FailedStartSendingException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
+    }
+
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
+    }
+
+    @Override
+    public int getMessageStrRes() {
+        return 0;
+    }
+
+    @Override
+    public int getLocalizedMessageStrRes() {
+        return 0;
     }
 }

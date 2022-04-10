@@ -4,7 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.view.View;
 
-public class CrossFadeUtils {
+public abstract class CrossFadeUtils {
     public static void fadeIn(View view, long duration, Animator.AnimatorListener listener) {
         view.setAlpha(0f);
         view.setVisibility(View.VISIBLE);
@@ -14,6 +14,7 @@ public class CrossFadeUtils {
                 .setDuration(duration)
                 .setListener(listener).start();
     }
+
     public static void fadeOut(View view, long duration, Animator.AnimatorListener listener) {
         view.animate()
                 .alpha(0f)

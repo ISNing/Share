@@ -137,7 +137,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
         private PeerInfo peer;
         private final BadgeHelper badgeHelper;
 
-        LifecycleOwner mLifecycleOwner;
+        final LifecycleOwner mLifecycleOwner;
 
         private final View mView;
         private final ConstraintLayout mPeerIconContainer;

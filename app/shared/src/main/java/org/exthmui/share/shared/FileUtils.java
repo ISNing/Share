@@ -19,30 +19,32 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 
-public class FileUtils {
+@SuppressWarnings("SpellCheckingInspection")
+public abstract class FileUtils {
     // construct a with an approximation of the capacity
-    private static final HashMap<String, Constants.FileTypes> sMimeIds = new HashMap<>(1 + (int)(114 / 0.75));
-    private static void put(String mimeType, Constants.FileTypes type) {
+    private static final HashMap<String, Constants.FileType> sMimeIds = new HashMap<>(1 + (int) (114 / 0.75));
+
+    private static void put(String mimeType, Constants.FileType type) {
         if (sMimeIds.put(mimeType, type) != null) {
             throw new RuntimeException(mimeType + " already registered!");
         }
     }
 
-    private static void putKeys(Constants.FileTypes fileType, String... mimeTypes) {
+    private static void putKeys(Constants.FileType fileType, String... mimeTypes) {
         for (String type : mimeTypes) {
             put(type, fileType);
         }
     }
 
     static {
-        putKeys(Constants.FileTypes.APK,
+        putKeys(Constants.FileType.APK,
                 "application/vnd.android.package-archive"
         );
-        putKeys(Constants.FileTypes.AUDIO,
+        putKeys(Constants.FileType.AUDIO,
                 "application/ogg",
                 "application/x-flac"
         );
-        putKeys(Constants.FileTypes.CERTIFICATE,
+        putKeys(Constants.FileType.CERTIFICATE,
                 "application/pgp-keys",
                 "application/pgp-signature",
                 "application/x-pkcs12",
@@ -54,7 +56,7 @@ public class FileUtils {
                 "application/x-pkcs7-mime",
                 "application/x-pkcs7-signature"
         );
-        putKeys(Constants.FileTypes.CODE,
+        putKeys(Constants.FileType.CODE,
                 "application/rdf+xml",
                 "application/rss+xml",
                 "application/x-object",
@@ -84,7 +86,7 @@ public class FileUtils {
                 "text/javascript",
                 "application/x-javascript"
         );
-        putKeys(Constants.FileTypes.COMPRESSED,
+        putKeys(Constants.FileType.COMPRESSED,
                 "application/mac-binhex40",
                 "application/rar",
                 "application/zip",
@@ -105,21 +107,21 @@ public class FileUtils {
                 "application/x-deb",
                 "application/x-rar-compressed"
         );
-        putKeys(Constants.FileTypes.CONTACT,
+        putKeys(Constants.FileType.CONTACT,
                 "text/x-vcard",
                 "text/vcard"
         );
-        putKeys(Constants.FileTypes.EVENTS,
+        putKeys(Constants.FileType.EVENTS,
                 "text/calendar",
                 "text/x-vcalendar"
         );
-        putKeys(Constants.FileTypes.FONT,
+        putKeys(Constants.FileType.FONT,
                 "application/x-font",
                 "application/font-woff",
                 "application/x-font-woff",
                 "application/x-font-ttf"
         );
-        putKeys(Constants.FileTypes.IMAGE,
+        putKeys(Constants.FileType.IMAGE,
                 "application/vnd.oasis.opendocument.graphics",
                 "application/vnd.oasis.opendocument.graphics-template",
                 "application/vnd.oasis.opendocument.image",
@@ -129,10 +131,10 @@ public class FileUtils {
                 "image/jpeg",
                 "image/png"
         );
-        putKeys(Constants.FileTypes.PDF,
+        putKeys(Constants.FileType.PDF,
                 "application/pdf"
         );
-        putKeys(Constants.FileTypes.PRESENTATION,
+        putKeys(Constants.FileType.PRESENTATION,
                 "application/vnd.ms-powerpoint",
                 "application/vnd.openxmlformats-officedocument.presentationml.presentation",
                 "application/vnd.openxmlformats-officedocument.presentationml.template",
@@ -143,7 +145,7 @@ public class FileUtils {
                 "application/x-kpresenter",
                 "application/vnd.oasis.opendocument.presentation"
         );
-        putKeys(Constants.FileTypes.SPREADSHEETS,
+        putKeys(Constants.FileType.SPREADSHEETS,
                 "application/vnd.oasis.opendocument.spreadsheet",
                 "application/vnd.oasis.opendocument.spreadsheet-template",
                 "application/vnd.ms-excel",
@@ -155,7 +157,7 @@ public class FileUtils {
                 "application/x-kspread",
                 "text/comma-separated-values"
         );
-        putKeys(Constants.FileTypes.DOCUMENTS,
+        putKeys(Constants.FileType.DOCUMENTS,
                 "application/msword",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "application/vnd.openxmlformats-officedocument.wordprocessingml.template",
@@ -172,14 +174,14 @@ public class FileUtils {
                 "application/x-kword",
                 "text/markdown"
         );
-        putKeys(Constants.FileTypes.TEXT,
+        putKeys(Constants.FileType.TEXT,
                 "text/plain"
         );
-        putKeys(Constants.FileTypes.VIDEO,
+        putKeys(Constants.FileType.VIDEO,
                 "application/x-quicktimeplayer",
                 "application/x-shockwave-flash"
         );
-        putKeys(Constants.FileTypes.ENCRYPTED,
+        putKeys(Constants.FileType.ENCRYPTED,
                 "application/octet-stream"
         );
     }
@@ -194,23 +196,23 @@ public class FileUtils {
         return file.exists();
     }
 
-    public static Constants.FileTypes getFileType(String path) {
+    public static Constants.FileType getFileType(String path) {
         String mimeType = MimeTypes.getMimeType(path);
         return getFileTypeByMime(mimeType);
     }
 
-    public static Constants.FileTypes getFileTypeByMime(String mimeType) {
-        if(mimeType == null) return Constants.FileTypes.UNKNOWN;
+    public static Constants.FileType getFileTypeByMime(String mimeType) {
+        if (mimeType == null) return Constants.FileType.UNKNOWN;
 
-        Constants.FileTypes type = sMimeIds.get(mimeType);
-        if(type != null) return type;
+        Constants.FileType type = sMimeIds.get(mimeType);
+        if (type != null) return type;
         else {
-            if(checkType(mimeType, "text")) return Constants.FileTypes.TEXT;
-            else if (checkType(mimeType, "image")) return Constants.FileTypes.IMAGE;
-            else if(checkType(mimeType, "video")) return Constants.FileTypes.VIDEO;
-            else if(checkType(mimeType, "audio")) return Constants.FileTypes.AUDIO;
-            else if (checkType(mimeType, "crypt")) return Constants.FileTypes.ENCRYPTED;
-            else return Constants.FileTypes.UNKNOWN;
+            if (checkType(mimeType, "text")) return Constants.FileType.TEXT;
+            else if (checkType(mimeType, "image")) return Constants.FileType.IMAGE;
+            else if (checkType(mimeType, "video")) return Constants.FileType.VIDEO;
+            else if (checkType(mimeType, "audio")) return Constants.FileType.AUDIO;
+            else if (checkType(mimeType, "crypt")) return Constants.FileType.ENCRYPTED;
+            else return Constants.FileType.UNKNOWN;
         }
     }
 

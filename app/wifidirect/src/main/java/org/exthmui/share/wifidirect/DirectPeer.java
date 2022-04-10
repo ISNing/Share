@@ -125,7 +125,7 @@ public class DirectPeer extends Peer {
 
     @Override
     public String getDetailMessage() {
-        return null;//TODO:Add detail message
+        return String.format("IP: %1$s\n", wifiP2pDevice.deviceAddress);
     }
 
     @NonNull

@@ -14,7 +14,7 @@ import java.util.Objects;
 
 public class NearSharePeer extends Peer {
     public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_MSNEARSHARE;
-    RemoteSystem remoteSystem;
+    final RemoteSystem remoteSystem;
 
     public NearSharePeer(RemoteSystem remoteSystem) {
         this.remoteSystem = remoteSystem;

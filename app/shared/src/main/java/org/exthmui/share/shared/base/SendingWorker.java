@@ -85,14 +85,14 @@ public abstract class SendingWorker extends Worker {
      * {@link String}: {@link Entity#FILE_NAME},
      * {@link String}: {@link Entity#FILE_PATH},
      * {@link long}: {@link Entity#FILE_SIZE},
-     * {@link int}: {@link Entity#FILE_TYPE}, For more {@link Constants.FileTypes#getNumVal()}
+     * {@link int}: {@link Entity#FILE_TYPE}, For more {@link Constants.FileType#getNumVal()}
      * {@link String}: {@link Sender#TARGET_PEER_ID}
      *
      * OR:{@link String[]}: {@link Entity#FILE_URIS},
      * {@link String[]}: {@link Entity#FILE_NAMES},
      * {@link String[]}: {@link Entity#FILE_PATHS},
      * {@link long[]}: {@link Entity#FILE_SIZES},
-     * {@link int[]}: {@link Entity#FILE_TYPES}, For more {@link Constants.FileTypes#getNumVal()}
+     * {@link int[]}: {@link Entity#FILE_TYPES}, For more {@link Constants.FileType#getNumVal()}
      * {@link String[]}: {@link Sender#TARGET_PEER_ID}
      * ***** Extra values is allowed *****
      *

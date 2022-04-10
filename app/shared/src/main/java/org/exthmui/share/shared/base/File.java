@@ -13,7 +13,7 @@ public class File implements FileInfo {
     private long fileSize = -1;
     private int fileAddedTime;
     private int fileModifiedTime;
-    private int fileType = Constants.FileTypes.UNKNOWN.getNumVal();
+    private int fileType = Constants.FileType.UNKNOWN.getNumVal();
 
     @SuppressWarnings("deprecated")
     public File(Cursor c) {

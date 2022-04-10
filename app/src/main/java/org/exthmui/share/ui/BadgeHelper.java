@@ -208,7 +208,7 @@ public class BadgeHelper extends View {
         View targetView = null;
         View tabView = null;
         try {
-            Field viewField = TabLayout.Tab.class.getDeclaredField("mView");
+            @SuppressWarnings("JavaReflectionMemberAccess") Field viewField = TabLayout.Tab.class.getDeclaredField("mView");
             viewField.setAccessible(true);
             targetView = tabView = (View) viewField.get(tab);
         } catch (Exception e) {

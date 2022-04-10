@@ -2,9 +2,6 @@ package org.exthmui.share.exceptions;
 
 public class InvalidPeerException extends FailedStartSendingException {
 
-  public InvalidPeerException() {
-  }
-
   public InvalidPeerException(String message) {
     super(message);
   }

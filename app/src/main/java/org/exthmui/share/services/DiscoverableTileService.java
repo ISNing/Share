@@ -49,19 +49,9 @@ public class DiscoverableTileService extends TileService {
     }
 
     @Override
-    public void onTileAdded() {
-        super.onTileAdded();
-    }
-
-    @Override
     public void onStartListening() {
         super.onStartListening();
         refreshState();
-    }
-
-    @Override
-    public void onStopListening() {
-        super.onStopListening();
     }
 
     @Override

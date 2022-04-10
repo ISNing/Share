@@ -4,22 +4,29 @@ import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
 import static org.exthmui.share.shared.Constants.PEER_ID_STRING;
 
 import android.content.Context;
+import android.net.wifi.WpsInfo;
+import android.net.wifi.p2p.WifiP2pConfig;
+import android.net.wifi.p2p.WifiP2pDevice;
+import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
 import org.exthmui.share.shared.Utils;
 
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
-public class DirectUtils {
+public abstract class DirectUtils {
     public static final String TAG = "DirectUtils";
-    public static int generatePort(int except){
+
+    public static int generatePort(int except) {
         int port;
         do {
             port = generatePort();
         } while (!isPortValid(port) | port == except);
         return port;
     }
-    public static int generatePort(){
+
+    public static int generatePort() {
         Random random = new Random();
         return random.nextInt(60534) + 5001;
     }
@@ -67,5 +74,33 @@ public class DirectUtils {
 
     public static String genDirectId(String peerId) {
         return String.format(PEER_ID_STRING, CONNECTION_CODE_WIFIDIRECT, peerId);
+    }
+
+    public static void connectPeer(Context context, DirectPeer peer, CountDownLatch latch) {
+        WifiP2pDevice targetDevice = peer.getWifiP2pDevice();
+        DirectManager manager = DirectManager.getInstance(context);
+        WifiP2pManager wifiP2pManager = manager.getWifiP2pManager();
+        WifiP2pManager.Channel channel = manager.getChannel();
+        WifiP2pConfig config = new WifiP2pConfig();
+        if (config.deviceAddress != null) {
+            config.deviceAddress = targetDevice.deviceAddress;
+            config.wps.setup = WpsInfo.PBC;
+            try {
+                wifiP2pManager.connect(channel, config, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        peer.notifyPeerUpdated();
+                        latch.countDown();
+                    }
+
+                    @Override
+                    public void onFailure(int reason) {
+
+                    }
+                });
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

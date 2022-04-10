@@ -9,9 +9,7 @@ import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.EventObject;
 
-public class
-
-BaseEventListenersUtils {
+public abstract class BaseEventListenersUtils {
     public static boolean isThisListenerSuitable(BaseEventListener listener, Class<? extends BaseEventListener>[] listenerTypesAllowed) {
         for (Class<? extends BaseEventListener> t : listenerTypesAllowed) {
             if (t.isAssignableFrom(listener.getClass())) {
@@ -21,7 +19,7 @@ BaseEventListenersUtils {
         return false;
     }
 
-    public static void notifyListeners(@NonNull EventObject event, @NonNull Collection<BaseEventListener> listeners){
+    public static void notifyListeners(@NonNull EventObject event, @NonNull Collection<BaseEventListener> listeners) {
         for (BaseEventListener listener : listeners) {
             for (Class<? extends EventObject> t: listener.getEventTMethodMap().keySet()) {
                 if (t.isAssignableFrom(event.getClass())){

@@ -30,7 +30,7 @@ import org.exthmui.share.shared.ui.AcceptationRequestActivity;
 
 import java.util.UUID;
 
-public class ReceiverUtils {
+public abstract class ReceiverUtils {
     private static final String REQUEST_CHANNEL_ID = "org.exthmui.share.notification.channel.REQUEST";
     private static final String RECEIVE_PROGRESS_CHANNEL_ID = "org.exthmui.share.notification.channel.RECEIVE";
     private static final String RECEIVE_SERVICE_CHANNEL_ID = "org.exthmui.share.notification.channel.RECEIVE_SERVICE";

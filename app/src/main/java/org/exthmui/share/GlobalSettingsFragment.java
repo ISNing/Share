@@ -19,7 +19,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
-import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -174,14 +173,11 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             mDestinationDirectoryActivityResultLauncher.launch(null);
             return true;
         });
-        mDestinationDirectoryPrefs.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-            @Override
-            public boolean onPreferenceChange(@NonNull Preference preference, Object newValue) {
-                if (newValue == null) {
-                    mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
-                } else mDestinationDirectoryPrefs.setSummary((String) newValue);
-                return true;
-            }
+        mDestinationDirectoryPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+            if (newValue == null) {
+                mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
+            } else mDestinationDirectoryPrefs.setSummary((String) newValue);
+            return true;
         });
         if (mDestinationDirectoryPrefs.getValue() == null) {
             mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));

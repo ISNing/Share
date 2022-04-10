@@ -56,7 +56,6 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
                     OnPeerUpdatedListener.class,
                     OnPeerRemovedListener.class
             };
-    private static DiscoverService instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 
@@ -70,11 +69,6 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     public DiscoverService() {
         initializeInternalListeners();
-    }
-
-    public static DiscoverService getInstance() {
-        if (instance == null) instance = new DiscoverService();
-        return instance;
     }
 
     @Override

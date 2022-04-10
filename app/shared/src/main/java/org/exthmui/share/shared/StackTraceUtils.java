@@ -1,6 +1,6 @@
 package org.exthmui.share.shared;
 
-public class StackTraceUtils {
+public abstract class StackTraceUtils {
     public static String getStackTraceString(StackTraceElement[] stackTraceElements) {
         StringBuilder builder = new StringBuilder();
         for (StackTraceElement element : stackTraceElements) {

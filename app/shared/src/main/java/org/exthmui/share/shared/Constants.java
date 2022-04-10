@@ -26,20 +26,20 @@ public class Constants {
     public static final String NOTIFICATION_SERVICE_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.SERVICES";
     public static final String NOTIFICATION_REQUEST_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.PROGRESSES";
 
-    public enum FileTypes{
-        UNKNOWN(-1),APK(0), AUDIO(1), CERTIFICATE(2),
-        CODE(3), COMPRESSED(4),CONTACT(5), EVENTS(6),
+    public enum FileType {
+        UNKNOWN(-1), APK(0), AUDIO(1), CERTIFICATE(2),
+        CODE(3), COMPRESSED(4), CONTACT(5), EVENTS(6),
         FONT(7), IMAGE(8), PDF(9), PRESENTATION(10),
         SPREADSHEETS(11), DOCUMENTS(12), TEXT(13), VIDEO(14),
         ENCRYPTED(15), GIF(16);
         private final int numVal;
 
-        FileTypes(int numVal) {
+        FileType(int numVal) {
             this.numVal = numVal;
         }
 
-        public static DeviceType parse(int numVal) {
-            for (DeviceType o : DeviceType.values()) {
+        public static FileType parse(int numVal) {
+            for (FileType o : FileType.values()) {
                 if (o.getNumVal() == numVal) {
                     return o;
                 }

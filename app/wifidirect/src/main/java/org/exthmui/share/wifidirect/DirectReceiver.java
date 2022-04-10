@@ -92,14 +92,6 @@ public class DirectReceiver implements Receiver {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
-    public WifiP2pManager getWifiP2pManager() {
-        return mWifiP2pManager;
-    }
-
-    public WifiP2pManager.Channel getChannel() {
-        return mChannel;
-    }
-
     @NonNull
     @Override
     public Set<String> getPermissionNotGranted() {

@@ -16,7 +16,7 @@
 
     <string name="hint_scanning_no_peers">Scanning peers available, please ensure remote peers are detectable.\nNo available peers found so far. </string>
     <string name="hint_scanning_disabled">Scanning disabled, tap the button below to start scanning</string>
-    <string name="hint_scanning_unavailable">Scanning unavailable, check<!-- TODO:add what to check--></string>
+    <string name="hint_scanning_unavailable">Scanning unavailable, check if permissions are not granted or futures required are not supported.</string>
 
     <string name="button_non_scanning_place_holder_enable">Start to scan peers</string>
 

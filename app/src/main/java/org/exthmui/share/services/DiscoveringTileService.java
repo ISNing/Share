@@ -38,11 +38,6 @@ public class DiscoveringTileService extends TileService {
     }
 
     @Override
-    public void onTileAdded() {
-        super.onTileAdded();
-    }
-
-    @Override
     public void onClick() {
         super.onClick();
         int state = getQsTile().getState();
@@ -83,11 +78,6 @@ public class DiscoveringTileService extends TileService {
     public void onStartListening() {
         super.onStartListening();
         refreshState();
-    }
-
-    @Override
-    public void onStopListening() {
-        super.onStopListening();
     }
 
     private void refreshState() {

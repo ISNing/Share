@@ -2,9 +2,6 @@ package org.exthmui.share.exceptions;
 
 public class InvalidConnectionTypeException extends FailedStartSendingException {
 
-  public InvalidConnectionTypeException() {
-  }
-
   public InvalidConnectionTypeException(String message) {
     super(message);
   }

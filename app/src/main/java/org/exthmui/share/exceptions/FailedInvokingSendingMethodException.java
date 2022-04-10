@@ -2,9 +2,6 @@ package org.exthmui.share.exceptions;
 
 public class FailedInvokingSendingMethodException extends FailedStartSendingException {
 
-  public FailedInvokingSendingMethodException() {
-  }
-
   public FailedInvokingSendingMethodException(String message) {
     super(message);
   }

@@ -8,7 +8,6 @@ import androidx.annotation.Nullable;
 import androidx.preference.Preference;
 
 public class ClickableStringPreference extends Preference {
-    private String mValue;
     public ClickableStringPreference(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
     }
@@ -26,7 +25,6 @@ public class ClickableStringPreference extends Preference {
     }
 
     public void setValue(String val) {
-        mValue = val;
         if (callChangeListener(val))
             persistString(val);
     }

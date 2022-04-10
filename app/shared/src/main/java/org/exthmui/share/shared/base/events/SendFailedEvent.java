@@ -5,8 +5,8 @@ import org.exthmui.share.shared.Constants;
 import java.util.EventObject;
 
 public class SendFailedEvent extends EventObject {
-    public Constants.TransmissionStatus status;
-    public String reason;
+    public final Constants.TransmissionStatus status;
+    public final String reason;
 
     public SendFailedEvent(Object source, Constants.TransmissionStatus status, String reason) {
         super(source);

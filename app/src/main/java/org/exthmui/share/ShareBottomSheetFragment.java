@@ -12,12 +12,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+
 import org.exthmui.share.exceptions.InvalidPeerException;
 import org.exthmui.share.misc.SendingHelper;
 import org.exthmui.share.services.DiscoverService;
@@ -34,6 +32,11 @@ import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.ui.BaseBottomSheetFragment;
 import org.exthmui.share.ui.PeerChooserView;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
 
@@ -122,15 +125,9 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
           mPeerChooser.setState(PeerChooserView.STATE_DISABLED);
         }
       });
-      mServiceListeners.add((OnPeerAddedListener) event -> {
-        requireActivity().runOnUiThread(() -> mPeerChooser.addPeer(event.getPeer()));
-      });
-      mServiceListeners.add((OnPeerUpdatedListener) event -> {
-        requireActivity().runOnUiThread(() -> mPeerChooser.updatePeer(event.getPeer()));
-      });
-      mServiceListeners.add((OnPeerRemovedListener) event -> {
-        requireActivity().runOnUiThread(() -> mPeerChooser.removePeer(event.getPeer()));
-      });
+      mServiceListeners.add((OnPeerAddedListener) event -> requireActivity().runOnUiThread(() -> mPeerChooser.addPeer(event.getPeer())));
+      mServiceListeners.add((OnPeerUpdatedListener) event -> requireActivity().runOnUiThread(() -> mPeerChooser.updatePeer(event.getPeer())));
+      mServiceListeners.add((OnPeerRemovedListener) event -> requireActivity().runOnUiThread(() -> mPeerChooser.removePeer(event.getPeer())));
       for (BaseEventListener listener : mServiceListeners) {
         mService.registerListener(listener);
       }
@@ -181,37 +178,18 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
     }
 
     mPeerChooser.getPeerSelectedLiveData()
-        .observe(this, s -> mActionButton.setClickable(s != null));
-    mActionButton.setOnClickListener(new View.OnClickListener() {
-
-      @Override
-      public void onClick(View v) {
-        if (mEntities == null) {
-          throw new NoEntityPassedException();
-        }
-        if (mService == null) {
-          mConnection.registerOnServiceConnectedListener(s -> {
-            DiscoverService service = (DiscoverService) s;
-            PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
-            try {
-              if (peer == null) {
-                throw new InvalidPeerException("Peer is null");
-              }
-              if (mEntities.size() == 1) {
-                mSendingHelper.send(peer, mEntities.get(0));
-              } else {
-                mSendingHelper.send(peer, mEntities);
-              }
-            } catch (Throwable tr) {
-              handleError(requireContext(), tr);
-            }
-            dismiss();
-          });
-        } else {
-          PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+            .observe(this, s -> mActionButton.setClickable(s != null));
+    mActionButton.setOnClickListener(v -> {
+      if (mEntities == null) {
+        throw new NoEntityPassedException();
+      }
+      if (mService == null) {
+        mConnection.registerOnServiceConnectedListener(s -> {
+          DiscoverService service = (DiscoverService) s;
+          PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
           try {
             if (peer == null) {
-              throw new InvalidPeerException("Peer is null");
+              throw new InvalidPeerException("Peer disappeared");
             }
             if (mEntities.size() == 1) {
               mSendingHelper.send(peer, mEntities.get(0));
@@ -222,7 +200,22 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
             handleError(requireContext(), tr);
           }
           dismiss();
+        });
+      } else {
+        PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+        try {
+          if (peer == null) {
+            throw new InvalidPeerException("Peer is null");
+          }
+          if (mEntities.size() == 1) {
+            mSendingHelper.send(peer, mEntities.get(0));
+          } else {
+            mSendingHelper.send(peer, mEntities);
+          }
+        } catch (Throwable tr) {
+          handleError(requireContext(), tr);
         }
+        dismiss();
       }
     });
   }

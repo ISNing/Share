@@ -33,13 +33,9 @@ public class Constants {
         }
 
         ConnectionType(IConnectionType type) {
-            this.friendlyName = type.getFriendlyName();
-            this.code = type.getCode();
-            this.senderClass = type.getSenderClass();
-            this.discovererClass = type.getDiscovererClass();
-            this.receiverClass = type.getReceiverClass();
-            this.peerClass = type.getPeerClass();
-            this.preferenceFragmentClass = type.getPreferenceFragmentClass();
+            this(type.getFriendlyName(), type.getCode(), type.getSenderClass(),
+                    type.getDiscovererClass(), type.getReceiverClass(), type.getPeerClass(),
+                    type.getPreferenceFragmentClass());
         }
 
         @Override
