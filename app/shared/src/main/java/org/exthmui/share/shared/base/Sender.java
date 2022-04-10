@@ -1,11 +1,12 @@
 package org.exthmui.share.shared.base;
 
-import android.util.Log;
+import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 
 import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.exceptions.FailedCastingPeerException;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,23 +31,21 @@ public interface Sender<T extends PeerInfo > {
     UUID send(T peer, List<Entity> entities);
 
     @SuppressWarnings("unchecked")
-    default UUID sendToPeerInfo(PeerInfo peer, Entity entity) {
+    default UUID sendToPeerInfo(Context context, PeerInfo peer, Entity entity) throws FailedCastingPeerException {
         try {
             return send((T) peer, entity);
         } catch (ClassCastException e) {
-            Log.e(TAG, "Failed casting peer");
+            throw new FailedCastingPeerException(context, e);
         }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
-    default UUID sendToPeerInfo(PeerInfo peer, List<Entity> entities) {
+    default UUID sendToPeerInfo(Context context, PeerInfo peer, List<Entity> entities) throws FailedCastingPeerException {
         try {
             return send((T) peer, entities);
         } catch (ClassCastException e) {
-            Log.e(TAG, "Failed casting peer");
+            throw new FailedCastingPeerException(context, e);
         }
-        return null;
     }
 
     void registerListener(BaseEventListener listener);
@@ -65,21 +64,20 @@ public interface Sender<T extends PeerInfo > {
                 .putInt(Entity.FILE_TYPE, entity.getFileType())
                 .putString(TARGET_PEER_ID, peer.getId())
                 .build();
-
     }
 
-    default Data genSendingInputData(PeerInfo peer, @NonNull Entity[] entities) {
-        String[] uriStrings = new String[entities.length];
-        String[] fileNames = new String[entities.length];
-        String[] filePaths = new String[entities.length];
-        long[] fileSizes = new long[entities.length];
-        int[] fileTypes = new int[entities.length];
-        for (int i = 0; i < entities.length; i++) {
-            uriStrings[i] = entities[i].getUri().toString();
-            fileNames[i] = entities[i].getFileName();
-            filePaths[i] = entities[i].getFilePath();
-            fileSizes[i] = entities[i].getFileSize();
-            fileTypes[i] = entities[i].getFileType();
+    default Data genSendingInputData(PeerInfo peer, @NonNull List<Entity> entities) {
+        String[] uriStrings = new String[entities.size()];
+        String[] fileNames = new String[entities.size()];
+        String[] filePaths = new String[entities.size()];
+        long[] fileSizes = new long[entities.size()];
+        int[] fileTypes = new int[entities.size()];
+        for (int i = 0; i < entities.size(); i++) {
+            uriStrings[i] = entities.get(i).getUri().toString();
+            fileNames[i] = entities.get(i).getFileName();
+            filePaths[i] = entities.get(i).getFilePath();
+            fileSizes[i] = entities.get(i).getFileSize();
+            fileTypes[i] = entities.get(i).getFileType();
         }
         return new Data.Builder()
                 .putStringArray(Entity.FILE_URIS, uriStrings)

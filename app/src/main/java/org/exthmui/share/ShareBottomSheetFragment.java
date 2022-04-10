@@ -16,7 +16,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.exthmui.share.exceptions.InvalidPeerException;
 import org.exthmui.share.misc.SendingHelper;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.ServiceUtils;
@@ -30,6 +29,7 @@ import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.exceptions.PeerDisappearedException;
 import org.exthmui.share.shared.ui.BaseBottomSheetFragment;
 import org.exthmui.share.ui.PeerChooserView;
 
@@ -189,7 +189,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                     PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                     try {
                         if (peer == null) {
-                            throw new InvalidPeerException("Peer disappeared");
+                            throw new PeerDisappearedException(requireContext());
                         }
                         if (mEntities.size() == 1) {
                             mSendingHelper.send(peer, mEntities.get(0));
@@ -205,7 +205,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                 PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                 try {
                     if (peer == null) {
-                        throw new InvalidPeerException("Peer is null");
+                        throw new PeerDisappearedException(requireContext());
                     }
                     if (mEntities.size() == 1) {
                         mSendingHelper.send(peer, mEntities.get(0));

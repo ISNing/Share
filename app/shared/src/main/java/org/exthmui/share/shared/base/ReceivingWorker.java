@@ -126,7 +126,7 @@ public abstract class ReceivingWorker extends Worker {
     @Override
     public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
         SettableFuture<ForegroundInfo> foregroundInfoListenableFuture = SettableFuture.create();
-        foregroundInfoListenableFuture.set(createForegroundInfo(Constants.TransmissionStatus.UNKNOWN.getNumVal(), (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), 0, 0, (String) null, null, false));
+        foregroundInfoListenableFuture.set(createForegroundInfo(Constants.TransmissionStatus.INITIALIZING.getNumVal(), (Constants.NOTIFICATION_ID_PREFIX_RECEIVE + getId()).hashCode(), 0, 0, (String) null, null, false));
         return foregroundInfoListenableFuture;
     }
 }

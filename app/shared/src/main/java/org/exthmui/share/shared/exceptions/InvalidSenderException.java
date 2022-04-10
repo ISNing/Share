@@ -1,11 +1,11 @@
-package org.exthmui.share.exceptions;
+package org.exthmui.share.shared.exceptions;
 
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.exthmui.share.R;
+import org.exthmui.share.shared.R;
 
 public class InvalidSenderException extends FailedStartSendingException {
 

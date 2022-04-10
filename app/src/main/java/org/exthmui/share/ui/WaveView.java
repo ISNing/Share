@@ -28,7 +28,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class WaveView extends View {
     public static final int WAVING_MODE_LIMITED = 0x01;
     public static final int WAVING_MODE_NON_LIMITED = 0x02;
-    private static final float DEFAULT_LENGTH_DIP = 200;
     private final float DEFAULT_LENGTH_PX = TypedValue.applyDimension(COMPLEX_UNIT_DIP, 200f, getResources().getDisplayMetrics());
 
     private ScalingTimerTask scalingTask;
@@ -447,7 +446,7 @@ public class WaveView extends View {
                     break;
                 }
             }
-            if (mRadii.get(0) > getRadiusMax()) {
+            if (mRadii.size() > 0 && mRadii.get(0) > getRadiusMax()) {
                 if (stopRequested) mRadii.remove(0);
                 else mRadii.set(0, 0f);
                 List<Float> tempList = transList(mRadii);

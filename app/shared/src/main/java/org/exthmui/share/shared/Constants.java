@@ -116,12 +116,13 @@ public abstract class Constants {
 
     public enum TransmissionStatus {
         UNKNOWN(0, R.string.transmission_status_unknown),
-        WAITING_FOR_REQUEST(6, R.string.transmission_status_waiting_for_request),
-        WAITING_FOR_ACCEPTATION(5, R.string.transmission_status_waiting_for_acceptation),
-        REJECTED(3, R.string.transmission_status_rejected),
-        CONNECTION_ESTABLISHED(4, R.string.transmission_status_connection_established),
-        IN_PROGRESS(2, R.string.transmission_status_in_progress),
-        COMPLETED(1, R.string.transmission_status_completed),
+        INITIALIZING(1, R.string.transmission_status_initializing),
+        WAITING_FOR_REQUEST(7, R.string.transmission_status_waiting_for_request),
+        WAITING_FOR_ACCEPTATION(6, R.string.transmission_status_waiting_for_acceptation),
+        REJECTED(4, R.string.transmission_status_rejected),
+        CONNECTION_ESTABLISHED(5, R.string.transmission_status_connection_established),
+        IN_PROGRESS(3, R.string.transmission_status_in_progress),
+        COMPLETED(2, R.string.transmission_status_completed),
 
         UNKNOWN_ERROR(10, R.string.transmission_status_unknown_error),
         NETWORK_ERROR(11, R.string.transmission_status_network_error),

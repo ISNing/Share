@@ -1,13 +1,12 @@
 package org.exthmui.share.msnearshare;
 
-import android.annotation.SuppressLint;
+import static org.exthmui.share.msnearshare.Constants.STATUS_MAPPING;
+
 import android.content.Context;
 import android.net.Uri;
-import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
@@ -26,7 +25,6 @@ import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
 
-import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -92,36 +90,13 @@ public class NearShareMultiSendingWorker extends SendingWorker {
                 return;
             }
 
-            HashMap<NearShareStatus, Constants.TransmissionStatus> m = new HashMap<>() {
-                {
-                    put(NearShareStatus.UNKNOWN, Constants.TransmissionStatus.UNKNOWN_ERROR);
-                    put(NearShareStatus.COMPLETED, Constants.TransmissionStatus.COMPLETED);
-                    put(NearShareStatus.IN_PROGRESS, Constants.TransmissionStatus.IN_PROGRESS);
-                    put(NearShareStatus.TIMED_OUT, Constants.TransmissionStatus.TIMED_OUT);
-                    put(NearShareStatus.CANCELLED, Constants.TransmissionStatus.RECEIVER_CANCELLED);
-                    put(NearShareStatus.DENIED_BY_REMOTE_SYSTEM, Constants.TransmissionStatus.REJECTED);
-                }
-
-                @SuppressLint("ObsoleteSdkInt")
-                @Nullable
-                @Override
-                public Constants.TransmissionStatus getOrDefault(@Nullable Object key, @Nullable Constants.TransmissionStatus defaultValue) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                        return super.getOrDefault(key, defaultValue);
-                    } else {
-                        Constants.TransmissionStatus ret = get(key);
-                        return ret != null ? ret : defaultValue;
-                    }
-                }
-            };
-
             if (tr != null) {
                 Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
                 Log.i(TAG, StackTraceUtils.getStackTraceString(tr.getStackTrace()));
-                result.set(genFailureResult(Objects.requireNonNull(m.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), tr.getLocalizedMessage()));
+                result.set(genFailureResult(Objects.requireNonNull(STATUS_MAPPING.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), tr.getLocalizedMessage()));
             } else {
                 Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
-                result.set(genFailureResult(Objects.requireNonNull(m.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), null));
+                result.set(genFailureResult(Objects.requireNonNull(STATUS_MAPPING.getOrDefault(status, Constants.TransmissionStatus.UNKNOWN_ERROR)).getNumVal(), null));
             }
             finished.set(true);
         });

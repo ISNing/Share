@@ -51,10 +51,4 @@
     <string name="view_peer_information_peer_device_type_tag_text">Device type:&#160;</string>
     <string name="view_peer_information_peer_plugin_tag_text">From plugin:&#160;</string>
 
-    <string name="error_failed_invoking_sending_method">Failed invoking sending method (Reflection error)</string>
-    <string name="error_failed_start_sending">Failed start sending</string>
-    <string name="error_invalid_connection_type">Invalid connection type</string>
-    <string name="error_invalid_peer">Invalid peer</string>
-    <string name="error_peer_disappeared">Peer disappeared</string>
-    <string name="error_invalid_sender">Invalid sender</string>
 </resources>

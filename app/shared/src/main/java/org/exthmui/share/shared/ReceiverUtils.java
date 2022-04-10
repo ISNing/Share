@@ -161,7 +161,10 @@ public abstract class ReceiverUtils {
             fileName = context.getString(R.string.notification_placeholder_unknown);
         if (senderName == null)
             senderName = context.getString(R.string.notification_placeholder_unknown);
-        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+
+        if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal())
+            title = context.getString(R.string.notification_title_receive_waiting);
+        else if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
             title = context.getString(R.string.notification_title_receive_waiting);
         else
             title = context.getString(R.string.notification_title_receive_receiving, fileName, senderName);
@@ -192,7 +195,10 @@ public abstract class ReceiverUtils {
         }
         if (senderName == null)
             senderName = context.getString(R.string.notification_placeholder_unknown);
-        if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+
+        if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal())
+            title = context.getString(R.string.notification_title_receive_waiting);
+        else if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
             title = context.getString(R.string.notification_title_receive_waiting);
         else if (fileNames.length == 1)
             title = context.getString(R.string.notification_title_receive_receiving, fileNames[0], senderName);

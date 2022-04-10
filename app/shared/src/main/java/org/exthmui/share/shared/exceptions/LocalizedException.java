@@ -1,4 +1,4 @@
-package org.exthmui.share.exceptions;
+package org.exthmui.share.shared.exceptions;
 
 import android.content.Context;
 

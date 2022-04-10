@@ -150,7 +150,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     @Override
     public UUID send(DirectPeer peer, List<Entity> entities) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectMultiSendingWorker.class)
-                .setInputData(genSendingInputData(peer, (Entity[]) entities.toArray()))
+                .setInputData(genSendingInputData(peer, entities))
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
         WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);

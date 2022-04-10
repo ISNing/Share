@@ -38,7 +38,10 @@ dependencies {
     implementation "androidx.work:work-runtime:$rootProject.ext.workVersion"
     implementation 'androidx.preference:preference:1.2.0'
 
-    implementation "com.microsoft.connecteddevices:connecteddevices-sdk:1.6.1"
+    // Never upgrade it unless microsoft re-maintained Project-Rome
+    // Because there's a serious bug in newer version but Project-Rome seems not in maintaining.
+    // See: https://github.com/microsoft/project-rome/issues/85
+    implementation "com.microsoft.connecteddevices:connecteddevices-sdk:1.3.0"
 
     implementation project(path: ':app:shared')
 }

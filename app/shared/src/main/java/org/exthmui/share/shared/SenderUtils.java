@@ -60,7 +60,10 @@ public abstract class SenderUtils {
     public static Notification buildSendingNotification(Context context, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, @Nullable String fileName, @Nullable String targetName, boolean indeterminate) {
         createProgressNotificationChannel(context);
 
-        String title = context.getString(R.string.notification_title_sending, fileName, targetName);
+        String title;
+        if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal())
+            title = context.getString(R.string.notification_title_sending_initializing);
+        else title = context.getString(R.string.notification_title_sending, fileName, targetName);
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
@@ -80,7 +83,9 @@ public abstract class SenderUtils {
         createProgressNotificationChannel(context);
 
         String title;
-        if (fileNames.length == 2)
+        if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal())
+            title = context.getString(R.string.notification_title_sending_initializing);
+        else if (fileNames.length == 2)
             title = context.getString(R.string.notification_title_sending_two, fileNames[0], fileNames[1], targetName);
         else
             title = context.getString(R.string.notification_title_sending_multi, fileNames[0], fileNames[1], fileNames.length - 2, targetName);
@@ -93,7 +98,6 @@ public abstract class SenderUtils {
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
                 .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
-                .setTicker(title)
                 .setSmallIcon(R.drawable.ic_notification_send)
                 .setOngoing(true)
                 .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent)
