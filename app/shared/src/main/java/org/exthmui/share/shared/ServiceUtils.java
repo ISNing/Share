@@ -8,8 +8,8 @@ import android.os.Binder;
 import android.os.IBinder;
 
 import java.util.EventListener;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public abstract class ServiceUtils {
 
@@ -41,10 +41,9 @@ public abstract class ServiceUtils {
     }
 
 
-
     public static class MyServiceConnection implements ServiceConnection {
-        private final Set<OnServiceConnectedListener> mOnServiceConnectedListeners = new HashSet<>();
-        private final Set<OnServiceDisconnectedListener> mOnServiceDisconnectedListeners = new HashSet<>();
+        private final Set<OnServiceConnectedListener> mOnServiceConnectedListeners = new CopyOnWriteArraySet<>();
+        private final Set<OnServiceDisconnectedListener> mOnServiceDisconnectedListeners = new CopyOnWriteArraySet<>();
 
         public void registerOnServiceConnectedListener(OnServiceConnectedListener listener) {
             mOnServiceConnectedListeners.add(listener);

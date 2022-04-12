@@ -41,13 +41,14 @@ public class FailedStartSendingException extends LocalizedException {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 
+    @NonNull
     @Override
-    String getDefaultMessage() {
+    protected String getDefaultMessage() {
         return "Failed start sending";
     }
 
     @Override
-    int getLocalizedMessageStrRes() {
+    protected int getLocalizedMessageStrRes() {
         return R.string.error_failed_start_sending;
     }
 }

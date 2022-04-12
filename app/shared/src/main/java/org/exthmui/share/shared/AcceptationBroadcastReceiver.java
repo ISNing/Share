@@ -12,7 +12,7 @@ import androidx.core.app.NotificationManagerCompat;
 
 import org.exthmui.share.shared.base.listeners.OnReceiveShareBroadcastActionListener;
 
-public class ShareBroadcastReceiver extends BroadcastReceiver {
+public class AcceptationBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_ACCEPTATION_DIALOG = "org.exthmui.share.intent.action.ACCEPTATION_DIALOG";
     public static final String ACTION_ACCEPT = "org.exthmui.share.intent.action.ACCEPT_SHARE";
     public static final String ACTION_REJECT = "org.exthmui.share.intent.action.REJECT_SHARE";
@@ -23,7 +23,8 @@ public class ShareBroadcastReceiver extends BroadcastReceiver {
     public static final String EXTRA_FILE_NAME = "org.exthmui.share.extra.FILE_NAME";
     public static final String EXTRA_FILE_SIZE = "org.exthmui.share.extra.FILE_SIZE";
 
-    @Nullable private OnReceiveShareBroadcastActionListener mOnReceiveShareBroadcastActionListener;
+    @Nullable
+    private OnReceiveShareBroadcastActionListener mOnReceiveShareBroadcastActionListener;
 
     public void setListener(@Nullable OnReceiveShareBroadcastActionListener listener) {
         mOnReceiveShareBroadcastActionListener = listener;
@@ -63,6 +64,5 @@ public class ShareBroadcastReceiver extends BroadcastReceiver {
                 mOnReceiveShareBroadcastActionListener.onReceiveActionRejectShare(pluginCode, requestId);
                 break;
         }
-
     }
 }

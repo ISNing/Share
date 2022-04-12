@@ -14,6 +14,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceInfo;
+import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 
@@ -110,6 +111,9 @@ public class DirectReceiver implements Receiver {
         permissions.add(Manifest.permission.CHANGE_WIFI_STATE);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
         permissions.add(Manifest.permission.INTERNET);
         return permissions;
     }
@@ -142,7 +146,8 @@ public class DirectReceiver implements Receiver {
                     break;
                 }
             }
-            if (isReceiverStarted() & !isRunning) startWork();
+            if (isReceiverStarted() && !isRunning)
+                startWork();// Restart when finished but receiver not stopped
         });
         this.mInitialized = true;
     }
@@ -210,7 +215,7 @@ public class DirectReceiver implements Receiver {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.KEEP, work);
+        WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.REPLACE, work);
     }
 
     @Override
@@ -221,7 +226,7 @@ public class DirectReceiver implements Receiver {
             if (workInfo == null) return;
             for (WorkInfo info : workInfo) {
                 if (!info.getState().isFinished()) {
-                    if (info.getProgress().getInt(ReceivingWorker.P_STATUS_CODE, Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) {
+                    if (info.getProgress().getInt(ReceivingWorker.STATUS_CODE, Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) {
                         WorkManager.getInstance(mContext).cancelUniqueWork(WORK_UNIQUE_NAME);
                     }
                 }
@@ -230,6 +235,7 @@ public class DirectReceiver implements Receiver {
         } catch (ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
+        if (mServiceInfo == null) return;
         mWifiP2pManager.removeLocalService(mChannel, mServiceInfo, new WifiP2pManager.ActionListener() {
             @Override
             public void onSuccess() {

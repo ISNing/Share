@@ -279,11 +279,11 @@ public class WaveView extends View {
         int paddingRight = getPaddingRight();
         boolean isRtl = getLayoutDirection() == LAYOUT_DIRECTION_RTL;
         float x = getWidth() / 2f;
-        if (getGravity().contains(Gravity.CENTER_HORIZONTAL) |
-                (getGravity().contains(Gravity.INNER_START) & getGravity().contains(Gravity.INNER_END)) |
-                (getGravity().contains(Gravity.OUTER_START) & getGravity().contains(Gravity.OUTER_END)) |
-                (getGravity().contains(Gravity.INNER_LEFT) & getGravity().contains(Gravity.INNER_RIGHT)) |
-                (getGravity().contains(Gravity.OUTER_LEFT) & getGravity().contains(Gravity.OUTER_RIGHT)))
+        if (getGravity().contains(Gravity.CENTER_HORIZONTAL) ||
+                (getGravity().contains(Gravity.INNER_START) && getGravity().contains(Gravity.INNER_END)) ||
+                (getGravity().contains(Gravity.OUTER_START) && getGravity().contains(Gravity.OUTER_END)) ||
+                (getGravity().contains(Gravity.INNER_LEFT) && getGravity().contains(Gravity.INNER_RIGHT)) ||
+                (getGravity().contains(Gravity.OUTER_LEFT) && getGravity().contains(Gravity.OUTER_RIGHT)))
             x = getWidth() / 2f;
         else if (getGravity().contains(Gravity.INNER_LEFT)) x = getRadiusMin() + paddingLeft;
         else if (getGravity().contains(Gravity.INNER_RIGHT))
@@ -311,9 +311,9 @@ public class WaveView extends View {
         int paddingTop = getPaddingTop();
         int paddingBottom = getPaddingBottom();
         float y = getHeight() / 2f;
-        if (getGravity().contains(Gravity.CENTER_VERTICAL) |
-                (getGravity().contains(Gravity.INNER_TOP) & getGravity().contains(Gravity.INNER_BOTTOM)) |
-                (getGravity().contains(Gravity.OUTER_TOP) & getGravity().contains(Gravity.OUTER_BOTTOM)))
+        if (getGravity().contains(Gravity.CENTER_VERTICAL) ||
+                (getGravity().contains(Gravity.INNER_TOP) && getGravity().contains(Gravity.INNER_BOTTOM)) ||
+                (getGravity().contains(Gravity.OUTER_TOP) && getGravity().contains(Gravity.OUTER_BOTTOM)))
             y = getHeight() / 2f;
         else if (getGravity().contains(Gravity.INNER_TOP)) y = getRadiusMin() + paddingTop;
         else if (getGravity().contains(Gravity.INNER_BOTTOM))
@@ -441,7 +441,7 @@ public class WaveView extends View {
             for (int i = 0; i < mRadii.size(); i++) {
                 float curVal = mRadii.get(i);
                 mRadii.set(i, curVal + mDistancePerFrame);
-                if (i < mRadii.size() - 1 & curVal < getRadiusMin() + getWaveInterval()) {
+                if (i < mRadii.size() - 1 && curVal < getRadiusMin() + getWaveInterval()) {
                     mRadii.set(i + 1, getRadiusMin());
                     break;
                 }
@@ -455,7 +455,7 @@ public class WaveView extends View {
             }
 
             invalidate();
-            if (stopRequested & mRadii.size() == 0) this.cancel();
+            if (stopRequested && mRadii.size() == 0) this.cancel();
         }
 
         public void stop() {

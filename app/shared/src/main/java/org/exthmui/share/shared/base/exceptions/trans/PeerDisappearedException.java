@@ -1,14 +1,13 @@
-package org.exthmui.share.shared.exceptions;
+package org.exthmui.share.shared.base.exceptions.trans;
 
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.exthmui.share.shared.R;
+import org.exthmui.share.shared.Constants;
 
-public class PeerDisappearedException extends InvalidPeerException {
-
+public class PeerDisappearedException extends TransmissionException {
     public PeerDisappearedException(@NonNull Context context) {
         super(context);
     }
@@ -43,12 +42,13 @@ public class PeerDisappearedException extends InvalidPeerException {
 
     @NonNull
     @Override
-    protected String getDefaultMessage() {
-        return "Peer disappeared";
+    public Constants.TransmissionStatus getStatus() {
+        return Constants.TransmissionStatus.PEER_DISAPPEARED;
     }
 
+    @NonNull
     @Override
-    protected int getLocalizedMessageStrRes() {
-        return R.string.error_peer_disappeared;
+    protected String getDefaultMessage() {
+        return "Peer disappeared";
     }
 }

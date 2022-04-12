@@ -95,6 +95,22 @@
             android:exported="false"
             android:theme="@style/AppTheme.Share" />
 
+        <receiver
+            android:name=".ShareBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="org.exthmui.share.intent.action.ENABLE_DISCOVER" />
+                <action android:name="org.exthmui.share.intent.action.DISABLE_DISCOVER" />
+                <action android:name="org.exthmui.share.intent.action.ENABLE_RECEIVER" />
+                <action android:name="org.exthmui.share.intent.action.DISABLE_RECEIVER" />
+                <action android:name="org.exthmui.share.intent.action.START_DISCOVER" />
+                <action android:name="org.exthmui.share.intent.action.STOP_DISCOVER" />
+                <action android:name="org.exthmui.share.intent.action.START_RECEIVER" />
+                <action android:name="org.exthmui.share.intent.action.STOP_RECEIVER" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="org.exthmui.share.files"

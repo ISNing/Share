@@ -152,7 +152,7 @@ public class FileManager {
                 folderBean.setFistImgPath(path);
                 if (parentFile.list() == null)
                     continue;
-                int count = Objects.requireNonNull(parentFile.list((dir1, filename) -> filename.endsWith(".jpeg") | filename.endsWith(".jpg") | filename.endsWith(".png"))).length;
+                int count = Objects.requireNonNull(parentFile.list((dir1, filename) -> filename.endsWith(".jpeg") || filename.endsWith(".jpg") || filename.endsWith(".png"))).length;
 
                 folderBean.setCount(count);
                 folders.add(folderBean);

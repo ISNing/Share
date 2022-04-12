@@ -53,7 +53,7 @@ public abstract class Utils {
     public static String getDefaultFileName(@NonNull Context context) {
         String defaultValue = context.getString(R.string.prefs_default_global_default_file_name);
         String defaultFileName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
-        if (defaultFileName == null | TextUtils.isEmpty(defaultFileName)) {
+        if (defaultFileName == null || TextUtils.isEmpty(defaultFileName)) {
             Log.e(TAG, String.format("Got invalid default file name, returning default value \"%s\".", defaultValue));
             defaultFileName = defaultValue;
         }
@@ -73,7 +73,7 @@ public abstract class Utils {
     public static String getSelfName(@NonNull Context context) {
         String defaultValue = getDeviceNameOnBoard(context);
         String deviceName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
-        if (deviceName == null | TextUtils.isEmpty(deviceName)) {
+        if (deviceName == null || TextUtils.isEmpty(deviceName)) {
             Log.e(TAG, String.format("Got invalid device name, returning default value \"%s\".", defaultValue));
             deviceName = defaultValue;
         }
@@ -85,7 +85,7 @@ public abstract class Utils {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String key = context.getString(R.string.prefs_key_global_default_file_name);
         String peerId = sharedPreferences.getString(key, null);
-        if (peerId == null | TextUtils.isEmpty(peerId)) {
+        if (peerId == null || TextUtils.isEmpty(peerId)) {
             peerId = genPeerId();
             sharedPreferences.edit().putString(key, peerId).apply();
             Log.e(TAG, String.format("Got invalid device name, regenerated and saved a new value: %s.", peerId));

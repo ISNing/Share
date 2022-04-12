@@ -61,9 +61,9 @@ public class DirectPeer extends Peer {
         int id1 = Integer.parseInt(sliced[0]);
         int id2 = Integer.parseInt(sliced[2]);
         if (id1 == 1) {
-            if (id2 == 1 | id2 == 4 | id2 == 6)
+            if (id2 == 1 || id2 == 4 || id2 == 6)
                 return Constants.DeviceType.DESKTOP.getNumVal();
-            if (id2 == 5 | id2 == 8 | id2 == 10)
+            if (id2 == 5 || id2 == 8 || id2 == 10)
                 return Constants.DeviceType.LAPTOP.getNumVal();
             if (id2 == 9)
                 return Constants.DeviceType.TABLET.getNumVal();

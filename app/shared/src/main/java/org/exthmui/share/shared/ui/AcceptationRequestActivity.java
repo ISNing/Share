@@ -1,11 +1,11 @@
 package org.exthmui.share.shared.ui;
 
 import static androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID;
-import static org.exthmui.share.shared.ShareBroadcastReceiver.EXTRA_FILE_NAME;
-import static org.exthmui.share.shared.ShareBroadcastReceiver.EXTRA_FILE_SIZE;
-import static org.exthmui.share.shared.ShareBroadcastReceiver.EXTRA_PEER_NAME;
-import static org.exthmui.share.shared.ShareBroadcastReceiver.EXTRA_PLUGIN_CODE;
-import static org.exthmui.share.shared.ShareBroadcastReceiver.EXTRA_REQUEST_ID;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_FILE_NAME;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_FILE_SIZE;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_PEER_NAME;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_PLUGIN_CODE;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_REQUEST_ID;
 
 import android.os.Bundle;
 
@@ -23,7 +23,7 @@ public class AcceptationRequestActivity extends AppCompatActivity {
         long fileSize = getIntent().getLongExtra(EXTRA_FILE_SIZE, -1);
         String requestId = getIntent().getStringExtra(EXTRA_REQUEST_ID);
         int notificationId = getIntent().getIntExtra(EXTRA_NOTIFICATION_ID, -1);
-//        if (pluginCode == null | peerName == null | fileName == null | fileSize <= 0 | requestId == null) {
+//        if (pluginCode == null || peerName == null || fileName == null || fileSize <= 0 || requestId == null) {
 //            Log.e(TAG, "Invalid extras");
 //            this.finish();
 //        }

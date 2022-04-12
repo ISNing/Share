@@ -39,7 +39,6 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         return ret;
     }
 
-
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         onCreatePreferences(savedInstanceState, rootKey, null);
         PreferenceScreen preferenceScreen = getPreferenceScreen();
@@ -95,8 +94,11 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         grantPreference.setSummary(R.string.prefs_summary_global_permissions_not_granted_discover);
         grantPreference.setOrder(DISCOVER_GRANT_PREFERENCE_ORDER);
         grantPreference.setOnPreferenceClickListener(preference -> {
-            service.grantDiscovererPermissions(type.getCode(), requireActivity(), type.getDiscovererClass().hashCode());
-            return false;
+            if (service.getDiscovererPermissionsNotGranted(type.getCode()).isEmpty())
+                checkDiscoverPermissions(service);
+            else
+                service.grantDiscovererPermissions(type.getCode(), requireActivity(), type.getDiscovererClass().hashCode());
+            return true;
         });
         mGrantPreferenceDiscover = grantPreference;
         PreferenceScreen preferenceScreen = getPreferenceScreen();
@@ -111,8 +113,11 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         grantPreference.setSummary(R.string.prefs_summary_global_permissions_not_granted_receive);
         grantPreference.setOrder(RECEIVE_GRANT_PREFERENCE_ORDER);
         grantPreference.setOnPreferenceClickListener(preference -> {
-            service.grantReceiverPermissions(type.getCode(), requireActivity(), type.getReceiverClass().hashCode());
-            return false;
+            if (service.getReceiverPermissionsNotGranted(type.getCode()).isEmpty())
+                checkReceivePermissions(service);
+            else
+                service.grantReceiverPermissions(type.getCode(), requireActivity(), type.getReceiverClass().hashCode());
+            return true;
         });
         mGrantPreferenceReceive = grantPreference;
         PreferenceScreen preferenceScreen = getPreferenceScreen();

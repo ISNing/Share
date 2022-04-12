@@ -16,7 +16,8 @@ import java.util.UUID;
  */
 public interface Sender<T extends PeerInfo > {
     String TAG = "Sender";
-    String TARGET_PEER_ID="TARGET_PEER_ID";
+    String TARGET_PEER_ID = "TARGET_PEER_ID";
+    String TARGET_PEER_NAME = "TARGET_PEER_NAME";
 
     /**
      * Send an entity
@@ -63,6 +64,7 @@ public interface Sender<T extends PeerInfo > {
                 .putLong(Entity.FILE_SIZE, entity.getFileSize())
                 .putInt(Entity.FILE_TYPE, entity.getFileType())
                 .putString(TARGET_PEER_ID, peer.getId())
+                .putString(TARGET_PEER_NAME, peer.getDisplayName())
                 .build();
     }
 
@@ -86,6 +88,7 @@ public interface Sender<T extends PeerInfo > {
                 .putLongArray(Entity.FILE_SIZES, fileSizes)
                 .putIntArray(Entity.FILE_TYPES, fileTypes)
                 .putString(TARGET_PEER_ID, peer.getId())
+                .putString(TARGET_PEER_NAME, peer.getDisplayName())
                 .build();
 
     }

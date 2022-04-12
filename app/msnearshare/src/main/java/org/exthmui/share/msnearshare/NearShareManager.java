@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.os.Build;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -116,7 +117,6 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     private NearShareManager(Context context) {
         this.mContext = context.getApplicationContext();
-        initializePlatform();
         initialize();
     }
 
@@ -183,12 +183,16 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         permissions.add(Manifest.permission.BLUETOOTH);
         permissions.add(Manifest.permission.BLUETOOTH_ADMIN);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
         permissions.add(Manifest.permission.ACCESS_NETWORK_STATE);
         return permissions;
     }
 
     @Override
     public void initialize() {
+        initializePlatform();
         this.mInitialized = true;
     }
 
@@ -299,7 +303,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     @Override
     public boolean isFeatureAvailable() {
         return mContext.getPackageManager().hasSystemFeature(
-                PackageManager.FEATURE_BLUETOOTH) &
+                PackageManager.FEATURE_BLUETOOTH) &&
                 mContext.getPackageManager().hasSystemFeature(
                         PackageManager.FEATURE_WIFI);
     }

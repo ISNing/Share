@@ -41,13 +41,14 @@ public class FailedInvokingSendingMethodException extends FailedStartSendingExce
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 
+    @NonNull
     @Override
-    String getDefaultMessage() {
+    protected String getDefaultMessage() {
         return "Failed invoking sending method";
     }
 
     @Override
-    int getLocalizedMessageStrRes() {
+    protected int getLocalizedMessageStrRes() {
         return R.string.error_failed_invoking_sending_method;
     }
 }

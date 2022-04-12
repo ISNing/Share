@@ -41,13 +41,14 @@ public class InvalidConnectionTypeException extends FailedStartSendingException 
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 
+    @NonNull
     @Override
-    String getDefaultMessage() {
+    protected String getDefaultMessage() {
         return "Invalid connection type";
     }
 
     @Override
-    int getLocalizedMessageStrRes() {
+    protected int getLocalizedMessageStrRes() {
         return R.string.error_invalid_connection_type;
     }
 }

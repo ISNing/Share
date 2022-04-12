@@ -143,7 +143,7 @@ public class PeerChooserView extends FrameLayout {
 
 
     public void discoverStarted() {
-        if (mState != STATE_ENABLED & mState != STATE_ENABLED_NO_PEER) {
+        if (mState != STATE_ENABLED && mState != STATE_ENABLED_NO_PEER) {
             setState(STATE_ENABLED_NO_PEER);
         }
     }

@@ -336,7 +336,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     @Override
     public boolean isDiscoverersAvailable() {
         for (Discoverer discoverer : mDiscovererList) {
-            if (discoverer.isFeatureAvailable() & discoverer.getPermissionNotGranted().isEmpty())
+            if (discoverer.isFeatureAvailable() && discoverer.getPermissionNotGranted().isEmpty())
                 return true;
         }
         return false;
@@ -346,7 +346,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     public boolean isDiscovererAvailable(String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return false;
-        return discoverer.isFeatureAvailable() & discoverer.getPermissionNotGranted().isEmpty();
+        return discoverer.isFeatureAvailable() && discoverer.getPermissionNotGranted().isEmpty();
     }
 
     @Override
@@ -367,12 +367,16 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public void grantDiscoverPermissions(Activity activity) {
-        ActivityCompat.requestPermissions(activity, getDiscoverersPermissionsNotGranted().toArray(new String[0]), REQUEST_CODE_GRANT_PERMISSIONS);
+        String[] permissions = getDiscoverersPermissionsNotGranted().toArray(new String[0]);
+        if (permissions.length == 0) return;
+        ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE_GRANT_PERMISSIONS);
     }
 
     @Override
     public void grantDiscovererPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode) {
-        ActivityCompat.requestPermissions(activity, getDiscovererPermissionsNotGranted(code).toArray(new String[0]), requestCode);
+        String[] permissions = getDiscovererPermissionsNotGranted(code).toArray(new String[0]);
+        if (permissions.length == 0) return;
+        ActivityCompat.requestPermissions(activity, permissions, requestCode);
     }
 
     @Override

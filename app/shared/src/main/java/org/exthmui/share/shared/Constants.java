@@ -115,31 +115,35 @@ public abstract class Constants {
     }
 
     public enum TransmissionStatus {
-        UNKNOWN(0, R.string.transmission_status_unknown),
-        INITIALIZING(1, R.string.transmission_status_initializing),
-        WAITING_FOR_REQUEST(7, R.string.transmission_status_waiting_for_request),
-        WAITING_FOR_ACCEPTATION(6, R.string.transmission_status_waiting_for_acceptation),
-        REJECTED(4, R.string.transmission_status_rejected),
-        CONNECTION_ESTABLISHED(5, R.string.transmission_status_connection_established),
-        IN_PROGRESS(3, R.string.transmission_status_in_progress),
-        COMPLETED(2, R.string.transmission_status_completed),
+        UNKNOWN(0, R.string.transmission_status_unknown, R.string.transmission_status_unknown_detailed),
+        INITIALIZING(1, R.string.transmission_status_initializing, R.string.transmission_status_initializing_detailed),
+        WAITING_FOR_REQUEST(7, R.string.transmission_status_waiting_for_request, R.string.transmission_status_waiting_for_request_detailed),
+        WAITING_FOR_ACCEPTATION(6, R.string.transmission_status_waiting_for_acceptation, R.string.transmission_status_waiting_for_acceptation_detailed),
+        REJECTED(4, R.string.transmission_status_rejected, R.string.transmission_status_rejected_detailed),
+        CONNECTION_ESTABLISHED(5, R.string.transmission_status_connection_established, R.string.transmission_status_connection_established_detailed),
+        IN_PROGRESS(3, R.string.transmission_status_in_progress, R.string.transmission_status_in_progress_detailed),
+        COMPLETED(2, R.string.transmission_status_completed, R.string.transmission_status_completed_detailed),
 
-        UNKNOWN_ERROR(10, R.string.transmission_status_unknown_error),
-        NETWORK_ERROR(11, R.string.transmission_status_network_error),
-        TIMED_OUT(111, R.string.transmission_status_timed_out),
-        SENDER_CANCELLED(121, R.string.transmission_status_sender_cancelled),
-        RECEIVER_CANCELLED(122, R.string.transmission_status_receiver_cancelled),
-        FILE_IO_ERROR(13, R.string.transmission_status_file_io_error),
-        NO_ENOUGH_SPACE(131, R.string.transmission_status_no_enough_space),
-        REMOTE_ERROR(14, R.string.transmission_status_remote_error),
-        PEER_DISAPPEARED(15, R.string.transmission_status_peer_disappeared);
+        UNKNOWN_ERROR(10, R.string.transmission_status_unknown_error, R.string.transmission_status_unknown_error_detailed),
+        NETWORK_ERROR(11, R.string.transmission_status_network_error, R.string.transmission_status_network_error_detailed),
+        TIMED_OUT(111, R.string.transmission_status_timed_out, R.string.transmission_status_timed_out_detailed),
+        CANCELLED(12, R.string.transmission_status_cancelled, R.string.transmission_status_cancelled_detailed),
+        SENDER_CANCELLED(121, R.string.transmission_status_sender_cancelled, R.string.transmission_status_sender_cancelled_detailed),
+        RECEIVER_CANCELLED(122, R.string.transmission_status_receiver_cancelled, R.string.transmission_status_receiver_cancelled_detailed),
+        FILE_IO_ERROR(13, R.string.transmission_status_file_io_error, R.string.transmission_status_file_io_error_detailed),
+        NO_ENOUGH_SPACE(131, R.string.transmission_status_no_enough_space, R.string.transmission_status_no_enough_space_detailed),
+        REMOTE_ERROR(14, R.string.transmission_status_remote_error, R.string.transmission_status_remote_error_detailed),
+        PEER_DISAPPEARED(15, R.string.transmission_status_peer_disappeared, R.string.transmission_status_peer_disappeared_detailed);
         private final int numVal;
         @StringRes
-        private final int friendlyStringRes;
+        private final int strRes;
+        @StringRes
+        private final int strResDetailed;
 
-        TransmissionStatus(int numVal, @StringRes int friendlyStringRes) {
+        TransmissionStatus(int numVal, @StringRes int friendlyStringRes, int strResDetailed) {
             this.numVal = numVal;
-            this.friendlyStringRes = friendlyStringRes;
+            this.strRes = friendlyStringRes;
+            this.strResDetailed = strResDetailed;
         }
 
         @NonNull
@@ -157,9 +161,13 @@ public abstract class Constants {
         }
 
         @StringRes
-        public int getFriendlyStringRes() {
-            return friendlyStringRes;
+        public int getStrRes() {
+            return strRes;
+        }
+
+        @StringRes
+        public int getStrResDetailed() {
+            return strResDetailed;
         }
     }
-
 }

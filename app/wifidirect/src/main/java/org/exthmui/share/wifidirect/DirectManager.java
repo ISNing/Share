@@ -17,6 +17,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pInfo;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.net.wifi.p2p.nsd.WifiP2pDnsSdServiceRequest;
+import android.os.Build;
 import android.os.Looper;
 import android.util.Log;
 
@@ -128,6 +129,9 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
         permissions.add(Manifest.permission.CHANGE_WIFI_STATE);
         permissions.add(Manifest.permission.ACCESS_COARSE_LOCATION);
         permissions.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            permissions.add(Manifest.permission.ACCESS_BACKGROUND_LOCATION);
+        }
         permissions.add(Manifest.permission.INTERNET);
         return permissions;
     }
@@ -271,8 +275,8 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                             String peerId = rec.get(RECORD_KEY_PEER_ID);
                             String uidStr = rec.get(RECORD_KEY_UID);
                             String serverSign = rec.get(RECORD_KEY_ACCOUNT_SERVER_SIGN);
-                            if (serverPortStr == null | peerId == null | uidStr == null |
-                                    serverSign == null | !StringUtils.isNumeric(serverPortStr) |
+                            if (serverPortStr == null || peerId == null || uidStr == null ||
+                                    serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
                                     !StringUtils.isNumeric(uidStr)) {
                                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                                 Log.d(TAG, "DnsSdTxtRecord: " + rec);

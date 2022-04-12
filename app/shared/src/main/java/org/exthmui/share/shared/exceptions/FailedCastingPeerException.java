@@ -40,13 +40,14 @@ public class FailedCastingPeerException extends InvalidPeerException {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 
+    @NonNull
     @Override
-    String getDefaultMessage() {
+    protected String getDefaultMessage() {
         return "Failed casting peer";
     }
 
     @Override
-    int getLocalizedMessageStrRes() {
+    protected int getLocalizedMessageStrRes() {
         return R.string.error_failed_casting_peer;
     }
 }

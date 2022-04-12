@@ -66,8 +66,9 @@ public abstract class LocalizedException extends Exception {
         return this.localizedMessage != null ? this.localizedMessage : this.getMessage();
     }
 
-    abstract String getDefaultMessage();
+    @NonNull
+    protected abstract String getDefaultMessage();
 
     @StringRes
-    abstract int getLocalizedMessageStrRes();
+    protected abstract int getLocalizedMessageStrRes();
 }

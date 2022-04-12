@@ -27,6 +27,13 @@ import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.Sender;
 import org.exthmui.share.shared.base.SendingWorker;
 import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
+import org.exthmui.share.shared.base.exceptions.trans.FileIOErrorException;
+import org.exthmui.share.shared.base.exceptions.trans.InvalidInputDataException;
+import org.exthmui.share.shared.base.exceptions.trans.PeerDisappearedException;
+import org.exthmui.share.shared.base.exceptions.trans.RemoteErrorException;
+import org.exthmui.share.shared.base.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.base.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.wifidirect.ssl.SSLUtils;
 
 import java.io.BufferedReader;
@@ -60,6 +67,12 @@ public class DirectMultiSendingWorker extends SendingWorker {
         super(context, workerParams);
     }
 
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
+    }
+
     final AtomicReference<ServerSocket> serverSocketToClientReference = new AtomicReference<>(null);
 
     @SuppressLint("RestrictedApi")
@@ -70,13 +83,13 @@ public class DirectMultiSendingWorker extends SendingWorker {
         String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
         String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
         if (uriStrings == null)
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
         if (fileNames == null)
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
         Uri[] uris = new Uri[uriStrings.length];
         for (int i = 0; i < uriStrings.length; i++) {
             if (uriStrings[i] == null)
-                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "No file passed");
+                return genFailureResult(new InvalidInputDataException(getApplicationContext()));
             uris[i] = Uri.parse(uriStrings[i]);
         }
 
@@ -87,13 +100,13 @@ public class DirectMultiSendingWorker extends SendingWorker {
             try {
                 entities[i] = new Entity(getApplicationContext(), uris[i]);
             } catch (FailedResolvingUriException e) {
-                return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), "Failed resolving uri of: " + fileNames[i] + "\n" + e.getMessage());
+                return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
             }
         }
         String peerId = input.getString(Sender.TARGET_PEER_ID);
         DirectPeer peer = (DirectPeer) manager.getPeers().get(peerId);
         if (peer == null)
-            return genFailureResult(Constants.TransmissionStatus.PEER_DISAPPEARED.getNumVal(), "Could not get a valid Peer object by id:" + peerId);
+            return genFailureResult(new PeerDisappearedException(getApplicationContext()));
 
         // Connect target device
         {
@@ -137,8 +150,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
         DataOutputStream dataOutputStream = null;
         final AtomicReference<Socket> socketToClientReference = new AtomicReference<>(null);
 
-        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] canceledByReceiver = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
-        canceledByReceiver[0] = SettableFuture.create();
+        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] cancelledByReceiver = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
+        cancelledByReceiver[0] = SettableFuture.create();
         @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] isAccepted = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
         isAccepted[0] = SettableFuture.create();
         @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] succeeded = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
@@ -163,7 +176,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                         switch (command) {
                             case COMMAND_CANCEL:
                                 Log.d(TAG, String.format("Received cancel command \"%s\"", command));
-                                ((SettableFuture<Boolean>) canceledByReceiver[0]).set(true);
+                                ((SettableFuture<Boolean>) cancelledByReceiver[0]).set(true);
                                 break label;
                             case COMMAND_ACCEPT:
                                 Log.d(TAG, String.format("Received  command \"%s\"", command));
@@ -309,7 +322,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 try {
                     socketToClientReference.set(serverSocketToClientReference.get().accept());
                 } catch (SocketTimeoutException e) {
-                    return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), "Connection timeout(1)");
+                    return genFailureResult(new TimedOutException(getApplicationContext(), e));
                 }
                 if (socketToClientReference.get() == null) continue;
                 address = socketToClientReference.get().getInetAddress().getAddress();
@@ -327,14 +340,14 @@ public class DirectMultiSendingWorker extends SendingWorker {
             updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User rejected receiving file");
-                return genRejectedResult();
+                return genRejectedResult(getApplicationContext());
             }
             Log.d(TAG, "User accepted receiving file");
 
             // Check if remote cancelled
-            if (canceledByReceiver[0].isDone()) {
+            if (cancelledByReceiver[0].isDone()) {
                 Log.d(TAG, "Remote cancelled receiving file");
-                return genReceiverCancelledResult();
+                return genReceiverCancelledResult(getApplicationContext());
             }
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
@@ -345,7 +358,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
                 dataOutputStream = null;
-                return genSenderCancelledResult();
+                return genSenderCancelledResult(getApplicationContext());
             }
 
             for (Entity entity : entities) {
@@ -354,7 +367,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 outputStream = socketToServer.getOutputStream();
                 inputStream = entity.getInputStream(getApplicationContext());
                 if (inputStream == null)
-                    return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), String.format("Failed opening file: %s: Got null InputStream", entity.getFileName()));
+                    return genFailureResult(new FileIOErrorException(String.format("Failed opening file: %s: Got null InputStream", entity.getFileName())));
                 byte[] buf = new byte[bufferSize];
                 int len;
                 while ((len = inputStream.read(buf)) != -1) {
@@ -363,11 +376,11 @@ public class DirectMultiSendingWorker extends SendingWorker {
                     updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
 
                     // Check if remote cancelled
-                    if (canceledByReceiver[0].isDone())
-                        return genReceiverCancelledResult();
+                    if (cancelledByReceiver[0].isDone())
+                        return genReceiverCancelledResult(getApplicationContext());
                     // Check if user cancelled
                     if (getForegroundInfoAsync().isCancelled())
-                        return genSenderCancelledResult();
+                        return genSenderCancelledResult(getApplicationContext());
                 }
                 inputStream.close();
                 inputStream = null;
@@ -383,7 +396,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
 
             if (!succeeded[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User failed receiving file");
-                return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "Remote system failed receiving file");
+                return genFailureResult(new RemoteErrorException(getApplicationContext()));
             }
             Log.d(TAG, "User succeeded receiving file");
 
@@ -400,14 +413,14 @@ public class DirectMultiSendingWorker extends SendingWorker {
             return result.get();
         } catch (SocketTimeoutException e) {
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), e.getMessage());
+            return genFailureResult(new TimedOutException(getApplicationContext(), e));
         } catch (IOException | ExecutionException | InterruptedException e) {
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
         } finally {
             if (objectOutputStream != null) {
                 try {

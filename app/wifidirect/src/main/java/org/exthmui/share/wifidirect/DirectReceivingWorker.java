@@ -26,8 +26,14 @@ import org.exthmui.share.shared.ReceiverUtils;
 import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.ReceivingWorker;
+import org.exthmui.share.shared.base.exceptions.trans.FileIOErrorException;
+import org.exthmui.share.shared.base.exceptions.trans.NetworkErrorException;
+import org.exthmui.share.shared.base.exceptions.trans.NoEnoughSpaceException;
+import org.exthmui.share.shared.base.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.base.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
+import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.wifidirect.ssl.SSLUtils;
 
 import java.io.BufferedReader;
@@ -61,6 +67,12 @@ public class DirectReceivingWorker extends ReceivingWorker {
         super(context, workerParams);
     }
 
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
+    }
+
     private ServerSocket serverSocketToServer = null;
 
     @SuppressLint({"RestrictedApi", "MissingPermission"})
@@ -79,8 +91,8 @@ public class DirectReceivingWorker extends ReceivingWorker {
         int serverPort = DirectUtils.getServerPort(getApplicationContext());
         int bufferSize = DirectUtils.getBufferSize(getApplicationContext());
 
-        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] canceledBySender = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
-        canceledBySender[0] = SettableFuture.create();
+        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] cancelledBySender = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
+        cancelledBySender[0] = SettableFuture.create();
         @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] isAccepted = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
         isAccepted[0] = SettableFuture.create();
 
@@ -166,7 +178,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 dataOutputStream.writeUTF(COMMAND_REJECT);
                 Log.d(TAG, "User rejected receiving file");
-                return genRejectedResult();
+                return genRejectedResult(getApplicationContext());
             }
             dataOutputStream.writeUTF(COMMAND_ACCEPT + "\n");
             dataOutputStream.close();
@@ -174,9 +186,9 @@ public class DirectReceivingWorker extends ReceivingWorker {
             Log.d(TAG, "User accepted receiving file");
 
             // Check if remote cancelled
-            if (canceledBySender[0].isDone()) {
+            if (cancelledBySender[0].isDone()) {
                 Log.d(TAG, "Remote cancelled receiving file");
-                return genSenderCancelledResult();
+                return genSenderCancelledResult(getApplicationContext());
             }
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
@@ -187,14 +199,14 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
                 dataOutputStream = null;
-                return genReceiverCancelledResult();
+                return genReceiverCancelledResult(getApplicationContext());
             }
 
             DocumentFile destinationDirectory = Utils.getDestinationDirectory(getApplicationContext());
 
             // Receive file
             if (FileUtils.getSpaceAvailable(getApplicationContext(), destinationDirectory) < totalBytesToSend) {
-                return genFailureResult(Constants.TransmissionStatus.NO_ENOUGH_SPACE.getNumVal(), "No enough free disk space");
+                return genFailureResult(new NoEnoughSpaceException(getApplicationContext()));
             }
             DocumentFile[] files = new DocumentFile[fileTransferList.size()];
             for (int i = 0; i < fileTransferList.size(); i++) {
@@ -208,7 +220,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 DocumentFile file = destinationDirectory.createFile("", fileName);
                 files[i] = file;
                 if (file == null) {
-                    return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), "Failed creating file");
+                    return genFailureResult(new FileIOErrorException("Failed creating file"));
                 }
                 outputStream = getApplicationContext().getContentResolver().openOutputStream(file.getUri());
                 byte[] buf = new byte[bufferSize];
@@ -219,9 +231,9 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     bytesReceived += len;
                     updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesReceived, (String[]) fileNameList.toArray(), fileTransfer.getFileName());
                     // Check if remote cancelled
-                    if (canceledBySender[0].isDone()) {
+                    if (cancelledBySender[0].isDone()) {
                         Log.d(TAG, "Remote cancelled receiving file");
-                        return genSenderCancelledResult();
+                        return genSenderCancelledResult(getApplicationContext());
                     }
                     // Check if user cancelled
                     if (getForegroundInfoAsync().isCancelled()) {
@@ -234,7 +246,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                         dataOutputStream = null;
                         // Delete file
                         file.delete();
-                        genReceiverCancelledResult();
+                        return genReceiverCancelledResult(getApplicationContext());
                     }
                 }
                 outputStream.close();
@@ -244,7 +256,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     // Unexpected EOF
                     // Delete file
                     file.delete();
-                    return genFailureResult(Constants.TransmissionStatus.NETWORK_ERROR.getNumVal(), "Unexpected EOF");
+                    return genFailureResult(new NetworkErrorException("Unexpected EOF"));
                 }
             }
 
@@ -258,7 +270,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 try {
                     inputStream = getApplicationContext().getContentResolver().openInputStream(files[i].getUri());
                 } catch (FileNotFoundException e) {
-                    return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "Failed calculating MD5");
+                    return genFailureResult(new UnknownErrorException("Failed calculating MD5"));
                 }
                 String md5 = FileUtils.getMD5(inputStream);
                 inputStream = null;
@@ -272,7 +284,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     dataOutputStream = null;
                     // Delete file
                     files[i].delete();
-                    return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), "File validation failed");
+                    return genFailureResult(new UnknownErrorException("File validation failed"));
                 } else
                     Log.d(TAG, "Md5 validation passed: " + fileTransferList.get(i).getFileName());
             }
@@ -288,20 +300,20 @@ public class DirectReceivingWorker extends ReceivingWorker {
         } catch (SocketTimeoutException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.TIMED_OUT.getNumVal(), e.getMessage());
+            return genFailureResult(new TimedOutException(getApplicationContext(), e));
         } catch (ErrnoException | FileNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.FILE_IO_ERROR.getNumVal(), e.getMessage());
+            return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
         } catch (IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
             Log.e(TAG, e.getMessage());
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal(), e.getMessage());
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
         } finally {
             if (outputStream != null) {
                 try {

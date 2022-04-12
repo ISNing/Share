@@ -1,7 +1,7 @@
 package org.exthmui.share.ui;
 
-import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_SENT;
-import static org.exthmui.share.shared.base.SendingWorker.P_BYTES_TOTAL;
+import static org.exthmui.share.shared.base.BaseWorker.P_BYTES_TOTAL;
+import static org.exthmui.share.shared.base.BaseWorker.P_BYTES_TRANSMITTED;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -226,9 +226,9 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                                 switch (workInfo.getState()) {
                                     case RUNNING:
                                         Data progress_data = workInfo.getProgress();
-                                        bytesSent += progress_data.getLong(P_BYTES_SENT, 0);
+                                        bytesSent += progress_data.getLong(P_BYTES_TRANSMITTED, 0);
                                         bytesTotal += progress_data.getLong(P_BYTES_TOTAL, 0);
-                                        if (bytesSent == -1 | bytesTotal == -1) {
+                                        if (bytesSent == -1 || bytesTotal == -1) {
                                             bytesSent++;
                                             bytesTotal++;
                                         }
@@ -254,7 +254,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                             else if (succeededNumber != 0)
                                 addBadge(mView.getContext().getResources().getColor(R.color.transmission_succeeded_badge_background, null), succeededNumber);
                             mPeerDetailText.setText(detailText);
-                            if (bytesSent == -1 | bytesTotal == -1) {
+                            if (bytesSent == -1 || bytesTotal == -1) {
                                 mPeerProgressBar.setIndeterminate(true);
                             } else {
                                 mPeerProgressBar.setIndeterminate(false);

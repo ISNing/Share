@@ -13,6 +13,7 @@ public abstract class Constants {
     public enum ConnectionType implements org.exthmui.share.shared.misc.IConnectionType {
         MSNEARSHARE(new org.exthmui.share.msnearshare.Metadata()),
         WIFIDIRECT(new org.exthmui.share.wifidirect.Metadata());
+
         @NonNull
         private final String friendlyName;
         @NonNull
@@ -26,7 +27,8 @@ public abstract class Constants {
         @NonNull
         private final Class<? extends PeerInfo> peerClass;
         // IMPORTANT: preferenceFragmentClass must have a public non-argument constructor
-        @NonNull private final Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass;
+        @NonNull
+        private final Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass;
 
         ConnectionType(@NonNull String friendlyName, @NonNull String code, @NonNull Class<? extends Sender<? extends PeerInfo>> senderClass, @NonNull Class<? extends Discoverer> discovererClass, @NonNull Class<? extends Receiver> receiverClass, @NonNull Class<? extends PeerInfo> peerClass, @NonNull Class<? extends PluginPreferenceFragmentCompat> preferenceFragmentClass) {
             this.friendlyName = friendlyName;

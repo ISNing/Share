@@ -19,10 +19,10 @@ import androidx.preference.PreferenceManager;
 import org.exthmui.share.BuildConfig;
 import org.exthmui.share.R;
 import org.exthmui.share.misc.Constants;
+import org.exthmui.share.shared.AcceptationBroadcastReceiver;
 import org.exthmui.share.shared.BaseEventListenersUtils;
 import org.exthmui.share.shared.ReceiverUtils;
 import org.exthmui.share.shared.ServiceUtils;
-import org.exthmui.share.shared.ShareBroadcastReceiver;
 import org.exthmui.share.shared.base.Receiver;
 import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
@@ -61,7 +61,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     private final Set<BaseEventListener> mInternalListenerList = new HashSet<>();
     private final Set<BaseEventListener> mReceiverListenerList = new HashSet<>();
 
-    private final ShareBroadcastReceiver mShareBroadcastReceiver = new ShareBroadcastReceiver();
+    private final AcceptationBroadcastReceiver mAcceptationBroadcastReceiver = new AcceptationBroadcastReceiver();
 
     public ReceiveService() {
         initializeInternalListeners();
@@ -87,7 +87,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     public void onCreate() {
         super.onCreate();
 
-        mShareBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
+        mAcceptationBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
             @Override
             public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, String peerName, String fileName, long fileSize, int notificationId) {
                 ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, peerName, fileName, fileSize, notificationId);
@@ -107,7 +107,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
                 receiver.onReceiveActionReject(new ReceiveActionRejectEvent(this, pluginCode, requestId));
             }
         });
-        registerReceiver(mShareBroadcastReceiver, ShareBroadcastReceiver.getIntentFilter());
+        registerReceiver(mAcceptationBroadcastReceiver, AcceptationBroadcastReceiver.getIntentFilter());
 
         addReceivers();
         registerInternalListeners();
@@ -122,8 +122,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mShareBroadcastReceiver.setListener(null);
-        unregisterReceiver(mShareBroadcastReceiver);
+        mAcceptationBroadcastReceiver.setListener(null);
+        unregisterReceiver(mAcceptationBroadcastReceiver);
         unregisterReceiverListeners(mReceiverListenerList);
         Log.d(TAG, "Service going down(onDestroy), stopping receivers");
         stopReceivers();
@@ -338,7 +338,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     @Override
     public boolean isReceiversAvailable() {
         for (Receiver receiver : mReceiverList) {
-            if (receiver.isFeatureAvailable() & receiver.getPermissionNotGranted().isEmpty())
+            if (receiver.isFeatureAvailable() && receiver.getPermissionNotGranted().isEmpty())
                 return true;
         }
         return false;
@@ -348,7 +348,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     public boolean isReceiverAvailable(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return false;
-        return receiver.isFeatureAvailable() & receiver.getPermissionNotGranted().isEmpty();
+        return receiver.isFeatureAvailable() && receiver.getPermissionNotGranted().isEmpty();
     }
 
     @Override

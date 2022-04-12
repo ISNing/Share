@@ -65,7 +65,7 @@ public class DiscoverableTileService extends TileService {
                     mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
                         public void onServiceConnected(ServiceUtils.MyService service) {
-                            mService.stopReceivers();
+                            ((ReceiveService) service).stopReceivers();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
                     });
@@ -78,7 +78,7 @@ public class DiscoverableTileService extends TileService {
                     mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
                         public void onServiceConnected(ServiceUtils.MyService service) {
-                            mService.startReceivers();
+                            ((ReceiveService) service).startReceivers();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
                     });

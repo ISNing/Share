@@ -22,7 +22,7 @@ public abstract class DirectUtils {
         int port;
         do {
             port = generatePort();
-        } while (!isPortValid(port) | port == except);
+        } while (!isPortValid(port) || port == except);
         return port;
     }
 
@@ -38,7 +38,7 @@ public abstract class DirectUtils {
     }
     public static int getServerPort(Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_server_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_server_port));
-        if (!isServerPortValid(context, port) | port == -1) {
+        if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort();
         }
@@ -46,20 +46,20 @@ public abstract class DirectUtils {
     }
     public static int getClientPort(Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_client_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_client_port));
-        if (!isClientPortValid(context, port) | port == -1) {
+        if (!isClientPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort(getServerPort(context));
         }
         return port;
     }
     public static boolean isPortValid(int port) {
-        return !(port < 5001 | port > 65535);
+        return !(port < 5001 || port > 65535);
     }
     public static boolean isServerPortValid(Context context, int serverPort) {
-        return serverPort == -1 | (isPortValid(serverPort));
+        return serverPort == -1 || (isPortValid(serverPort));
     }
     public static boolean isClientPortValid(Context context, int clientPort) {
-        return clientPort == -1 | (isPortValid(clientPort) && clientPort != getServerPort(context));
+        return clientPort == -1 || (isPortValid(clientPort) && clientPort != getServerPort(context));
     }
 
     public static int getBufferSize(Context context) {

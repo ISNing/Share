@@ -55,6 +55,7 @@
 
     <string name="notification_title_receive_service">Receiver Service running</string>
 
+    <string name="notification_action_cancel">Cancel</string>
     <string name="notification_action_accept">Accept</string>
     <string name="notification_action_reject">Reject</string>
 
@@ -69,21 +70,71 @@
 
     <string name="notification_title_send_service">Discover/Sender Service running</string>
 
-    <string name="notification_title_sending_initializing" formatted="true">Initializing sender</string>
-    <string name="notification_title_sending" formatted="true">Sending file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%2$s</xliff:g></string>
-    <string name="notification_title_sending_two" formatted="true">Sending \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%3$s</xliff:g></string>
-    <string name="notification_title_sending_multi" formatted="true" tools:ignore="PluralsCandidate">Sending \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files to <xliff:g id="target_name" example="ISNing's Tablet">%4$s</xliff:g></string>
-    <string name="notification_action_cancel">Cancel</string>
+
+    <!-- Sending in progress notification -->
+    <plurals name="notification_title_sending">
+        <item quantity="one">Sending file to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_sending">
+        <item quantity="one">Sending file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+    </plurals>
+    <!-- Sending failed notification -->
+    <plurals name="notification_title_sending_failed">
+        <item quantity="one">Failed sending file to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_sending_failed">
+        <item quantity="one">Failed sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+        <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+    </plurals>
+    <!-- Sending succeeded notification -->
+    <plurals name="notification_title_sending_succeeded">
+        <item quantity="one">Succeeded sending file to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Succeeded sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_sending_succeeded">
+        <item quantity="one">Failed sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+    </plurals>
 
     <string name="dialog_title_accept_or_reject_request" formatted="true"><xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g> request to send you file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</string>
     <string name="dialog_accept_or_reject_request_size" formatted="true">Size: <xliff:g id="file_size" example="1.86MB">%1$s</xliff:g></string>
     <string name="dialog_action_accept">Accept</string>
     <string name="dialog_action_reject">Reject</string>
+
+
     <string name="notification_title_initializing">Initializing receiver</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
-    <string name="notification_title_receive_receiving" formatted="true">Receiving file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" from <xliff:g id="sender_name" example="ISNing's Phone">%2$s</xliff:g></string>
-    <string name="notification_title_receive_receiving_two" formatted="true">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\ from <xliff:g id="sender_name" example="ISNing's Phone">%3$s</xliff:g></string>
-    <string name="notification_title_receive_receiving_multi" formatted="true" tools:ignore="PluralsCandidate">Receiving \"<xliff:g id="file_name_1st" example="base.apk">%1$s</xliff:g>\", \"<xliff:g id="file_name_2nd" example="exTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" and <xliff:g id="rest_file_number" example="3">%3$d</xliff:g> more files from <xliff:g id="sender_name" example="ISNing's Phone">%4$s</xliff:g></string>
+    <!-- Receiving in progress notification -->
+    <plurals name="notification_title_receiving">
+        <item quantity="one">Receiving file from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_receiving">
+        <item quantity="one">Receiving file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+    </plurals>
+    <!-- Receiving failed notification -->
+    <plurals name="notification_title_receiving_failed">
+        <item quantity="one">Failed receiving file from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Failed receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_receiving_failed">
+        <item quantity="one">Failed receiving file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+        <item quantity="other">Failed receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+    </plurals>
+    <!-- Receiving succeeded notification -->
+    <plurals name="notification_title_receiving_succeeded">
+        <item quantity="one">Succeeded receiving file from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Succeeded receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_receiving_succeeded">
+        <item quantity="one">Succeeded receiving file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Succeeded receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+    </plurals>
+
     <string name="notification_placeholder_unknown">Unknown</string>
 
     <!-- Transmission Status Friendly -->
@@ -99,12 +150,33 @@
     <string name="transmission_status_unknown_error">Unknown error</string>
     <string name="transmission_status_network_error">Network error</string>
     <string name="transmission_status_timed_out">Timed out</string>
+    <string name="transmission_status_cancelled">Cancelled</string>
     <string name="transmission_status_sender_cancelled">Sender cancelled</string>
     <string name="transmission_status_receiver_cancelled">Receiver cancelled</string>
     <string name="transmission_status_file_io_error">File IO error</string>
     <string name="transmission_status_no_enough_space">No enough disk space</string>
     <string name="transmission_status_remote_error">Remote unknown error</string>
     <string name="transmission_status_peer_disappeared">Peer disappeared</string>
+
+    <string name="transmission_status_unknown_detailed">Unknown</string>
+    <string name="transmission_status_initializing_detailed">Initializing</string>
+    <string name="transmission_status_waiting_for_request_detailed">Waiting for request from sender</string>
+    <string name="transmission_status_waiting_for_acceptation_detailed">Waiting for acceptation from receiver</string>
+    <string name="transmission_status_rejected_detailed">Transmission has been rejected by receiver</string>
+    <string name="transmission_status_connection_established_detailed">Connection established</string>
+    <string name="transmission_status_in_progress_detailed">Transmission in progress</string>
+    <string name="transmission_status_completed_detailed">Transmission completed</string>
+
+    <string name="transmission_status_unknown_error_detailed">Unknown error occurred</string>
+    <string name="transmission_status_network_error_detailed">Network error occurred</string>
+    <string name="transmission_status_timed_out_detailed">Connection timed out</string>
+    <string name="transmission_status_cancelled_detailed">Sending/Receiving has been cancelled</string>
+    <string name="transmission_status_sender_cancelled_detailed">Sender cancelled sending file(s)</string>
+    <string name="transmission_status_receiver_cancelled_detailed">Receiver cancelled receiving file(s)</string>
+    <string name="transmission_status_file_io_error_detailed">File IO error occurred</string>
+    <string name="transmission_status_no_enough_space_detailed">No enough disk space left</string>
+    <string name="transmission_status_remote_error_detailed">Unknown error from remote side</string>
+    <string name="transmission_status_peer_disappeared_detailed">Peer disappeared</string>
 
     <string name="device_type_desktop">Desktop</string>
     <string name="device_type_laptop">Laptop</string>

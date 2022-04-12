@@ -4,7 +4,10 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.work.WorkInfo;
+import androidx.work.WorkManager;
 
+import org.exthmui.share.shared.SenderUtils;
 import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
@@ -22,11 +25,13 @@ import java.util.UUID;
 public class SendingHelper {
 
     private final Context mContext;
+    private final WorkManager mWorkManager;
 
     public static final String TAG = "SendingHelper";
 
     public SendingHelper(@NonNull Context context) {
-        this.mContext = context;
+        mContext = context;
+        mWorkManager = WorkManager.getInstance(mContext);
     }
 
     public UUID send(@NonNull PeerInfo target, @NonNull Entity entity)
@@ -38,12 +43,20 @@ public class SendingHelper {
         }
         try {
             Method method = connectionType.getSenderClass()
-                .getDeclaredMethod("getInstance", Context.class);
+                    .getDeclaredMethod("getInstance", Context.class);
             Sender<?> sender = (Sender<?>) method.invoke(null, mContext);
             if (sender == null) {
                 throw new InvalidSenderException(mContext);
             }
-            return sender.sendToPeerInfo(mContext, target, entity);
+            UUID workId = sender.sendToPeerInfo(mContext, target, entity);
+            mWorkManager.getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    SenderUtils.buildSendingSucceededNotification(mContext, workInfo.getOutputData());
+                } else if (workInfo.getState() == WorkInfo.State.FAILED) {
+                    SenderUtils.buildSendingFailedNotification(mContext, workInfo.getOutputData());
+                }
+            });
+            return workId;
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             throw new FailedInvokingSendingMethodException(mContext, e);
@@ -59,12 +72,20 @@ public class SendingHelper {
         }
         try {
             Method method = connectionType.getSenderClass()
-                .getDeclaredMethod("getInstance", Context.class);
+                    .getDeclaredMethod("getInstance", Context.class);
             Sender<?> sender = (Sender<?>) method.invoke(null, mContext);
             if (sender == null) {
                 throw new InvalidSenderException(mContext);
             }
-            return sender.sendToPeerInfo(mContext, target, entities);
+            UUID workId = sender.sendToPeerInfo(mContext, target, entities);
+            mWorkManager.getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    SenderUtils.buildSendingSucceededNotification(mContext, workInfo.getOutputData());
+                } else if (workInfo.getState() == WorkInfo.State.FAILED) {
+                    SenderUtils.buildSendingFailedNotification(mContext, workInfo.getOutputData());
+                }
+            });
+            return workId;
         } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             throw new FailedInvokingSendingMethodException(mContext, e);

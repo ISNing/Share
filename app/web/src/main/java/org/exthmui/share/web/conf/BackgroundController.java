@@ -13,11 +13,11 @@ import com.yanzhenjie.andserver.annotation.RequestMapping;
 import com.yanzhenjie.andserver.annotation.RequestParam;
 import com.yanzhenjie.andserver.annotation.RestController;
 
+import org.exthmui.share.shared.Constants;
+import org.exthmui.share.shared.Utils;
 import org.exthmui.share.web.R;
 import org.exthmui.share.web.WebServerService;
 import org.exthmui.share.web.exceptions.InvalidRequestException;
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.Utils;
 
 @RestController
 @RequestMapping(path = "/media")
@@ -36,8 +36,9 @@ public class BackgroundController {
     @PostMapping("/auth")
     String auth(@RequestBody AuthPBody data) {
         String pattern = "^[0-9]{6}$";
-        if(data.deviceId.isEmpty() | data.authCode.isEmpty() | !data.authCode.matches(pattern)) throw new InvalidRequestException();
-        if(data.displayName.isEmpty()) data.displayName = "Unknown device";
+        if (data.deviceId.isEmpty() || data.authCode.isEmpty() || !data.authCode.matches(pattern))
+            throw new InvalidRequestException();
+        if (data.displayName.isEmpty()) data.displayName = "Unknown device";
         if(!Utils.isInclude(Constants.DeviceType.class, data.deviceType)) data.deviceType = Constants.DeviceType.UNKNOWN.getNumVal();
         Dialog dialog = generateCodeDialog(data.authCode);
         dialog.show();
