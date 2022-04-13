@@ -62,6 +62,10 @@
 
     <string name="notification_title_receive_request">Share Request</string>
     <plurals name="notification_text_receive_request">
+        <item quantity="one">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share <xliff:g id="file_count" example="1">%2$d</xliff:g> file with you</item>
+        <item quantity="other">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share <xliff:g id="file_count" example="3">%2$d</xliff:g> files with you</item>
+    </plurals>
+    <plurals name="notification_text_expanded_receive_request">
         <item quantity="other">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share \"<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" with you</item>
     </plurals>
 
@@ -76,11 +80,14 @@
 
     <!-- Sending in progress notification -->
     <plurals name="notification_title_sending">
-        <item quantity="one">Sending file to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
-        <item quantity="other">Sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="one">Sending file</item>
+        <item quantity="other">Sending files</item>
     </plurals>
     <plurals name="notification_text_sending">
-        <item quantity="one">Sending file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">@string/notification_text_progress</item>
+    </plurals>
+    <plurals name="notification_text_expanded_sending">
+        <item quantity="one">Sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
         <item quantity="other">Sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
     </plurals>
     <!-- Sending failed notification -->
@@ -89,8 +96,11 @@
         <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
     </plurals>
     <plurals name="notification_text_sending_failed">
-        <item quantity="one">Failed sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
-        <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+        <item quantity="other">Reason: <xliff:g id="reason">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_expanded_sending_failed">
+        <item quantity="one">Reason: <xliff:g id="reason">%1$s</xliff:g>\nFile: \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</item>
+        <item quantity="other">Reason: <xliff:g id="reason">%1$s</xliff:g>\nFiles: <xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
     </plurals>
     <!-- Sending succeeded notification -->
     <plurals name="notification_title_sending_succeeded">
@@ -98,8 +108,12 @@
         <item quantity="other">Succeeded sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
     </plurals>
     <plurals name="notification_text_sending_succeeded">
-        <item quantity="one">Succeeded sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
-        <item quantity="other">Succeeded sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+        <item quantity="one"><xliff:g id="file_name" example="base.apk">%1$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="file_count">%2$s</xliff:g> files in total, expand notification to see complete list</item>
+    </plurals>
+    <plurals name="notification_text_expanded_sending_succeeded">
+        <item quantity="one">@null</item>
+        <item quantity="other"><xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%1$s</xliff:g></item>
     </plurals>
 
     <string name="dialog_title_accept_or_reject_request" formatted="true"><xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g> request to send you file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</string>
@@ -110,13 +124,18 @@
 
     <string name="notification_title_initializing">Initializing receiver</string>
     <string name="notification_title_receive_waiting">Ready for receive</string>
+    <string name="notification_text_progress"><xliff:g id="size_transmitted" example="18.6 MB">%1$s</xliff:g> transmitted, <xliff:g id="size_total" example="93.2 MB">%2$s</xliff:g> in total</string>
+
     <!-- Receiving in progress notification -->
     <plurals name="notification_title_receiving">
-        <item quantity="one">Receiving file from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
-        <item quantity="other">Receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="one">Receiving file</item>
+        <item quantity="other">Receiving files</item>
     </plurals>
     <plurals name="notification_text_receiving">
-        <item quantity="one">Receiving file \"<xliff:g id="file_name" example="base.apk">%1$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">@string/notification_text_progress</item>
+    </plurals>
+    <plurals name="notification_text_expanded_receiving">
+        <item quantity="one">Receiving file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
         <item quantity="other">Receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
     </plurals>
     <!-- Receiving failed notification -->
@@ -125,8 +144,11 @@
         <item quantity="other">Failed receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
     </plurals>
     <plurals name="notification_text_receiving_failed">
-        <item quantity="one">Failed receiving file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
-        <item quantity="other">Failed receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\nReason: <xliff:g id="reason">%3$s</xliff:g></item>
+        <item quantity="other">Reason: <xliff:g id="reason">%1$s</xliff:g></item>
+    </plurals>
+    <plurals name="notification_text_expanded_receiving_failed">
+        <item quantity="one">Reason: <xliff:g id="reason">%1$s</xliff:g>\nFile: \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</item>
+        <item quantity="other">Reason: <xliff:g id="reason">%1$s</xliff:g>\nFiles: <xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
     </plurals>
     <!-- Receiving succeeded notification -->
     <plurals name="notification_title_receiving_succeeded">
@@ -134,8 +156,12 @@
         <item quantity="other">Succeeded receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
     </plurals>
     <plurals name="notification_text_receiving_succeeded">
-        <item quantity="one">Succeeded receiving file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
-        <item quantity="other">Succeeded receiving files from <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+        <item quantity="one"><xliff:g id="file_name" example="base.apk">%1$s</xliff:g></item>
+        <item quantity="other"><xliff:g id="file_count">%2$s</xliff:g> files in total, expand notification to see complete list</item>
+    </plurals>
+    <plurals name="notification_text_expanded_receiving_succeeded">
+        <item quantity="one">@null</item>
+        <item quantity="other"><xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%1$s</xliff:g></item>
     </plurals>
 
     <string name="notification_placeholder_unknown">Unknown</string>

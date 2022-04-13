@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.text.format.Formatter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -138,12 +139,16 @@ public abstract class ReceiverUtils {
         createRequestNotificationChannel(context);
 
         String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileNameStr);
+        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileInfos.length);
 
         @SuppressLint("LaunchActivityFromNotification") NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REQUEST_CHANNEL_ID)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setSmallIcon(R.drawable.ic_notification_request)
                 .setContentTitle(context.getString(R.string.notification_title_receive_request))
-                .setContentText(context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileNameStr))
+                .setContentText(text)
+                .setStyle(new NotificationCompat.BigTextStyle()
+                        .bigText(bigText))
                 .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setContentIntent(buildDialogPendingIntent(context, pluginCode, requestId, senderInfo, fileInfos, notificationId))
                 .addAction(R.drawable.ic_action_accept, context.getString(R.string.notification_action_accept),
@@ -182,9 +187,13 @@ public abstract class ReceiverUtils {
 
         String title;
         String text;
+        String subText = null;
+        String bigText = null;
         String senderName = senderInfo == null ? null : senderInfo.getDisplayName();
         if (senderName == null)
             senderName = context.getString(R.string.notification_placeholder_unknown);
+
+        boolean setProgress = false;
 
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
@@ -198,10 +207,13 @@ public abstract class ReceiverUtils {
             text = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
             cancelPendingIntent = buildStopReceiverPendingIntent(context, connectionType.getCode());
         } else {
+            setProgress = true;
             String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
 
             title = context.getResources().getQuantityString(R.plurals.notification_title_receiving, fileInfos.length, senderName);
-            text = context.getResources().getQuantityString(R.plurals.notification_text_receiving, fileInfos.length, senderName, fileNameStr);
+            text = context.getResources().getQuantityString(R.plurals.notification_text_receiving, fileInfos.length, Formatter.formatFileSize(context, bytesReceived), Formatter.formatFileSize(context, totalBytesToSend));
+            subText = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
+            bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receiving, fileInfos.length, senderName, fileNameStr);
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID).setContentTitle(title)
@@ -212,7 +224,11 @@ public abstract class ReceiverUtils {
                 .setSmallIcon(R.drawable.ic_notification_receive)
                 .setOngoing(true)
                 .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
-        if (statusCode != Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal())
+        if (subText != null)
+            builder.setSubText(subText);
+        if (bigText != null)
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
+        if (setProgress)
             builder.setProgress((int) totalBytesToSend, (int) bytesReceived, indeterminate);
         return builder.build();
     }
@@ -222,13 +238,13 @@ public abstract class ReceiverUtils {
 
         String senderName = output.getString(Receiver.FROM_PEER_NAME);
         String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
-        String[] fileUris = output.getStringArray(Entity.FILE_URIS);
         long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
 
         String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
-        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_succeeded, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr);
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_succeeded, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr);
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_receiving_succeeded, fileNames == null ? 1 : fileNames.length, senderName);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_receiving_succeeded, fileNames == null ? 1 : fileNames.length, fileNameStr, fileNames == null ? 1 : fileNames.length);
+        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receiving_succeeded, fileNames == null ? 1 : fileNames.length, fileNameStr);
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)
@@ -236,13 +252,10 @@ public abstract class ReceiverUtils {
                 .setAutoCancel(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
-                .setSmallIcon(R.drawable.ic_notification_send);
-        if (fileUris != null && fileUris.length == 1) {
-            String openFile = context.getString(R.string.notification_action_open_file);
-            PendingIntent openFilePendingIntent = buildOpenFilePendingIntent(context, Uri.parse(fileUris[0]));
-            builder.addAction(R.drawable.ic_action_cancel, openFile, openFilePendingIntent);
-            builder.setContentIntent(openFilePendingIntent);
-        }
+                .setSmallIcon(R.drawable.ic_notification_success);
+
+        if (bigText != null)
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
         return builder.build();
     }
 
@@ -259,16 +272,20 @@ public abstract class ReceiverUtils {
 
         String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
-        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr, localizedMessage);
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr, localizedMessage);
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_receiving_failed, fileNames == null ? 1 : fileNames.length, senderName);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_receiving_failed, fileNames == null ? 1 : fileNames.length, localizedMessage);
+        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receiving_failed, fileNames == null ? 1 : fileNames.length, localizedMessage, fileNameStr);
 
-        return new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setAutoCancel(true)
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
-                .setSmallIcon(R.drawable.ic_notification_send)
-                .build();
+                .setSmallIcon(R.drawable.ic_notification_failed);
+
+        if (bigText != null)
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
+        return builder.build();
     }
 }
