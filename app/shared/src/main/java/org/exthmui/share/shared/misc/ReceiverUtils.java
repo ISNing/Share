@@ -199,7 +199,7 @@ public abstract class ReceiverUtils {
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
         if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal()) {
-            title = context.getString(R.string.notification_title_initializing);
+            title = context.getString(R.string.notification_title_receive_initializing);
             text = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
             cancelPendingIntent = buildStopReceiverPendingIntent(context, connectionType.getCode());
         } else if (statusCode == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) {
@@ -208,12 +208,10 @@ public abstract class ReceiverUtils {
             cancelPendingIntent = buildStopReceiverPendingIntent(context, connectionType.getCode());
         } else {
             setProgress = true;
-            String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
 
             title = context.getResources().getQuantityString(R.plurals.notification_title_receiving, fileInfos.length, senderName);
             text = context.getResources().getQuantityString(R.plurals.notification_text_receiving, fileInfos.length, Formatter.formatFileSize(context, bytesReceived), Formatter.formatFileSize(context, totalBytesToSend));
             subText = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
-            bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receiving, fileInfos.length, senderName, fileNameStr);
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID).setContentTitle(title)
@@ -226,8 +224,6 @@ public abstract class ReceiverUtils {
                 .addAction(R.drawable.ic_action_cancel, cancel, cancelPendingIntent);
         if (subText != null)
             builder.setSubText(subText);
-        if (bigText != null)
-            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
         if (setProgress)
             builder.setProgress((int) totalBytesToSend, (int) bytesReceived, indeterminate);
         return builder.build();

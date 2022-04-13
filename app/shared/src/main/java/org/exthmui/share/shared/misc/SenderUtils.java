@@ -84,15 +84,17 @@ public abstract class SenderUtils {
         String title = context.getResources().getQuantityString(R.plurals.notification_title_sending, fileInfos.length, receiverName);
         String text = context.getResources().getQuantityString(R.plurals.notification_text_sending, fileInfos.length, Formatter.formatFileSize(context, bytesSent), Formatter.formatFileSize(context, totalBytesToSend));
         String subText = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
-        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_sending, fileInfos.length, receiverName, fileNameStr);
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
+        if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal()) {
+            title = context.getString(R.string.notification_title_receive_initializing);
+            text = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
+        }
         return new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSubText(subText)
-                .setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
                 .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
