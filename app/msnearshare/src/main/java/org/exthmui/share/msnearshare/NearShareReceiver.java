@@ -4,16 +4,17 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.Receiver;
-import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
-import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.receive.Receiver;
+import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
+import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.listeners.BaseEventListener;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 public class NearShareReceiver implements Receiver {
     public static NearShareReceiver getInstance(Context context) {
@@ -70,6 +71,11 @@ public class NearShareReceiver implements Receiver {
     @Override
     public void stopReceive() {
 
+    }
+
+    @Override
+    public UUID startWork(Context context) {
+        return null;
     }
 
     @Override

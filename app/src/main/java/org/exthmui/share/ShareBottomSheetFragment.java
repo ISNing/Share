@@ -18,18 +18,18 @@ import androidx.annotation.Nullable;
 
 import org.exthmui.share.misc.SendingHelper;
 import org.exthmui.share.services.DiscoverService;
-import org.exthmui.share.shared.ServiceUtils;
-import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.exceptions.NoEntityPassedException;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
-import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
-import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.exceptions.NoEntityPassedException;
 import org.exthmui.share.shared.exceptions.PeerDisappearedException;
+import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.listeners.OnDiscovererStartedListener;
+import org.exthmui.share.shared.listeners.OnDiscovererStoppedListener;
+import org.exthmui.share.shared.listeners.OnPeerAddedListener;
+import org.exthmui.share.shared.listeners.OnPeerRemovedListener;
+import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.misc.ServiceUtils;
+import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.ui.BaseBottomSheetFragment;
 import org.exthmui.share.ui.PeerChooserView;
 
@@ -191,11 +191,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                         if (peer == null) {
                             throw new PeerDisappearedException(requireContext());
                         }
-                        if (mEntities.size() == 1) {
-                            mSendingHelper.send(peer, mEntities.get(0));
-                        } else {
-                            mSendingHelper.send(peer, mEntities);
-                        }
+                        mSendingHelper.send(peer, mEntities);
                     } catch (Throwable tr) {
                         handleError(requireContext(), tr);
                     }
@@ -207,11 +203,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                     if (peer == null) {
                         throw new PeerDisappearedException(requireContext());
                     }
-                    if (mEntities.size() == 1) {
-                        mSendingHelper.send(peer, mEntities.get(0));
-                    } else {
-                        mSendingHelper.send(peer, mEntities);
-                    }
+                    mSendingHelper.send(peer, mEntities);
                 } catch (Throwable tr) {
                     handleError(requireContext(), tr);
                 }

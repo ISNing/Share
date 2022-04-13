@@ -20,18 +20,19 @@ import org.exthmui.share.BuildConfig;
 import org.exthmui.share.R;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.shared.AcceptationBroadcastReceiver;
-import org.exthmui.share.shared.BaseEventListenersUtils;
-import org.exthmui.share.shared.ReceiverUtils;
-import org.exthmui.share.shared.ServiceUtils;
-import org.exthmui.share.shared.base.Receiver;
-import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
-import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
-import org.exthmui.share.shared.base.events.ReceiverStoppedEvent;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
-import org.exthmui.share.shared.base.listeners.OnReceiveShareBroadcastActionListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverErrorOccurredListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverStartedListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverStoppedListener;
+import org.exthmui.share.shared.base.receive.Receiver;
+import org.exthmui.share.shared.base.receive.SenderInfo;
+import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
+import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.events.ReceiverStoppedEvent;
+import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.listeners.OnReceiveShareBroadcastActionListener;
+import org.exthmui.share.shared.listeners.OnReceiverErrorOccurredListener;
+import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
+import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
+import org.exthmui.share.shared.misc.BaseEventListenersUtils;
+import org.exthmui.share.shared.misc.ReceiverUtils;
+import org.exthmui.share.shared.misc.ServiceUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -89,8 +90,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
         mAcceptationBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
             @Override
-            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, String peerName, String fileName, long fileSize, int notificationId) {
-                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, peerName, fileName, fileSize, notificationId);
+            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, SenderInfo senderInfo, String fileName, long fileSize, int notificationId) {
+                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, senderInfo, fileName, fileSize, notificationId);
             }
 
             @Override

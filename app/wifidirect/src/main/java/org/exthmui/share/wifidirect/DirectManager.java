@@ -29,26 +29,26 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import org.apache.commons.lang3.StringUtils;
-import org.exthmui.share.shared.BaseEventListenersUtils;
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.Sender;
-import org.exthmui.share.shared.base.events.DiscovererErrorOccurredEvent;
-import org.exthmui.share.shared.base.events.DiscovererStartedEvent;
-import org.exthmui.share.shared.base.events.DiscovererStoppedEvent;
-import org.exthmui.share.shared.base.events.PeerAddedEvent;
-import org.exthmui.share.shared.base.events.PeerRemovedEvent;
-import org.exthmui.share.shared.base.events.PeerUpdatedEvent;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
-import org.exthmui.share.shared.base.listeners.OnDiscovererErrorOccurredListener;
-import org.exthmui.share.shared.base.listeners.OnDiscovererStartedListener;
-import org.exthmui.share.shared.base.listeners.OnDiscovererStoppedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerAddedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerRemovedListener;
-import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
-import org.exthmui.share.shared.base.listeners.OnSenderErrorOccurredListener;
+import org.exthmui.share.shared.base.discover.Discoverer;
+import org.exthmui.share.shared.base.send.Sender;
+import org.exthmui.share.shared.events.DiscovererErrorOccurredEvent;
+import org.exthmui.share.shared.events.DiscovererStartedEvent;
+import org.exthmui.share.shared.events.DiscovererStoppedEvent;
+import org.exthmui.share.shared.events.PeerAddedEvent;
+import org.exthmui.share.shared.events.PeerRemovedEvent;
+import org.exthmui.share.shared.events.PeerUpdatedEvent;
+import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.listeners.OnDiscovererErrorOccurredListener;
+import org.exthmui.share.shared.listeners.OnDiscovererStartedListener;
+import org.exthmui.share.shared.listeners.OnDiscovererStoppedListener;
+import org.exthmui.share.shared.listeners.OnPeerAddedListener;
+import org.exthmui.share.shared.listeners.OnPeerRemovedListener;
+import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
+import org.exthmui.share.shared.misc.BaseEventListenersUtils;
+import org.exthmui.share.shared.misc.Constants;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -139,16 +139,6 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     @Override
     public boolean isDiscovererStarted() {
         return mDiscovererStarted;
-    }
-
-    @Override
-    public UUID send(DirectPeer peer, Entity entity) {
-        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectSendingWorker.class)
-                .setInputData(genSendingInputData(peer, entity))
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .build();
-        WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), ExistingWorkPolicy.APPEND_OR_REPLACE, work);
-        return work.getId();
     }
 
     @Override

@@ -7,9 +7,9 @@ import android.content.Intent;
 import androidx.annotation.IntRange;
 import androidx.annotation.Nullable;
 
-import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
+import org.exthmui.share.shared.base.discover.Discoverer;
+import org.exthmui.share.shared.listeners.BaseEventListener;
 
 import java.util.Collection;
 import java.util.EventObject;

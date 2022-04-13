@@ -4,11 +4,14 @@ import android.content.ClipData;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
-import java.util.ArrayList;
+
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
+import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
+
+import java.util.ArrayList;
 
 public class ShareActivity extends AppCompatActivity {
 

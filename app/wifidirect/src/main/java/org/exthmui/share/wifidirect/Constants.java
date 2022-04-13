@@ -20,4 +20,6 @@ public class Constants {
     public static final String RECORD_KEY_PEER_ID = "peerId";
     public static final String RECORD_KEY_UID = "uid";
     public static final String RECORD_KEY_ACCOUNT_SERVER_SIGN = "serverSign";
+
+    public static final String FILE_INFO_EXTRA_KEY_MD5 = "md5";
 }

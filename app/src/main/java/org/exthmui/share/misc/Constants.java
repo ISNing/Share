@@ -2,10 +2,10 @@ package org.exthmui.share.misc;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.Discoverer;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.Receiver;
-import org.exthmui.share.shared.base.Sender;
+import org.exthmui.share.shared.base.discover.Discoverer;
+import org.exthmui.share.shared.base.receive.Receiver;
+import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 

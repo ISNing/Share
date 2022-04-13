@@ -26,8 +26,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.ReceiveService;
-import org.exthmui.share.shared.ServiceUtils;
-import org.exthmui.share.shared.Utils;
+import org.exthmui.share.shared.misc.ServiceUtils;
+import org.exthmui.share.shared.misc.Utils;
 import org.exthmui.share.shared.preferences.ClickableStringPreference;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 

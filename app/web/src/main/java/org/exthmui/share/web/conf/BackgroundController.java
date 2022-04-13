@@ -13,8 +13,8 @@ import com.yanzhenjie.andserver.annotation.RequestMapping;
 import com.yanzhenjie.andserver.annotation.RequestParam;
 import com.yanzhenjie.andserver.annotation.RestController;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.Utils;
+import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.Utils;
 import org.exthmui.share.web.R;
 import org.exthmui.share.web.WebServerService;
 import org.exthmui.share.web.exceptions.InvalidRequestException;

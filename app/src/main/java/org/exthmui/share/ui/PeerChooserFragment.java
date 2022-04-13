@@ -20,8 +20,8 @@ import com.google.android.material.transition.MaterialContainerTransform;
 import com.google.android.material.transition.MaterialFadeThrough;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.CrossFadeUtils;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.misc.CrossFadeUtils;
 
 import java.util.Map;
 

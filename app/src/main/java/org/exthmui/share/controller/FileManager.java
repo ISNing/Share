@@ -17,13 +17,13 @@ import android.util.Size;
 
 import androidx.annotation.RequiresApi;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.FileUtils;
-import org.exthmui.share.shared.base.AppInfo;
-import org.exthmui.share.shared.base.AudioFile;
-import org.exthmui.share.shared.base.File;
-import org.exthmui.share.shared.base.ImgFolderBean;
-import org.exthmui.share.shared.base.VideoFile;
+import org.exthmui.share.shared.base.file.AppInfo;
+import org.exthmui.share.shared.base.file.AudioFile;
+import org.exthmui.share.shared.base.file.File;
+import org.exthmui.share.shared.base.file.ImgFolderBean;
+import org.exthmui.share.shared.base.file.VideoFile;
+import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.FileUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;

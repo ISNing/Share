@@ -26,8 +26,8 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.misc.Constants;
 
 import java.util.Map;
 

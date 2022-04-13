@@ -8,17 +8,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import org.exthmui.share.shared.R;
-import org.exthmui.share.shared.ReceiverUtils;
+import org.exthmui.share.shared.base.receive.SenderInfo;
+import org.exthmui.share.shared.misc.ReceiverUtils;
 
 public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragment {
 
     public static final String TAG = "AcceptationRequestBottomSheetFragment";
 
     private final String mPluginCode;
-    private final String mPeerName;
+    private final SenderInfo mSenderInfo;
     private final String mFileName;
     private final long mFileSize;
     private final String mRequestId;
@@ -29,9 +32,9 @@ public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragme
     private Button mAcceptButton;
     private Button mRejectButton;
 
-    public AcceptationRequestBottomSheetFragment(String pluginCode, String peerName, String fileName, long fileSize, String requestId, int notificationId) {
+    public AcceptationRequestBottomSheetFragment(String pluginCode, SenderInfo senderInfo, String fileName, long fileSize, String requestId, int notificationId) {
         this.mPluginCode = pluginCode;
-        this.mPeerName = peerName;
+        this.mSenderInfo = senderInfo;
         this.mFileName = fileName;
         this.mFileSize = fileSize;
         this.mRequestId = requestId;
@@ -54,7 +57,7 @@ public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragme
         mAcceptButton = view.findViewById(R.id.fragment_acceptation_accept_button);
         mRejectButton = view.findViewById(R.id.fragment_acceptation_reject_button);
 
-        mTitle.setText(requireContext().getString(R.string.dialog_title_accept_or_reject_request, mPeerName, mFileName));
+        mTitle.setText(requireContext().getString(R.string.dialog_title_accept_or_reject_request, mSenderInfo.getDisplayName(), mFileName));
         mSize.setText(requireContext().getString(R.string.dialog_accept_or_reject_request_size, Formatter.formatFileSize(requireContext(), mFileSize)));
 
         mAcceptButton.setOnClickListener(v -> {

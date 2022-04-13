@@ -1,7 +1,7 @@
 package org.exthmui.share.wifidirect;
 
-import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
-import static org.exthmui.share.shared.Constants.PEER_ID_STRING;
+import static org.exthmui.share.shared.misc.Constants.CONNECTION_CODE_WIFIDIRECT;
+import static org.exthmui.share.shared.misc.Constants.PEER_ID_STRING;
 
 import android.content.Context;
 import android.net.wifi.WpsInfo;
@@ -10,7 +10,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
 
-import org.exthmui.share.shared.Utils;
+import org.exthmui.share.shared.misc.Utils;
 
 import java.util.Random;
 import java.util.concurrent.CountDownLatch;

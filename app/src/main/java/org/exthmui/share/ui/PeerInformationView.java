@@ -13,8 +13,8 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.misc.Constants;
 
 public class PeerInformationView extends ConstraintLayout {
 

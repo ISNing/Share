@@ -10,7 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.misc.ServiceUtils;
 
 public class DiscoverableTileService extends TileService {
     public static final String TAG = "DiscoverableTileService";

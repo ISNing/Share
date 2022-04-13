@@ -7,6 +7,8 @@ import static org.exthmui.share.wifidirect.Constants.COMMAND_REJECT;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_SUCCESS;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER;
 import static org.exthmui.share.wifidirect.Constants.COMMAND_TRANSFER_END;
+import static org.exthmui.share.wifidirect.Constants.FILE_INFO_EXTRA_KEY_MD5;
+import static org.exthmui.share.wifidirect.Constants.SHARE_PROTOCOL_VERSION_1;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -20,20 +22,23 @@ import androidx.work.impl.utils.futures.SettableFuture;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.StackTraceUtils;
-import org.exthmui.share.shared.Utils;
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.Sender;
-import org.exthmui.share.shared.base.SendingWorker;
-import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
-import org.exthmui.share.shared.base.exceptions.trans.FileIOErrorException;
-import org.exthmui.share.shared.base.exceptions.trans.InvalidInputDataException;
-import org.exthmui.share.shared.base.exceptions.trans.PeerDisappearedException;
-import org.exthmui.share.shared.base.exceptions.trans.RemoteErrorException;
-import org.exthmui.share.shared.base.exceptions.trans.TimedOutException;
-import org.exthmui.share.shared.base.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.base.receive.FileInfo;
+import org.exthmui.share.shared.base.receive.SenderInfo;
+import org.exthmui.share.shared.base.send.ReceiverInfo;
+import org.exthmui.share.shared.base.send.Sender;
+import org.exthmui.share.shared.base.send.SendingWorker;
+import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
+import org.exthmui.share.shared.exceptions.trans.FileIOErrorException;
+import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
+import org.exthmui.share.shared.exceptions.trans.PeerDisappearedException;
+import org.exthmui.share.shared.exceptions.trans.RemoteErrorException;
+import org.exthmui.share.shared.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.misc.StackTraceUtils;
+import org.exthmui.share.shared.misc.Utils;
 import org.exthmui.share.wifidirect.ssl.SSLUtils;
 
 import java.io.BufferedReader;
@@ -108,12 +113,14 @@ public class DirectMultiSendingWorker extends SendingWorker {
         if (peer == null)
             return genFailureResult(new PeerDisappearedException(getApplicationContext()));
 
+        ReceiverInfo receiverInfo = new ReceiverInfo(peer, peer.getServerPort());
+
         // Connect target device
         {
             CountDownLatch latch = new CountDownLatch(1);
 
             DirectUtils.connectPeer(getApplicationContext(), peer, latch);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileNames, peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileNames, receiverInfo);
             try {
                 latch.await();
             } catch (InterruptedException e) {
@@ -247,20 +254,26 @@ public class DirectMultiSendingWorker extends SendingWorker {
         };
 
         try {
-            // Initial fileTransfer object
-            FileTransfer[] fileTransfers = new FileTransfer[entities.length];
+            // Initial SenderInfo object
+            SenderInfo senderInfo = new SenderInfo();
+            senderInfo.setDisplayName(Utils.getSelfName(getApplicationContext()));
+            senderInfo.setId(Utils.getSelfId(getApplicationContext()));
+            senderInfo.setProtocolVersion(SHARE_PROTOCOL_VERSION_1);
+            senderInfo.setUid(0);//TODO: Get from account sdk
+            senderInfo.setAccountServerSign("");//TODO: Get from account sdk
+            senderInfo.setClientPort(clientPort);
+
+            // Initial FileTransfer object
+            FileInfo[] fileInfos = new FileInfo[entities.length];
             long totalBytesToSend = 0;
             for (int i = 0; i < entities.length; i++) {
                 entities[i].calculateMD5(getApplicationContext());
-                FileTransfer fileTransfer = new FileTransfer();
-                fileTransfer.setFileName(entities[i].getFileName());
-                fileTransfer.setFileSize(entities[i].getFileSize());
-                fileTransfer.setPeerName(Utils.getSelfName(getApplicationContext()));
-                fileTransfer.setPeerId(Utils.getSelfId(getApplicationContext()));
-                fileTransfer.setMd5(fileTransfer.getMd5());
-                fileTransfer.setClientPort(clientPort);
-                fileTransfers[i] = fileTransfer;
-                totalBytesToSend += fileTransfer.getFileSize();
+                FileInfo fileInfo = new FileInfo();
+                fileInfo.setFileName(entities[i].getFileName());
+                fileInfo.setFileSize(entities[i].getFileSize());
+                fileInfo.putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
+                fileInfos[i] = fileInfo;
+                totalBytesToSend += fileInfo.getFileSize();
             }
 
             long bytesSent = 0;
@@ -270,18 +283,27 @@ public class DirectMultiSendingWorker extends SendingWorker {
             Log.d(TAG, "Trying to connect to server(receiver): " + serverAddress[0].getHostAddress() + ":" + serverPort);
             socketToServer.connect((new InetSocketAddress(serverAddress[0], serverPort)), timeout);
 
-            // Send fileTransfer
-            Log.d(TAG, "Trying to send " + fileTransfers[0] + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
+            // Send senderInfo
+            Log.d(TAG, "Trying to send " + senderInfo + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
             outputStream = socketToServer.getOutputStream();
             objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(fileTransfers[0]);
+            objectOutputStream.writeObject(senderInfo);
             objectOutputStream.close();
             objectOutputStream = null;
             outputStream.close();
             outputStream = null;
 
-            for (int i = 1; i < fileTransfers.length; i++) {
-                FileTransfer fileTransfer = fileTransfers[i];
+            // Send fileTransfer
+            Log.d(TAG, "Trying to send " + fileInfos[0] + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
+            outputStream = socketToServer.getOutputStream();
+            objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(fileInfos[0]);
+            objectOutputStream.close();
+            objectOutputStream = null;
+            outputStream.close();
+            outputStream = null;
+
+            for (FileInfo fileInfo : fileInfos) {
                 Log.d(TAG, "Trying to send command \"" + COMMAND_TRANSFER + "\" -> " + serverAddress[0].getHostAddress() + ":" + clientPort);
                 dataOutputStream = SSLUtils.getDataOutput(socketToServer);
                 dataOutputStream.writeUTF(COMMAND_TRANSFER + "\n");
@@ -289,10 +311,10 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 dataOutputStream = null;
 
                 // Send fileTransfer
-                Log.d(TAG, "Trying to send " + fileTransfer + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
+                Log.d(TAG, "Trying to send " + fileInfo + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
                 outputStream = socketToServer.getOutputStream();
                 objectOutputStream = new ObjectOutputStream(outputStream);
-                objectOutputStream.writeObject(fileTransfer);
+                objectOutputStream.writeObject(fileInfo);
                 objectOutputStream.close();
                 objectOutputStream = null;
                 outputStream.close();
@@ -329,7 +351,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             } while (!Arrays.equals(oriAddress, address)); // Ensure the connection is from identical address
             // Connection established
             serverSocketToClientReference.get().setSoTimeout(0);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
 
             // Monitor command sending
             senderServerThread.start();
@@ -337,7 +359,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             // Read ACCEPT or REJECT command
             isAccepted[0] = SettableFuture.create();// Re-initialize acceptation status
 
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User rejected receiving file");
                 return genRejectedResult(getApplicationContext());
@@ -363,7 +385,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
 
             for (Entity entity : entities) {
                 // Start send file
-                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
                 outputStream = socketToServer.getOutputStream();
                 inputStream = entity.getInputStream(getApplicationContext());
                 if (inputStream == null)
@@ -373,7 +395,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 while ((len = inputStream.read(buf)) != -1) {
                     outputStream.write(buf, 0, len);
                     bytesSent += len;
-                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
 
                     // Check if remote cancelled
                     if (cancelledByReceiver[0].isDone())
@@ -408,7 +430,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             serverSocketToClientReference.get().close();
             serverSocketToClientReference.set(null);
 
-            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileNames, peer.getDisplayName());
+            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
             result.set(Result.success(getInputData()));
             return result.get();
         } catch (SocketTimeoutException e) {

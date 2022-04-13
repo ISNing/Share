@@ -1,6 +1,6 @@
 package org.exthmui.share.wifidirect;
 
-import static org.exthmui.share.shared.Constants.CONNECTION_CODE_WIFIDIRECT;
+import static org.exthmui.share.shared.misc.Constants.CONNECTION_CODE_WIFIDIRECT;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_DISPLAY_NAME;
 import static org.exthmui.share.wifidirect.Constants.RECORD_KEY_PEER_ID;
@@ -26,22 +26,22 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import org.exthmui.share.shared.BaseEventListenersUtils;
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.Utils;
-import org.exthmui.share.shared.base.Receiver;
-import org.exthmui.share.shared.base.ReceivingWorker;
-import org.exthmui.share.shared.base.events.ReceiveActionAcceptEvent;
-import org.exthmui.share.shared.base.events.ReceiveActionRejectEvent;
-import org.exthmui.share.shared.base.events.ReceiverErrorOccurredEvent;
-import org.exthmui.share.shared.base.events.ReceiverStartedEvent;
-import org.exthmui.share.shared.base.events.ReceiverStoppedEvent;
-import org.exthmui.share.shared.base.listeners.BaseEventListener;
-import org.exthmui.share.shared.base.listeners.OnReceiveActionAcceptListener;
-import org.exthmui.share.shared.base.listeners.OnReceiveActionRejectListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverErrorOccurredListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverStartedListener;
-import org.exthmui.share.shared.base.listeners.OnReceiverStoppedListener;
+import org.exthmui.share.shared.base.receive.Receiver;
+import org.exthmui.share.shared.base.receive.ReceivingWorker;
+import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
+import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
+import org.exthmui.share.shared.events.ReceiverErrorOccurredEvent;
+import org.exthmui.share.shared.events.ReceiverStartedEvent;
+import org.exthmui.share.shared.events.ReceiverStoppedEvent;
+import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
+import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
+import org.exthmui.share.shared.listeners.OnReceiverErrorOccurredListener;
+import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
+import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
+import org.exthmui.share.shared.misc.BaseEventListenersUtils;
+import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.Utils;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -51,6 +51,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 
 public class DirectReceiver implements Receiver {
@@ -147,7 +148,7 @@ public class DirectReceiver implements Receiver {
                 }
             }
             if (isReceiverStarted() && !isRunning)
-                startWork();// Restart when finished but receiver not stopped
+                startWorkWrapped(mContext);// Restart when finished but receiver not stopped
         });
         this.mInitialized = true;
     }
@@ -168,7 +169,7 @@ public class DirectReceiver implements Receiver {
         try {
             mReceiverStarted = true;
 
-            startWork();
+            startWorkWrapped(mContext);
 
             int serverPort = DirectUtils.getServerPort(mContext);
 
@@ -211,11 +212,12 @@ public class DirectReceiver implements Receiver {
         // Here shouldn't cause any exception, we should only register BroadcastReceiver after permissions are granted.
     }
 
-    private void startWork() {
+    public UUID startWork(Context context) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        WorkManager.getInstance(mContext).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.REPLACE, work);
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.REPLACE, work);
+        return work.getId();
     }
 
     @Override

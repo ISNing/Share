@@ -10,7 +10,8 @@ import android.content.IntentFilter;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
 
-import org.exthmui.share.shared.base.listeners.OnReceiveShareBroadcastActionListener;
+import org.exthmui.share.shared.base.receive.SenderInfo;
+import org.exthmui.share.shared.listeners.OnReceiveShareBroadcastActionListener;
 
 public class AcceptationBroadcastReceiver extends BroadcastReceiver {
     public static final String ACTION_ACCEPTATION_DIALOG = "org.exthmui.share.intent.action.ACCEPTATION_DIALOG";
@@ -19,7 +20,7 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
 
     public static final String EXTRA_PLUGIN_CODE = "org.exthmui.share.extra.PLUGIN_CODE";
     public static final String EXTRA_REQUEST_ID = "org.exthmui.share.extra.REQUEST_ID";
-    public static final String EXTRA_PEER_NAME = "org.exthmui.share.extra.PEER_NAME";
+    public static final String EXTRA_PEER_INFO_TRANSFER = "org.exthmui.share.extra.PEER_INFO_TRANSFER";
     public static final String EXTRA_FILE_NAME = "org.exthmui.share.extra.FILE_NAME";
     public static final String EXTRA_FILE_SIZE = "org.exthmui.share.extra.FILE_SIZE";
 
@@ -46,10 +47,10 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
         String requestId = intent.getStringExtra(EXTRA_REQUEST_ID);
         switch (intent.getAction()) {
             case ACTION_ACCEPTATION_DIALOG:
-                String peerName = intent.getStringExtra(EXTRA_PEER_NAME);
+                SenderInfo senderInfo = (SenderInfo) intent.getSerializableExtra(EXTRA_PEER_INFO_TRANSFER);
                 String fileName = intent.getStringExtra(EXTRA_FILE_NAME);
                 long fileSize = intent.getLongExtra(EXTRA_FILE_SIZE, -1);
-                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, peerName, fileName, fileSize, notificationId);
+                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, senderInfo, fileName, fileSize, notificationId);
                 break;
             case ACTION_ACCEPT:
                 if (notificationId != -1) {

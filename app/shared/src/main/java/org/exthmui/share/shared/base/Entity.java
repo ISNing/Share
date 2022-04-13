@@ -13,32 +13,30 @@ import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.OpenableColumns;
 import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
+import org.exthmui.share.shared.R;
+import org.exthmui.share.shared.exceptions.EmptyPathException;
+import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
+import org.exthmui.share.shared.exceptions.FileNotExistsException;
+import org.exthmui.share.shared.exceptions.UnknownUriSchemeException;
+import org.exthmui.share.shared.misc.FileUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import org.exthmui.share.shared.FileUtils;
-import org.exthmui.share.shared.R;
-import org.exthmui.share.shared.base.exceptions.EmptyPathException;
-import org.exthmui.share.shared.base.exceptions.FailedResolvingUriException;
-import org.exthmui.share.shared.base.exceptions.FileNotExistsException;
-import org.exthmui.share.shared.base.exceptions.UnknownUriSchemeException;
 
 public class Entity implements Parcelable {
 
     public static final String TAG = "Entity";
 
-    public static final String FILE_URI = "FILE_URI";
     public static final String FILE_URIS = "FILE_URIS";
-    public static final String FILE_NAME = "FILE_NAME";
     public static final String FILE_NAMES = "FILE_NAMES";
-    public static final String FILE_PATH = "FILE_PATH";
     public static final String FILE_PATHS = "FILE_PATHS";
-    public static final String FILE_TYPE = "FILE_TYPE";
     public static final String FILE_TYPES = "FILE_TYPES";
-    public static final String FILE_SIZE = "FILE_SIZE";
     public static final String FILE_SIZES = "FILE_SIZES";
 
     @NonNull

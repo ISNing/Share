@@ -18,16 +18,17 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareSender;
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareStatus;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.StackTraceUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.PeerInfo;
-import org.exthmui.share.shared.base.Sender;
-import org.exthmui.share.shared.base.SendingWorker;
-import org.exthmui.share.shared.base.exceptions.trans.InvalidInputDataException;
-import org.exthmui.share.shared.base.exceptions.trans.PeerDisappearedException;
-import org.exthmui.share.shared.base.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.base.send.ReceiverInfo;
+import org.exthmui.share.shared.base.send.Sender;
+import org.exthmui.share.shared.base.send.SendingWorker;
+import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
+import org.exthmui.share.shared.exceptions.trans.PeerDisappearedException;
+import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.misc.StackTraceUtils;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -36,8 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class NearShareMultiSendingWorker extends SendingWorker {
 
     public static final String TAG = "NearShareSendingWorker";
-
-    private NearShareSender mNearShareSender;
 
     public NearShareMultiSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -71,9 +70,14 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         PeerInfo peer = manager.getPeers().get(peerId);
         if (peer == null)
             return genFailureResult(new PeerDisappearedException(getApplicationContext()));
-        if (!manager.isInitialized()) manager.initialize();
-        if (mNearShareSender == null)
-            this.mNearShareSender = new NearShareSender();
+
+        ReceiverInfo receiverInfo = new ReceiverInfo();
+
+        receiverInfo.setId(peer.getId());
+        receiverInfo.setDisplayName(peer.getDisplayName());
+        // Other attributes are not supported in Microsoft NearShare
+
+        NearShareSender sender = new NearShareSender();
         final RemoteSystemConnectionRequest connectionRequest = new RemoteSystemConnectionRequest(((NearSharePeer) peer).remoteSystem);
 
         final AsyncOperationWithProgress<NearShareStatus, NearShareProgress> operation;
@@ -89,9 +93,9 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         AtomicReference<Result> result = new AtomicReference<>(null);
         AtomicBoolean finished = new AtomicBoolean(false);
 
-        operation = mNearShareSender.sendFilesAsync(connectionRequest, fileProviders);
+        operation = sender.sendFilesAsync(connectionRequest, fileProviders);
 
-        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileNames, peer.getDisplayName()));
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileNames, receiverInfo));
 
         operation.whenComplete((status, tr) -> {
             switch (status) {

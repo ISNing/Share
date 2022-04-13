@@ -15,11 +15,11 @@ import androidx.work.impl.utils.futures.SettableFuture;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.exceptions.trans.ReceiverCancelledException;
-import org.exthmui.share.shared.base.exceptions.trans.RejectedException;
-import org.exthmui.share.shared.base.exceptions.trans.SenderCancelledException;
-import org.exthmui.share.shared.base.exceptions.trans.TransmissionException;
+import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
+import org.exthmui.share.shared.exceptions.trans.RejectedException;
+import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
+import org.exthmui.share.shared.exceptions.trans.TransmissionException;
+import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,16 +46,15 @@ public abstract class BaseWorker extends Worker {
     public abstract IConnectionType getConnectionType();
 
     /**
-     * InputData are cus
+     * InputData are customized by implements
      *
      * @return See below:
-     * <p>
      * Success:
      * MUST contain:Everything in InputData & nothing else
      * @see #genSuccessData()
      * @see #genSuccessResult()
-     * ***** Extra values is not allowed *****
-     * <p>
+     * ***** Extra values is allowed *****
+     *
      * Failure:
      * MUST contain:{@link int}: {@link #STATUS_CODE}
      * {@link String}: {@link #F_MESSAGE}
@@ -64,31 +63,27 @@ public abstract class BaseWorker extends Worker {
      * @see #genFailureData(int, String, String)
      * @see #genFailureResult(TransmissionException)
      * @see #genFailureResult(int, String, String)
-     * ***** Extra values is not allowed *****
+     * ***** Extra values is allowed *****
      */
     @NonNull
     public abstract Result doWork();
 
-    abstract int getNotificationId();
+    protected abstract int getNotificationId();
 
-    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesTransmitted, @Nullable String fileName, @Nullable String peerName) {
-        updateProgress(statusCode, totalBytesToSend, bytesTransmitted, new String[]{fileName,}, peerName);
-    }
-
-    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable String peerName) {
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived, fileNames, peerName, indeterminate));
+        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived, fileNames, peerInfoTransfer, indeterminate));
     }
 
     @NonNull
-    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable String peerName, boolean indeterminate) {
-        Notification notification = buildProgressNotification(statusCode, totalBytesToSend, bytesTransmitted, fileNames, peerName, indeterminate);
+    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate) {
+        Notification notification = buildProgressNotification(statusCode, totalBytesToSend, bytesTransmitted, fileNames, peerInfoTransfer, indeterminate);
         return new ForegroundInfo(getNotificationId(), notification);
     }
 
     @NonNull
-    abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable String peerName, boolean indeterminate);
+    protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate);
 
     private void setForegroundInfo(ForegroundInfo foregroundInfo) {
         this.foregroundInfo.set(foregroundInfo);
@@ -96,51 +91,63 @@ public abstract class BaseWorker extends Worker {
         notificationManager.notify(getNotificationId(), foregroundInfo.getNotification());
     }
 
-    protected final Result genSuccessResult() {
-        return Result.failure(genSuccessData());
+    protected Result genSuccessResult() {
+        return Result.success(genSuccessData());
     }
 
-    protected final Result genRejectedResult(Context context) {
+    protected Result genRejectedResult(@NonNull Context context) {
         return genFailureResult(new RejectedException(context));
     }
 
-    protected final Result genSenderCancelledResult(Context context) {
+    protected Result genSenderCancelledResult(@NonNull Context context) {
         return genFailureResult(new SenderCancelledException(context));
     }
 
-    protected final Result genReceiverCancelledResult(Context context) {
+    protected Result genReceiverCancelledResult(@NonNull Context context) {
         return genFailureResult(new ReceiverCancelledException(context));
     }
 
-    protected final Result genFailureResult(TransmissionException e) {
+    protected Result genFailureResult(@NonNull TransmissionException e) {
         return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage());
     }
 
-    private Result genFailureResult(int errCode, String message, String localizedMessage) {
+    private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage) {
         return Result.failure(genFailureData(errCode, message, localizedMessage));
     }
 
-    private Data genSuccessData() {
+    protected Data.Builder genSuccessDataBuilder() {
         return new Data.Builder()
-                .putAll(getInputData())
+                .putAll(getInputData());
+    }
+
+    protected Data genSuccessData() {
+        return genSuccessDataBuilder()
                 .build();
     }
 
-    private Data genProgressData(int statusCode, long totalBytesToSend, long bytesReceived) {
+    protected Data.Builder genProgressDataBuilder(int statusCode, long totalBytesToSend, long bytesTransmitted) {
         return new Data.Builder()
                 .putAll(getInputData())
                 .putInt(STATUS_CODE, statusCode)
                 .putLong(P_BYTES_TOTAL, totalBytesToSend)
-                .putLong(P_BYTES_TRANSMITTED, bytesReceived)
+                .putLong(P_BYTES_TRANSMITTED, bytesTransmitted);
+    }
+
+    protected Data genProgressData(int statusCode, long totalBytesToSend, long bytesTransmitted) {
+        return genProgressDataBuilder(statusCode, totalBytesToSend, bytesTransmitted)
                 .build();
     }
 
-    private Data genFailureData(int statusCode, String message, String localizedMessage) {
+    protected Data.Builder genFailureDataBuilder(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
         return new Data.Builder()
                 .putAll(getInputData())
                 .putInt(STATUS_CODE, statusCode)
                 .putString(F_MESSAGE, message)
-                .putString(F_LOCALIZED_MESSAGE, localizedMessage)
+                .putString(F_LOCALIZED_MESSAGE, localizedMessage);
+    }
+
+    protected Data genFailureData(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
+        return genFailureDataBuilder(statusCode, message, localizedMessage)
                 .build();
     }
 

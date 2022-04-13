@@ -5,8 +5,8 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Peer;
+import org.exthmui.share.shared.misc.Constants;
 
 public class DirectPeer extends Peer {
     public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_WIFIDIRECT;
@@ -16,24 +16,24 @@ public class DirectPeer extends Peer {
     @IntRange(from = 5001, to = 65535)
     private int serverPort;
     @NonNull
-    private String shareProtocolVersion;
+    private String protocolVersion;
     @NonNull
     private String peerId;
     @IntRange(from = 0)
     private int uid;
     @NonNull
-    private String serverSign;
+    private String accountServerSign;
 
-    public DirectPeer(@NonNull WifiP2pDevice wifiP2pDevice, @NonNull String shareProtocolVersion,
+    public DirectPeer(@NonNull WifiP2pDevice wifiP2pDevice, @NonNull String protocolVersion,
                       @IntRange(from = 5001, to = 65535) int serverPort,
                       @NonNull String peerId,
-                      @IntRange(from = 0) int uid, @NonNull String serverSign) {
+                      @IntRange(from = 0) int uid, @NonNull String accountServerSign) {
         this.wifiP2pDevice = wifiP2pDevice;
         this.serverPort = serverPort;
-        this.shareProtocolVersion = shareProtocolVersion;
+        this.protocolVersion = protocolVersion;
         this.peerId = peerId;
         this.uid = uid;
-        this.serverSign = serverSign;
+        this.accountServerSign = accountServerSign;
     }
 
     @NonNull
@@ -147,12 +147,13 @@ public class DirectPeer extends Peer {
     }
 
     @NonNull
-    public String getShareProtocolVersion() {
-        return shareProtocolVersion;
+    @Override
+    public String getProtocolVersion() {
+        return protocolVersion;
     }
 
-    public void setShareProtocolVersion(@NonNull String shareProtocolVersion) {
-        this.shareProtocolVersion = shareProtocolVersion;
+    public void setProtocolVersion(@NonNull String protocolVersion) {
+        this.protocolVersion = protocolVersion;
     }
 
     @NonNull
@@ -174,11 +175,12 @@ public class DirectPeer extends Peer {
     }
 
     @NonNull
-    public String getServerSign() {
-        return serverSign;
+    @Override
+    public String getAccountServerSign() {
+        return accountServerSign;
     }
 
-    public void setServerSign(@NonNull String serverSign) {
-        this.serverSign = serverSign;
+    public void setAccountServerSign(@NonNull String accountServerSign) {
+        this.accountServerSign = accountServerSign;
     }
 }

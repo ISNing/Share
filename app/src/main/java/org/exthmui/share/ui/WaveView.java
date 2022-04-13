@@ -17,7 +17,7 @@ import androidx.annotation.ColorInt;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.PorterDuffUtils;
+import org.exthmui.share.shared.misc.PorterDuffUtils;
 
 import java.util.ArrayList;
 import java.util.List;

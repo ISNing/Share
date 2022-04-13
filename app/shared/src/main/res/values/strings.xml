@@ -55,12 +55,15 @@
 
     <string name="notification_title_receive_service">Receiver Service running</string>
 
+    <string name="notification_action_open_file">Open File</string>
     <string name="notification_action_cancel">Cancel</string>
     <string name="notification_action_accept">Accept</string>
     <string name="notification_action_reject">Reject</string>
 
     <string name="notification_title_receive_request">Share Request</string>
-    <string name="notification_content_receive_request" formatted="true">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" with you\nSize: <xliff:g id="file_size" example="1.86MB">%3$s</xliff:g></string>
+    <plurals name="notification_text_receive_request">
+        <item quantity="other">\"<xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g>\" want\'s to share \"<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g>\" with you</item>
+    </plurals>
 
     <string name="notification_channel_send_name">Send</string>
     <string name="notification_channel_send_description">Show you sending progress</string>

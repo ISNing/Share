@@ -20,7 +20,7 @@ import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.DiscoverableTileService;
 import org.exthmui.share.services.DiscoveringTileService;
 import org.exthmui.share.services.ReceiveService;
-import org.exthmui.share.shared.ServiceUtils;
+import org.exthmui.share.shared.misc.ServiceUtils;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 import java.util.ArrayList;

@@ -1,14 +1,15 @@
 package org.exthmui.share.msnearshare;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemKinds;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
 
-import org.exthmui.share.shared.Constants;
 import org.exthmui.share.shared.base.Peer;
-import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.misc.Constants;
 
 import java.util.Objects;
 
@@ -40,6 +41,23 @@ public class NearSharePeer extends Peer {
     @Override
     public String getDisplayName() {
         return Objects.requireNonNull(remoteSystem.getDisplayName());
+    }
+
+    @Nullable
+    @Override
+    public String getProtocolVersion() {
+        return null;
+    }
+
+    @Override
+    public int getUid() {
+        return 0;
+    }
+
+    @Nullable
+    @Override
+    public String getAccountServerSign() {
+        return null;
     }
 
     @Override

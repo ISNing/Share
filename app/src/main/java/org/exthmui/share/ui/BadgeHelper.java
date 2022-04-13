@@ -22,7 +22,7 @@ import androidx.annotation.NonNull;
 
 import com.google.android.material.tabs.TabLayout;
 
-import org.exthmui.share.shared.CrossFadeUtils;
+import org.exthmui.share.shared.misc.CrossFadeUtils;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

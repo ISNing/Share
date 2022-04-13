@@ -8,8 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
-import org.exthmui.share.shared.Constants;
-import org.exthmui.share.shared.base.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
+import org.exthmui.share.shared.misc.Constants;
 
 import java.util.List;
 
@@ -30,6 +30,23 @@ public interface PeerInfo {
     @NonNull String getDisplayName();
 
     /**
+     * @return [Optional] The protocol version of this peer. (Only used in plugin internal)
+     */
+    @Nullable String getProtocolVersion();
+
+    /**
+     * @return [Optional] The user identifier of this peer.
+     * (Used to judge whether the peer is trustable, use with {@link #getAccountServerSign()})
+     */
+    int getUid();
+
+    /**
+     * @return [Optional] The sign of the account server where user of this peer logged in.
+     * (Used to judge whether the peer is trustable, use with {@link #getUid()})
+     */
+    @Nullable String getAccountServerSign();
+
+    /**
      * @return The type of this peer. MUST be contained in {@link Constants.DeviceType}
      */
     int getDeviceType();
@@ -45,13 +62,13 @@ public interface PeerInfo {
     boolean isTrusted();
 
     /**
-     * @see org.exthmui.share.shared.Constants.ConnectionStatus
+     * @see Constants.ConnectionStatus
      * @return The status of connection with this peer.
      */
     int getConnectionStatus();
 
     /**
-     * @see org.exthmui.share.shared.Constants.TransmissionStatus
+     * @see Constants.TransmissionStatus
      * @return The status of transmission.
      */
     int getTransmissionStatus();
