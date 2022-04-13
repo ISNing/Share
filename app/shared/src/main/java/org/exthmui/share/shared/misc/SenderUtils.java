@@ -92,7 +92,7 @@ public abstract class SenderUtils {
                 .setContentTitle(title)
                 .setContentText(text)
                 .setSubText(subText)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(bigText))
+                .setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText))
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setOnlyAlertOnce(true)
                 .setProgress((int) totalBytesToSend, (int) bytesSent, indeterminate)
@@ -124,7 +124,7 @@ public abstract class SenderUtils {
                 .setSmallIcon(R.drawable.ic_notification_success);
 
         if (bigText != null)
-            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
+            builder.setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText));
         return builder.build();
     }
 
@@ -154,7 +154,7 @@ public abstract class SenderUtils {
                 .setSmallIcon(R.drawable.ic_notification_failed);
 
         if (bigText != null)
-            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(bigText));
+            builder.setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText));
         return builder.build();
     }
 }

@@ -105,7 +105,7 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         operation.whenComplete((status, tr) -> {
             switch (status) {
                 case COMPLETED:
-                    result.set(Result.success(getInputData()));
+                    result.set(genSuccessResult());
                     break;
                 case DENIED_BY_REMOTE_SYSTEM:
                     result.set(genRejectedResult(getApplicationContext()));

@@ -83,6 +83,4 @@ public class ShareActivity extends AppCompatActivity {
         intent.setClipData(data);
         startService(intent);
     }
-
-
 }
