@@ -23,7 +23,7 @@ import androidx.work.impl.utils.futures.SettableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.receive.FileInfo;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
@@ -87,27 +87,42 @@ public class DirectMultiSendingWorker extends SendingWorker {
         Data input = getInputData();
         String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
         String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
-        if (uriStrings == null)
+        long[] fileSizes = input.getLongArray(Entity.FILE_SIZES);
+        if (uriStrings == null || fileNames == null || fileSizes == null ||
+                uriStrings.length != fileNames.length || fileNames.length != fileSizes.length)
             return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-        if (fileNames == null)
-            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
+
         Uri[] uris = new Uri[uriStrings.length];
+        FileInfo[] fileInfos = new FileInfo[uriStrings.length];
+        Entity[] entities = new Entity[uris.length];
+
+        long totalBytesToSend = 0;
+        long bytesSent = 0;
+
         for (int i = 0; i < uriStrings.length; i++) {
             if (uriStrings[i] == null)
                 return genFailureResult(new InvalidInputDataException(getApplicationContext()));
             uris[i] = Uri.parse(uriStrings[i]);
-        }
-
-        DirectManager manager = DirectManager.getInstance(getApplicationContext());
-
-        Entity[] entities = new Entity[uris.length];
-        for (int i = 0; i < uris.length; i++) {
             try {
                 entities[i] = new Entity(getApplicationContext(), uris[i]);
             } catch (FailedResolvingUriException e) {
                 return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
             }
+            fileInfos[i] = new FileInfo();
+            fileInfos[i].setFileName(fileNames[i]);
+            fileInfos[i].setFileSize(fileSizes[i]);
+            try {
+                entities[i].calculateMD5(getApplicationContext());
+            } catch (IOException e) {
+                Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
+            }
+            fileInfos[i].putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
+            totalBytesToSend += fileInfos[i].getFileSize();
         }
+
+        DirectManager manager = DirectManager.getInstance(getApplicationContext());
+
         String peerId = input.getString(Sender.TARGET_PEER_ID);
         DirectPeer peer = (DirectPeer) manager.getPeers().get(peerId);
         if (peer == null)
@@ -120,7 +135,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             CountDownLatch latch = new CountDownLatch(1);
 
             DirectUtils.connectPeer(getApplicationContext(), peer, latch);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileNames, receiverInfo);
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileInfos, receiverInfo);
             try {
                 latch.await();
             } catch (InterruptedException e) {
@@ -263,21 +278,6 @@ public class DirectMultiSendingWorker extends SendingWorker {
             senderInfo.setAccountServerSign("");//TODO: Get from account sdk
             senderInfo.setClientPort(clientPort);
 
-            // Initial FileTransfer object
-            FileInfo[] fileInfos = new FileInfo[entities.length];
-            long totalBytesToSend = 0;
-            for (int i = 0; i < entities.length; i++) {
-                entities[i].calculateMD5(getApplicationContext());
-                FileInfo fileInfo = new FileInfo();
-                fileInfo.setFileName(entities[i].getFileName());
-                fileInfo.setFileSize(entities[i].getFileSize());
-                fileInfo.putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
-                fileInfos[i] = fileInfo;
-                totalBytesToSend += fileInfo.getFileSize();
-            }
-
-            long bytesSent = 0;
-
             socketToServer = SSLUtils.genMutualSocket(getApplicationContext());
             socketToServer.bind(null);
             Log.d(TAG, "Trying to connect to server(receiver): " + serverAddress[0].getHostAddress() + ":" + serverPort);
@@ -351,7 +351,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             } while (!Arrays.equals(oriAddress, address)); // Ensure the connection is from identical address
             // Connection established
             serverSocketToClientReference.get().setSoTimeout(0);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
+            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
 
             // Monitor command sending
             senderServerThread.start();
@@ -359,7 +359,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             // Read ACCEPT or REJECT command
             isAccepted[0] = SettableFuture.create();// Re-initialize acceptation status
 
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User rejected receiving file");
                 return genRejectedResult(getApplicationContext());
@@ -385,7 +385,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
 
             for (Entity entity : entities) {
                 // Start send file
-                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
+                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
                 outputStream = socketToServer.getOutputStream();
                 inputStream = entity.getInputStream(getApplicationContext());
                 if (inputStream == null)
@@ -395,7 +395,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 while ((len = inputStream.read(buf)) != -1) {
                     outputStream.write(buf, 0, len);
                     bytesSent += len;
-                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
+                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
 
                     // Check if remote cancelled
                     if (cancelledByReceiver[0].isDone())
@@ -430,7 +430,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
             serverSocketToClientReference.get().close();
             serverSocketToClientReference.set(null);
 
-            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileNames, receiverInfo);
+            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
             result.set(Result.success(getInputData()));
             return result.get();
         } catch (SocketTimeoutException e) {

@@ -9,6 +9,7 @@ import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.base.BaseWorker;
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.PeerInfoTransfer;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.SenderUtils;
@@ -26,8 +27,8 @@ public abstract class SendingWorker extends BaseWorker {
 
     @NonNull
     @Override
-    protected final Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesSent, @NonNull String[] fileNames, @Nullable PeerInfoTransfer receiverInfo, boolean indeterminate) {
-        return SenderUtils.buildSendingNotification(getApplicationContext(), getConnectionType(), statusCode, getId(), totalBytesToSend, bytesSent, fileNames, (ReceiverInfo) receiverInfo, indeterminate);
+    protected final Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesSent, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer receiverInfo, boolean indeterminate) {
+        return SenderUtils.buildSendingNotification(getApplicationContext(), getConnectionType(), statusCode, getId(), totalBytesToSend, bytesSent, fileInfos, (ReceiverInfo) receiverInfo, indeterminate);
     }
 
     /**

@@ -19,6 +19,7 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearShareStatus;
 
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.PeerInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
@@ -54,15 +55,19 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         Data input = getInputData();
         String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
         String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
-        if (uriStrings == null)
-            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-        if (fileNames == null)
+        long[] fileSizes = input.getLongArray(Entity.FILE_SIZES);
+        if (uriStrings == null || fileNames == null || fileSizes == null ||
+                uriStrings.length != fileNames.length || fileNames.length != fileSizes.length)
             return genFailureResult(new InvalidInputDataException(getApplicationContext()));
         Uri[] uris = new Uri[uriStrings.length];
+        FileInfo[] fileInfos = new FileInfo[uriStrings.length];
         for (int i = 0; i < uriStrings.length; i++) {
             if (uriStrings[i] == null)
                 return genFailureResult(new InvalidInputDataException(getApplicationContext()));
             uris[i] = Uri.parse(uriStrings[i]);
+            fileInfos[i] = new FileInfo();
+            fileInfos[i].setFileName(fileNames[i]);
+            fileInfos[i].setFileSize(fileSizes[i]);
         }
 
         final NearShareManager manager = NearShareManager.getInstance(getApplicationContext());
@@ -95,7 +100,7 @@ public class NearShareMultiSendingWorker extends SendingWorker {
 
         operation = sender.sendFilesAsync(connectionRequest, fileProviders);
 
-        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileNames, receiverInfo));
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileInfos, receiverInfo));
 
         operation.whenComplete((status, tr) -> {
             switch (status) {

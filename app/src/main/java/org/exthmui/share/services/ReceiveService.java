@@ -20,6 +20,7 @@ import org.exthmui.share.BuildConfig;
 import org.exthmui.share.R;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.shared.AcceptationBroadcastReceiver;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
@@ -90,8 +91,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
         mAcceptationBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
             @Override
-            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, SenderInfo senderInfo, String fileName, long fileSize, int notificationId) {
-                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, senderInfo, fileName, fileSize, notificationId);
+            public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
+                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, senderInfo, fileInfos, notificationId);
             }
 
             @Override

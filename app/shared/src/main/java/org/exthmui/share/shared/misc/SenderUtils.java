@@ -16,6 +16,7 @@ import androidx.work.WorkManager;
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.base.BaseWorker;
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
 
@@ -64,23 +65,23 @@ public abstract class SenderUtils {
                 .build();
     }
 
-    public static Notification buildSendingNotification(Context context, IConnectionType connectionType, int statusCode, UUID workerId, long totalBytesToSend, long bytesSent, @NonNull String[] fileNames, @Nullable ReceiverInfo receiverInfo, boolean indeterminate) {
+    public static Notification buildSendingNotification(Context context,
+                                                        IConnectionType connectionType,
+                                                        int statusCode, UUID workerId,
+                                                        long totalBytesToSend, long bytesSent,
+                                                        @NonNull FileInfo[] fileInfos,
+                                                        @Nullable ReceiverInfo receiverInfo,
+                                                        boolean indeterminate) {
         createProgressNotificationChannel(context);
 
-        if (fileNames[0] == null)
-            fileNames[0] = context.getString(R.string.notification_placeholder_unknown);
-        StringBuilder fileNameStr = new StringBuilder(fileNames[0]);
-        for (String s : fileNames) {
-            if (s == null) s = context.getString(R.string.notification_placeholder_unknown);
-            fileNameStr.append("\n").append(s);
-        }
+        String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
 
         String receiverName = receiverInfo == null ? null : receiverInfo.getDisplayName();
         if (receiverName == null)
             receiverName = context.getString(R.string.notification_placeholder_unknown);
 
-        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending, fileNames.length, receiverName);
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending, fileNames.length, receiverName, fileNameStr.toString());
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending, fileInfos.length, receiverName);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending, fileInfos.length, receiverName, fileNameStr);
         String cancel = context.getString(R.string.notification_action_cancel);
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
@@ -132,18 +133,10 @@ public abstract class SenderUtils {
         String receiverName = output.getString(Sender.TARGET_PEER_NAME);
         String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
 
-        StringBuilder fileNameStr;
-        if (fileNames != null) {
-            fileNameStr = new StringBuilder(fileNames[0]);
-            for (String s : fileNames) {
-                if (s == null) s = context.getString(R.string.notification_placeholder_unknown);
-                fileNameStr.append("\n").append(s);
-            }
-        } else
-            fileNameStr = new StringBuilder(context.getString(R.string.notification_placeholder_unknown));
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, null);
 
-        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr.toString(), localizedMessage);
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr.toString(), localizedMessage);
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr, localizedMessage);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr, localizedMessage);
 
         return new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)

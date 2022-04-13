@@ -13,6 +13,7 @@ import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.base.BaseWorker;
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.PeerInfoTransfer;
 import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
 import org.exthmui.share.shared.exceptions.trans.RejectedException;
@@ -36,8 +37,8 @@ public abstract class ReceivingWorker extends BaseWorker {
 
     @NonNull
     @Override
-    protected final Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable PeerInfoTransfer senderInfo, boolean indeterminate) {
-        return ReceiverUtils.buildReceivingNotification(getApplicationContext(), getConnectionType(), statusCode, getId(), totalBytesToSend, bytesReceived, fileNames, (SenderInfo) senderInfo, indeterminate);
+    protected final Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer senderInfo, boolean indeterminate) {
+        return ReceiverUtils.buildReceivingNotification(getApplicationContext(), getConnectionType(), statusCode, getId(), totalBytesToSend, bytesReceived, fileInfos, (SenderInfo) senderInfo, indeterminate);
     }
 
     @Deprecated
@@ -71,27 +72,27 @@ public abstract class ReceivingWorker extends BaseWorker {
     }
 
     protected final Result genSuccessResult(@NonNull SenderInfo peer, @NonNull List<Entity> entities) {
-        return Result.failure(genSuccessData(peer,entities));
+        return Result.failure(genSuccessData(peer, entities));
     }
 
-    protected final Result genRejectedResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
-        return genFailureResult(new RejectedException(context), peer, fileNames);
+    protected final Result genRejectedResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
+        return genFailureResult(new RejectedException(context), peer, fileInfos);
     }
 
-    protected final Result genSenderCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
-        return genFailureResult(new SenderCancelledException(context), peer, fileNames);
+    protected final Result genSenderCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
+        return genFailureResult(new SenderCancelledException(context), peer, fileInfos);
     }
 
-    protected final Result genReceiverCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
-        return genFailureResult(new ReceiverCancelledException(context), peer, fileNames);
+    protected final Result genReceiverCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
+        return genFailureResult(new ReceiverCancelledException(context), peer, fileInfos);
     }
 
-    protected Result genFailureResult(@NonNull TransmissionException e, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
-        return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage(), peer, fileNames);
+    protected Result genFailureResult(@NonNull TransmissionException e, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
+        return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage(), peer, fileInfos);
     }
 
-    private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
-        return Result.failure(genFailureData(errCode, message, localizedMessage, peer, fileNames));
+    private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
+        return Result.failure(genFailureData(errCode, message, localizedMessage, peer, fileInfos));
     }
 
     @Deprecated
@@ -130,14 +131,18 @@ public abstract class ReceivingWorker extends BaseWorker {
                 .build();
     }
 
-    protected final Data genFailureData(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable String[] fileNames) {
+    protected final Data genFailureData(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         Data.Builder builder = genFailureDataBuilder(errCode, message, localizedMessage);
         if (peer != null) {
             builder.putString(FROM_PEER_ID, peer.getId())
                     .putString(FROM_PEER_NAME, peer.getDisplayName());
         }
-        if (fileNames != null)
-                builder.putStringArray(Entity.FILE_NAMES, fileNames);
+        if (fileInfos != null) {
+            String[] fileNames = new String[fileInfos.length];
+            for (int i = 0; i < fileInfos.length; i++)
+                fileNames[i] = fileInfos[i].getFileName();
+            builder.putStringArray(Entity.FILE_NAMES, fileNames);
+        }
         return builder.build();
     }
 
@@ -169,8 +174,8 @@ public abstract class ReceivingWorker extends BaseWorker {
      * {@link String[]}: {@link Receiver#FROM_PEER_ID}
      * {@link String}: {@link Receiver#FROM_PEER_NAME}
      * & everything defined in super class
-     * @see #genFailureResult(TransmissionException, SenderInfo, String[])
-     * @see #genFailureData(int, String, String, SenderInfo, String[])
+     * @see #genFailureResult(TransmissionException, SenderInfo, FileInfo[])
+     * @see #genFailureData(int, String, String, SenderInfo, FileInfo[])
      * ***** Extra values is not allowed *****
      */
     @NonNull

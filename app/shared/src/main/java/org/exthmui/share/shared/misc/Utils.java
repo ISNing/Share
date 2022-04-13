@@ -10,14 +10,17 @@ import android.net.Uri;
 import android.os.Environment;
 import android.provider.Settings;
 import android.text.TextUtils;
+import android.text.format.Formatter;
 import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.preference.PreferenceManager;
 
 import org.exthmui.share.shared.R;
+import org.exthmui.share.shared.base.FileInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
@@ -106,6 +109,52 @@ public abstract class Utils {
 
     public static boolean isDevelopmentModeEnabled(ContentResolver cr) {
         return (Settings.Global.getInt(cr, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) > 0);
+    }
+
+
+    public static String genFileInfosStr(Context context, @Nullable FileInfo[] fileInfos) {
+        StringBuilder fileNameStr = null;
+        if (fileInfos != null) {
+            for (FileInfo fileInfo : fileInfos) {
+                if (fileNameStr == null)
+                    fileNameStr = new StringBuilder();
+                else
+                    fileNameStr.append("\n");
+
+                String fileSizeStr = Formatter.formatFileSize(context, fileInfo.getFileSize());
+                fileNameStr.append(String.format("%s(%s)", fileInfo.getFileName() == null ?
+                        context.getString(R.string.notification_placeholder_unknown) :
+                        fileInfo.getFileName(), fileSizeStr));
+            }
+        } else
+            fileNameStr = new StringBuilder(context.getString(R.string.notification_placeholder_unknown));
+        if (fileNameStr == null)
+            fileNameStr = new StringBuilder();
+        return fileNameStr.toString();
+    }
+
+    public static String genFileInfosStr(Context context, @Nullable String[] fileNames, @Nullable long[] fileSizes) {
+        StringBuilder fileNameStr = null;
+        if (fileNames != null) {
+            for (int i = 0; i < fileNames.length; i++) {
+                if (fileNameStr == null)
+                    fileNameStr = new StringBuilder();
+                else
+                    fileNameStr.append("\n");
+
+                String fileSizeStr;
+                if (fileSizes != null)
+                    fileSizeStr = Formatter.formatFileSize(context, fileSizes[i]);
+                else fileSizeStr = context.getString(R.string.notification_placeholder_unknown);
+                fileNameStr.append(String.format("%s(%s)", fileNames[i] == null ?
+                        context.getString(R.string.notification_placeholder_unknown) :
+                        fileNames[i], fileSizeStr));
+            }
+        } else
+            fileNameStr = new StringBuilder(context.getString(R.string.notification_placeholder_unknown));
+        if (fileNameStr == null)
+            fileNameStr = new StringBuilder();
+        return fileNameStr.toString();
     }
 
     /**

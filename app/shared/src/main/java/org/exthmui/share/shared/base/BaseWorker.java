@@ -35,7 +35,7 @@ public abstract class BaseWorker extends Worker {
 
     {
         setForegroundInfo(createForegroundInfo(Constants.TransmissionStatus.INITIALIZING.getNumVal(),
-                0, 0, new String[]{null,}, null, false));
+                0, 0, new FileInfo[]{null,}, null, false));
     }
 
     public BaseWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -70,20 +70,20 @@ public abstract class BaseWorker extends Worker {
 
     protected abstract int getNotificationId();
 
-    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer) {
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived, fileNames, peerInfoTransfer, indeterminate));
+        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived, fileInfos, peerInfoTransfer, indeterminate));
     }
 
     @NonNull
-    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate) {
-        Notification notification = buildProgressNotification(statusCode, totalBytesToSend, bytesTransmitted, fileNames, peerInfoTransfer, indeterminate);
+    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate) {
+        Notification notification = buildProgressNotification(statusCode, totalBytesToSend, bytesTransmitted, fileInfos, peerInfoTransfer, indeterminate);
         return new ForegroundInfo(getNotificationId(), notification);
     }
 
     @NonNull
-    protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull String[] fileNames, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate);
+    protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate);
 
     private void setForegroundInfo(ForegroundInfo foregroundInfo) {
         this.foregroundInfo.set(foregroundInfo);

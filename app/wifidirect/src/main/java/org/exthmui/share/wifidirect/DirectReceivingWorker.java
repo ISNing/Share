@@ -22,7 +22,7 @@ import androidx.work.impl.utils.futures.SettableFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import org.apache.commons.lang3.StringUtils;
-import org.exthmui.share.shared.base.receive.FileInfo;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.ReceivingWorker;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.exceptions.trans.FileIOErrorException;
@@ -96,8 +96,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
         int bufferSize = DirectUtils.getBufferSize(getApplicationContext());
 
         SenderInfo senderInfo = null;
-        String[] fileNames = null;
-        long[] fileSizes = null;
+        FileInfo[] fileInfos = null;
 
         @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] cancelledBySender = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
         cancelledBySender[0] = SettableFuture.create();
@@ -109,15 +108,13 @@ public class DirectReceivingWorker extends ReceivingWorker {
             serverSocketToServer = SSLUtils.genMutualServerSocket(getApplicationContext());
             serverSocketToServer.setReuseAddress(true);
             serverSocketToServer.bind(new InetSocketAddress(serverPort));
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal(), 0, 0, new String[]{null,}, null);
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal(), 0, 0, new FileInfo[]{null,}, null);
             socketToServer = serverSocketToServer.accept();// Handled cancel by closing serverSocket in onStopped
 
             InetAddress clientAddress = socketToServer.getInetAddress();
             Log.d(TAG, "serverSocketToServer connected. From: " + clientAddress.getHostAddress());
 
             List<FileInfo> fileInfoList = new ArrayList<>();
-            List<String> fileNameList = new ArrayList<>();
-            List<Long> fileSizeList = new ArrayList<>();
             // Read SenderInfo
             inputStream = socketToServer.getInputStream();
             objectInputStream = new ObjectInputStream(inputStream);
@@ -135,8 +132,6 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 objectInputStream = new ObjectInputStream(inputStream);
                 FileInfo fileInfo = (FileInfo) objectInputStream.readObject();
                 fileInfoList.add(fileInfo);
-                fileNameList.add(fileInfo.getFileName());
-                fileSizeList.add(fileInfo.getFileSize());
                 objectInputStream.close();
                 objectInputStream = null;
                 inputStream.close();
@@ -163,12 +158,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 }
             }
             int clientPort = senderInfo.getClientPort();
-            fileNames = fileNameList.toArray(new String[0]);
-            {
-                Long[] fileSizesTmp= fileSizeList.toArray(new Long[0]);
-                fileSizes = new long[fileSizesTmp.length];
-                for (int i=0; i < fileSizesTmp.length; i++) fileSizes[i] = fileSizesTmp[i];
-            }
+            fileInfos = fileInfoList.toArray(new FileInfo[0]);
 
             // Wait for acceptation from user
             DirectReceiver.getInstance(getApplicationContext()).registerListener((OnReceiveActionAcceptListener) event -> {
@@ -179,7 +169,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 Log.d(TAG, "User rejected file");
                 ((SettableFuture<Boolean>) isAccepted[0]).set(false);
             });
-            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), senderInfo, fileNames, fileSizes, getId().hashCode());
+            ReceiverUtils.requestAcceptation(getApplicationContext(), Constants.CONNECTION_CODE_WIFIDIRECT, getId().toString(), senderInfo, fileInfos, getId().hashCode());
 
             // Connect to client
             socketToClient = SSLUtils.genMutualSocket(getApplicationContext());
@@ -189,11 +179,11 @@ public class DirectReceivingWorker extends ReceivingWorker {
 
             Log.d(TAG, "Trying to send \"" + COMMAND_ACCEPT + "\" -> " + clientAddress.getHostAddress() + ":" + clientPort);
             dataOutputStream = SSLUtils.getDataOutput(socketToClient);
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToReceive, 0, fileNames, senderInfo);
+            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToReceive, 0, fileInfos, senderInfo);
             if (!isAccepted[0].get()) {// Will block until accepted or rejected
                 dataOutputStream.writeUTF(COMMAND_REJECT);
                 Log.d(TAG, "User rejected receiving file");
-                return genRejectedResult(getApplicationContext(), senderInfo, fileNames);
+                return genRejectedResult(getApplicationContext(), senderInfo, fileInfos);
             }
             dataOutputStream.writeUTF(COMMAND_ACCEPT + "\n");
             dataOutputStream.close();
@@ -203,7 +193,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
             // Check if remote cancelled
             if (cancelledBySender[0].isDone()) {
                 Log.d(TAG, "Remote cancelled receiving file");
-                return genSenderCancelledResult(getApplicationContext(), senderInfo, fileNames);
+                return genSenderCancelledResult(getApplicationContext(), senderInfo, fileInfos);
             }
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
@@ -214,14 +204,14 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 dataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
                 dataOutputStream.close();
                 dataOutputStream = null;
-                return genReceiverCancelledResult(getApplicationContext(), senderInfo, fileNames);
+                return genReceiverCancelledResult(getApplicationContext(), senderInfo, fileInfos);
             }
 
             DocumentFile destinationDirectory = Utils.getDestinationDirectory(getApplicationContext());
 
             // Receive file
             if (FileUtils.getSpaceAvailable(getApplicationContext(), destinationDirectory) < totalBytesToReceive) {
-                return genFailureResult(new NoEnoughSpaceException(getApplicationContext()), senderInfo, fileNames);
+                return genFailureResult(new NoEnoughSpaceException(getApplicationContext()), senderInfo, fileInfos);
             }
             DocumentFile[] files = new DocumentFile[fileInfoList.size()];
             for (int i = 0; i < fileInfoList.size(); i++) {
@@ -235,7 +225,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 DocumentFile file = destinationDirectory.createFile("", fileName);
                 files[i] = file;
                 if (file == null) {
-                    return genFailureResult(new FileIOErrorException("Failed creating file"), senderInfo, fileNames);
+                    return genFailureResult(new FileIOErrorException("Failed creating file"), senderInfo, fileInfos);
                 }
                 outputStream = getApplicationContext().getContentResolver().openOutputStream(file.getUri());
                 byte[] buf = new byte[bufferSize];
@@ -244,11 +234,11 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 while ((len = inputStream.read(buf)) != -1) {
                     outputStream.write(buf, 0, len);
                     bytesReceived += len;
-                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToReceive, bytesReceived, fileNames, senderInfo);
+                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToReceive, bytesReceived, fileInfos, senderInfo);
                     // Check if remote cancelled
                     if (cancelledBySender[0].isDone()) {
                         Log.d(TAG, "Remote cancelled receiving file");
-                        return genSenderCancelledResult(getApplicationContext(), senderInfo, fileNames);
+                        return genSenderCancelledResult(getApplicationContext(), senderInfo, fileInfos);
                     }
                     // Check if user cancelled
                     if (getForegroundInfoAsync().isCancelled()) {
@@ -261,7 +251,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                         dataOutputStream = null;
                         // Delete file
                         file.delete();
-                        return genReceiverCancelledResult(getApplicationContext(), senderInfo, fileNames);
+                        return genReceiverCancelledResult(getApplicationContext(), senderInfo, fileInfos);
                     }
                 }
                 outputStream.close();
@@ -271,7 +261,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     // Unexpected EOF
                     // Delete file
                     file.delete();
-                    return genFailureResult(new NetworkErrorException("Unexpected EOF"), senderInfo, fileNames);
+                    return genFailureResult(new NetworkErrorException("Unexpected EOF"), senderInfo, fileInfos);
                 }
             }
 
@@ -285,7 +275,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                 try {
                     inputStream = getApplicationContext().getContentResolver().openInputStream(files[i].getUri());
                 } catch (FileNotFoundException e) {
-                    return genFailureResult(new UnknownErrorException("Failed calculating MD5"), senderInfo, fileNames);
+                    return genFailureResult(new UnknownErrorException("Failed calculating MD5"), senderInfo, fileInfos);
                 }
                 String md5 = FileUtils.getMD5(inputStream);
                 inputStream = null;
@@ -299,7 +289,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
                     dataOutputStream = null;
                     // Delete file
                     files[i].delete();
-                    return genFailureResult(new UnknownErrorException("File validation failed"), senderInfo, fileNames);
+                    return genFailureResult(new UnknownErrorException("File validation failed"), senderInfo, fileInfos);
                 } else
                     Log.d(TAG, "Md5 validation passed: " + fileInfoList.get(i).getFileName());
             }
@@ -315,20 +305,20 @@ public class DirectReceivingWorker extends ReceivingWorker {
         } catch (SocketTimeoutException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new TimedOutException(getApplicationContext(), e), senderInfo, fileNames);
+            return genFailureResult(new TimedOutException(getApplicationContext(), e), senderInfo, fileInfos);
         } catch (ErrnoException | FileNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new FileIOErrorException(getApplicationContext(), e), senderInfo, fileNames);
+            return genFailureResult(new FileIOErrorException(getApplicationContext(), e), senderInfo, fileInfos);
         } catch (IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileNames);
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileInfos);
         } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
             Log.e(TAG, e.getMessage());
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileNames);
+            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileInfos);
         } finally {
             if (outputStream != null) {
                 try {

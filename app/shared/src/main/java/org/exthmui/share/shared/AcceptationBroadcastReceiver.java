@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
 
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.listeners.OnReceiveShareBroadcastActionListener;
 
@@ -21,8 +22,7 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
     public static final String EXTRA_PLUGIN_CODE = "org.exthmui.share.extra.PLUGIN_CODE";
     public static final String EXTRA_REQUEST_ID = "org.exthmui.share.extra.REQUEST_ID";
     public static final String EXTRA_PEER_INFO_TRANSFER = "org.exthmui.share.extra.PEER_INFO_TRANSFER";
-    public static final String EXTRA_FILE_NAME = "org.exthmui.share.extra.FILE_NAME";
-    public static final String EXTRA_FILE_SIZE = "org.exthmui.share.extra.FILE_SIZE";
+    public static final String EXTRA_FILE_INFOS = "org.exthmui.share.extra.FILE_INFOS";
 
     @Nullable
     private OnReceiveShareBroadcastActionListener mOnReceiveShareBroadcastActionListener;
@@ -48,9 +48,8 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
         switch (intent.getAction()) {
             case ACTION_ACCEPTATION_DIALOG:
                 SenderInfo senderInfo = (SenderInfo) intent.getSerializableExtra(EXTRA_PEER_INFO_TRANSFER);
-                String fileName = intent.getStringExtra(EXTRA_FILE_NAME);
-                long fileSize = intent.getLongExtra(EXTRA_FILE_SIZE, -1);
-                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, senderInfo, fileName, fileSize, notificationId);
+                FileInfo[] fileInfos = (FileInfo[]) intent.getSerializableExtra(EXTRA_FILE_INFOS);
+                mOnReceiveShareBroadcastActionListener.onReceiveActionAcceptationDialog(pluginCode, requestId, senderInfo, fileInfos, notificationId);
                 break;
             case ACTION_ACCEPT:
                 if (notificationId != -1) {

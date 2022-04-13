@@ -1,4 +1,4 @@
-package org.exthmui.share.shared.base.receive;
+package org.exthmui.share.shared.base;
 
 import androidx.annotation.Nullable;
 
@@ -6,9 +6,19 @@ import java.io.Serializable;
 import java.util.HashMap;
 
 public class FileInfo implements Serializable {
-    @Nullable private String fileName;
+    @Nullable
+    private String fileName;
     private long fileSize;
     private final HashMap<String, String> extras = new HashMap<>();
+
+    public FileInfo() {
+
+    }
+
+    public FileInfo(Entity entity) {
+        this.fileName = entity.getFileName();
+        this.fileSize = entity.getFileSize();
+    }
 
     @Nullable
     public String getFileName() {

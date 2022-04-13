@@ -4,8 +4,7 @@ import static androidx.core.app.NotificationCompat.EXTRA_NOTIFICATION_ID;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.ACTION_ACCEPT;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.ACTION_ACCEPTATION_DIALOG;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.ACTION_REJECT;
-import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_FILE_NAME;
-import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_FILE_SIZE;
+import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_FILE_INFOS;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_PEER_INFO_TRANSFER;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_PLUGIN_CODE;
 import static org.exthmui.share.shared.AcceptationBroadcastReceiver.EXTRA_REQUEST_ID;
@@ -20,7 +19,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.text.format.Formatter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -33,6 +31,7 @@ import org.exthmui.share.shared.IShareBroadcastReceiver;
 import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.base.BaseWorker;
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.ui.AcceptationRequestActivity;
@@ -106,14 +105,13 @@ public abstract class ReceiverUtils {
         return PendingIntent.getBroadcast(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    public static PendingIntent buildDialogPendingIntent(Context context, String pluginCode, String requestId, SenderInfo senderInfo, String[] fileNames, long[] fileSizes, int notificationId) {
+    public static PendingIntent buildDialogPendingIntent(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
         Intent dialogIntent = new Intent()
                 .setAction(ACTION_ACCEPTATION_DIALOG)
                 .putExtra(EXTRA_PLUGIN_CODE, pluginCode)
                 .putExtra(EXTRA_REQUEST_ID, requestId)
                 .putExtra(EXTRA_PEER_INFO_TRANSFER, senderInfo)
-                .putExtra(EXTRA_FILE_NAME, fileNames)
-                .putExtra(EXTRA_FILE_SIZE, fileSizes)
+                .putExtra(EXTRA_FILE_INFOS, fileInfos)
                 .putExtra(EXTRA_NOTIFICATION_ID, notificationId);
         return PendingIntent.getBroadcast(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
@@ -136,18 +134,18 @@ public abstract class ReceiverUtils {
         return PendingIntent.getBroadcast(context, 0, rejectIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    public static void requestAcceptation(Context context, String pluginCode, String requestId, SenderInfo senderInfo, String[] fileNames, long[] fileSizes, int notificationId) {
+    public static void requestAcceptation(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
         createRequestNotificationChannel(context);
 
-        String fileNameStr = genFileNameAndSizeStr(context, fileNames, fileSizes);
+        String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
 
         @SuppressLint("LaunchActivityFromNotification") NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REQUEST_CHANNEL_ID)
                 .setVisibility(NotificationCompat.VISIBILITY_PRIVATE)
                 .setSmallIcon(R.drawable.ic_notification_request)
                 .setContentTitle(context.getString(R.string.notification_title_receive_request))
-                .setContentText(context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileNames.length, senderInfo.getDisplayName(), fileNameStr))
+                .setContentText(context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileNameStr))
                 .setPriority(NotificationCompat.PRIORITY_MAX)
-                .setContentIntent(buildDialogPendingIntent(context, pluginCode, requestId, senderInfo, fileNames, fileSizes, notificationId))
+                .setContentIntent(buildDialogPendingIntent(context, pluginCode, requestId, senderInfo, fileInfos, notificationId))
                 .addAction(R.drawable.ic_action_accept, context.getString(R.string.notification_action_accept),
                         buildAcceptPendingIntent(context, pluginCode, requestId, notificationId))
                 .addAction(R.drawable.ic_action_reject, context.getString(R.string.notification_action_reject),
@@ -157,13 +155,12 @@ public abstract class ReceiverUtils {
         notificationManager.notify(notificationId, builder.build());
     }
 
-    public static void startRequestActivity(Context context, String pluginCode, String requestId, SenderInfo senderInfo, String fileName, long fileSize, int notificationId) {
+    public static void startRequestActivity(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
         Intent intent = new Intent(context, AcceptationRequestActivity.class)
                 .putExtra(EXTRA_PLUGIN_CODE, pluginCode)
                 .putExtra(EXTRA_REQUEST_ID, requestId)
                 .putExtra(EXTRA_PEER_INFO_TRANSFER, senderInfo)
-                .putExtra(EXTRA_FILE_NAME, fileName)
-                .putExtra(EXTRA_FILE_SIZE, fileSize)
+                .putExtra(EXTRA_FILE_INFOS, fileInfos)
                 .putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         context.startActivity(intent);
@@ -179,7 +176,8 @@ public abstract class ReceiverUtils {
                 .setSmallIcon(R.drawable.ic_notification_receive)
                 .build();
     }
-    public static Notification buildReceivingNotification(Context context, IConnectionType connectionType, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, @NonNull String[] fileNames, @Nullable SenderInfo senderInfo, boolean indeterminate) {
+
+    public static Notification buildReceivingNotification(Context context, IConnectionType connectionType, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable SenderInfo senderInfo, boolean indeterminate) {
         createProgressNotificationChannel(context);
 
         String title;
@@ -200,10 +198,10 @@ public abstract class ReceiverUtils {
             text = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
             cancelPendingIntent = buildStopReceiverPendingIntent(context, connectionType.getCode());
         } else {
-            String fileNameStr = genFileNameAndSizeStr(context, fileNames, null);
+            String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
 
-            title = context.getResources().getQuantityString(R.plurals.notification_title_receiving, fileNames.length, senderName);
-            text = context.getResources().getQuantityString(R.plurals.notification_text_receiving, fileNames.length, senderName, fileNameStr);
+            title = context.getResources().getQuantityString(R.plurals.notification_title_receiving, fileInfos.length, senderName);
+            text = context.getResources().getQuantityString(R.plurals.notification_text_receiving, fileInfos.length, senderName, fileNameStr);
         }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, RECEIVE_PROGRESS_CHANNEL_ID).setContentTitle(title)
@@ -227,7 +225,7 @@ public abstract class ReceiverUtils {
         String[] fileUris = output.getStringArray(Entity.FILE_URIS);
         long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
 
-        String fileNameStr = genFileNameAndSizeStr(context, fileNames, fileSizes);
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
         String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_succeeded, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr);
         String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_succeeded, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr);
@@ -259,7 +257,7 @@ public abstract class ReceiverUtils {
         String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
         long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
 
-        String fileNameStr = genFileNameAndSizeStr(context, fileNames, fileSizes);
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
         String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr, localizedMessage);
         String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, senderName, fileNameStr, localizedMessage);
@@ -272,22 +270,5 @@ public abstract class ReceiverUtils {
                 .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_notification_send)
                 .build();
-    }
-
-    private static String genFileNameAndSizeStr(Context context, @Nullable String[] fileNames, @Nullable long[] fileSizes) {
-        StringBuilder fileNameStr;
-        if (fileNames != null) {
-            fileNameStr = new StringBuilder(fileNames[0]);
-            for (int i=0; i < fileNames.length; i++) {
-                String fileSizeStr;
-                if (fileSizes != null)
-                    fileSizeStr = Formatter.formatFileSize(context, fileSizes[i]);
-                else fileSizeStr = context.getString(R.string.notification_placeholder_unknown);
-                if (fileNames[i] == null) fileNames[i] = context.getString(R.string.notification_placeholder_unknown);
-                fileNameStr.append("\n").append(String.format("%s(%s)", fileNames[i], fileSizeStr));
-            }
-        } else
-            fileNameStr = new StringBuilder(context.getString(R.string.notification_placeholder_unknown));
-        return fileNameStr.toString();
     }
 }
