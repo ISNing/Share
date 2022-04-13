@@ -52,6 +52,7 @@ public class SendingHelper {
             }
             UUID workId = sender.sendToPeerInfo(mContext, target, entities);
             mWorkManager.getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
+                if (workInfo == null) return;
                 if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
                     Notification notification =
                             SenderUtils.buildSendingSucceededNotification(mContext, workInfo.getOutputData());

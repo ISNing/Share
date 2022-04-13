@@ -98,8 +98,8 @@
         <item quantity="other">Succeeded sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
     </plurals>
     <plurals name="notification_text_sending_succeeded">
-        <item quantity="one">Failed sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
-        <item quantity="other">Failed sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
+        <item quantity="one">Succeeded sending file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\" to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g></item>
+        <item quantity="other">Succeeded sending files to <xliff:g id="target_name" example="ISNing's Tablet">%1$s</xliff:g>\n<xliff:g id="file_names" example="base.apk\nexTHmUI-OFFICIAL.zip">%2$s</xliff:g></item>
     </plurals>
 
     <string name="dialog_title_accept_or_reject_request" formatted="true"><xliff:g id="sender_name" example="ISNing's Phone">%1$s</xliff:g> request to send you file \"<xliff:g id="file_name" example="base.apk">%2$s</xliff:g>\"</string>

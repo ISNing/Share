@@ -102,16 +102,12 @@ public abstract class SenderUtils {
 
         String receiverName = output.getString(Sender.TARGET_PEER_NAME);
         String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
+        long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
 
-        StringBuilder fileNameStr;
-        if (fileNames != null) {
-            fileNameStr = new StringBuilder(fileNames[0]);
-            for (String s : fileNames) fileNameStr.append("\n").append(s);
-        } else
-            fileNameStr = new StringBuilder(context.getString(R.string.notification_placeholder_unknown));
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
         String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_succeeded, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr.toString());
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_succeeded, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr.toString());
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_succeeded, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr);
 
         return new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
                 .setContentTitle(title)
@@ -132,8 +128,9 @@ public abstract class SenderUtils {
 
         String receiverName = output.getString(Sender.TARGET_PEER_NAME);
         String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
+        long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
 
-        String fileNameStr = Utils.genFileInfosStr(context, fileNames, null);
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
 
         String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr, localizedMessage);
         String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName, fileNameStr, localizedMessage);

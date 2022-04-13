@@ -121,8 +121,10 @@ public abstract class Utils {
                 else
                     fileNameStr.append("\n");
 
-                String fileSizeStr = Formatter.formatFileSize(context, fileInfo.getFileSize());
-                fileNameStr.append(String.format("%s(%s)", fileInfo.getFileName() == null ?
+                String fileSizeStr = (fileInfo == null || fileInfo.getFileSize() == 0) ?
+                        context.getString(R.string.notification_placeholder_unknown) :
+                        Formatter.formatFileSize(context, fileInfo.getFileSize());
+                fileNameStr.append(String.format("%s(%s)", (fileInfo == null || fileInfo.getFileName() == null) ?
                         context.getString(R.string.notification_placeholder_unknown) :
                         fileInfo.getFileName(), fileSizeStr));
             }
