@@ -5,10 +5,12 @@ import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
 
+import androidx.annotation.NonNull;
+
 import org.exthmui.share.shared.R;
 
 public abstract class NotificationUtils {
-    public static void createProgressNotificationChannelGroup(Context context) {
+    public static void createProgressNotificationChannelGroup(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String name = context.getString(R.string.notification_channel_group_progress_name);
             String description = context.getString(R.string.notification_channel_group_progress_description);
@@ -21,7 +23,7 @@ public abstract class NotificationUtils {
         }
     }
 
-    public static void createServiceNotificationChannelGroup(Context context) {
+    public static void createServiceNotificationChannelGroup(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String name = context.getString(R.string.notification_channel_group_service_name);
             String description = context.getString(R.string.notification_channel_group_service_description);
@@ -34,7 +36,7 @@ public abstract class NotificationUtils {
         }
     }
 
-    public static void createRequestNotificationChannelGroup(Context context) {
+    public static void createRequestNotificationChannelGroup(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             String name = context.getString(R.string.notification_channel_group_request_name);
             String description = context.getString(R.string.notification_channel_group_request_description);

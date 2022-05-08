@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
@@ -40,21 +41,27 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
     boolean isFeatureAvailable();
     void startReceive();
     void stopReceive();
+    @Nullable
     UUID startWork(Context context);
 
-    default Map<Class<? extends EventObject>, Method[]> getEventTMethodMap(){
-        return this._getEventTMethodMap() == null ? new HashMap<>() : this._getEventTMethodMap();
+    @Nullable
+    @Override
+    default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap(){
+        this._getEventToMethodMap();
+        return this._getEventToMethodMap();
     }
 
+    @NonNull
     @Override
-    default Map<Class<? extends EventObject>, Method[]> _getEventTMethodMap() {
+    default Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap() {
         Map<Class<? extends EventObject>, Method[]> map = new HashMap<>();
-        map.putAll(OnReceiveActionAcceptListener.super._getEventTMethodMap());
-        map.putAll(OnReceiveActionRejectListener.super._getEventTMethodMap());
+        map.putAll(OnReceiveActionAcceptListener.super._getEventToMethodMap());
+        map.putAll(OnReceiveActionRejectListener.super._getEventToMethodMap());
         return map;
     }
 
-    default UUID startWorkWrapped(Context context) {
+    @Nullable
+    default UUID startWorkWrapped(@NonNull Context context) {
         UUID workId = startWork(context);
         WorkManager.getInstance(context).getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
             if (workInfo == null) return;

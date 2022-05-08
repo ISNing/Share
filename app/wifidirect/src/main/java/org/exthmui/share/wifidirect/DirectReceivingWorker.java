@@ -15,6 +15,7 @@ import android.system.ErrnoException;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.work.WorkerParameters;
 import androidx.work.impl.utils.futures.SettableFuture;
@@ -77,6 +78,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
         return new Metadata();
     }
 
+    @Nullable
     private ServerSocket serverSocketToServer = null;
 
     @SuppressLint({"RestrictedApi", "MissingPermission"})
@@ -306,15 +308,15 @@ public class DirectReceivingWorker extends ReceivingWorker {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new TimedOutException(getApplicationContext(), e), senderInfo, fileInfos);
-        } catch (ErrnoException | FileNotFoundException e) {
+        } catch (@NonNull ErrnoException | FileNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new FileIOErrorException(getApplicationContext(), e), senderInfo, fileInfos);
-        } catch (IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
+        } catch (@NonNull IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
             Log.i(TAG, e.getMessage());
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileInfos);
-        } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (@NonNull UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
             Log.e(TAG, e.getMessage());
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));

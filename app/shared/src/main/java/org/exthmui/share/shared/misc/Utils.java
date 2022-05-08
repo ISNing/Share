@@ -32,12 +32,12 @@ public abstract class Utils {
     public static final String TAG = "Utils";
 
     public static @NonNull
-    DocumentFile getDestinationDirectory(Context context) {
+    DocumentFile getDestinationDirectory(@NonNull Context context) {
         String destinationDirectoryUri = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
 
         DocumentFile downloadsDirectory = DocumentFile.fromFile(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS));
 
-        if (destinationDirectoryUri == null) return downloadsDirectory;
+        if (TextUtils.isEmpty(destinationDirectoryUri)) return downloadsDirectory;
         DocumentFile destinationDirectory = DocumentFile.fromTreeUri(context, Uri.parse(destinationDirectoryUri));
         if (destinationDirectory == null) {
             Log.e(TAG, "Failed to get DocumentFile object, returning Download directory.");
@@ -65,7 +65,7 @@ public abstract class Utils {
         return defaultFileName;
     }
 
-    public static String getDeviceNameOnBoard(Context context) {
+    public static String getDeviceNameOnBoard(@NonNull Context context) {
         String deviceName;
 //        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
 //            deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
@@ -77,10 +77,14 @@ public abstract class Utils {
     @NonNull
     public static String getSelfName(@NonNull Context context) {
         String defaultValue = getDeviceNameOnBoard(context);
-        String deviceName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_default_file_name), defaultValue);
+        String deviceName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_device_name), defaultValue);
         if (deviceName == null || TextUtils.isEmpty(deviceName)) {
             Log.e(TAG, String.format("Got invalid device name, returning default value \"%s\".", defaultValue));
             deviceName = defaultValue;
+        }
+        if (deviceName.length() > Constants.DISPLAY_NAME_LENGTH) {
+            Log.e(TAG, String.format("Device name is too long: %d, cutting down to %d.", deviceName.length(), Constants.DISPLAY_NAME_LENGTH));
+            deviceName = deviceName.substring(0, Constants.DISPLAY_NAME_LENGTH);
         }
         return deviceName;
     }
@@ -88,22 +92,26 @@ public abstract class Utils {
     @NonNull
     public static String getSelfId(@NonNull Context context) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
-        String key = context.getString(R.string.prefs_key_global_default_file_name);
+        String key = context.getString(R.string.prefs_key_global_peer_id);
         String peerId = sharedPreferences.getString(key, null);
-        if (peerId == null || TextUtils.isEmpty(peerId)) {
+        if (peerId == null || TextUtils.isEmpty(peerId) || peerId.length() > Constants.PEER_ID_LENGTH) {
             peerId = genPeerId();
             sharedPreferences.edit().putString(key, peerId).apply();
-            Log.e(TAG, String.format("Got invalid device name, regenerated and saved a new value: %s.", peerId));
+            Log.e(TAG, String.format("Got invalid device id, regenerated and saved a new value: %s.", peerId));
         }
         return peerId;
     }
 
-    @NonNull
-    public static String genPeerId() {
-        return UUID.randomUUID().toString();
+    public static int getSelfDeviceType(@NonNull Context context) {
+        return 0;//TODO: Waiting to implement
     }
 
-    public static SharedPreferences getDefaultSharedPreferences(Context context) {
+    @NonNull
+    public static String genPeerId() {
+        return UUID.randomUUID().toString().substring(0, Constants.PEER_ID_LENGTH);
+    }
+
+    public static SharedPreferences getDefaultSharedPreferences(@NonNull Context context) {
         return PreferenceManager.getDefaultSharedPreferences(context);
     }
 
@@ -112,7 +120,8 @@ public abstract class Utils {
     }
 
 
-    public static String genFileInfosStr(Context context, @Nullable FileInfo[] fileInfos) {
+    @NonNull
+    public static String genFileInfosStr(@NonNull Context context, @Nullable FileInfo[] fileInfos) {
         StringBuilder fileNameStr = null;
         if (fileInfos != null) {
             for (FileInfo fileInfo : fileInfos) {
@@ -135,7 +144,8 @@ public abstract class Utils {
         return fileNameStr.toString();
     }
 
-    public static String genFileInfosStr(Context context, @Nullable String[] fileNames, @Nullable long[] fileSizes) {
+    @NonNull
+    public static String genFileInfosStr(@NonNull Context context, @Nullable String[] fileNames, @Nullable long[] fileSizes) {
         StringBuilder fileNameStr = null;
         if (fileNames != null) {
             for (int i = 0; i < fileNames.length; i++) {
@@ -178,14 +188,14 @@ public abstract class Utils {
                         break;
                     }
                 }
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
+            } catch (@NonNull NoSuchMethodException | IllegalAccessException | InvocationTargetException ignored) {
             }
         }
 
         return include;
     }
 
-    public Bitmap Drawable2Bitmap(Drawable img) {
+    public Bitmap Drawable2Bitmap(@NonNull Drawable img) {
         return ((BitmapDrawable) img).getBitmap();
     }
 

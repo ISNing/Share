@@ -9,18 +9,21 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 public class PeerInformationView extends ConstraintLayout {
 
     public static final String TAG = "PeerInformationView";
 
-    private PeerInfo mPeer;
+    @Nullable
+    private IPeer mPeer;
     private OnBackPressedListener mOnBackPressedListener;
 
     private TextView mPeerNameText;
@@ -29,22 +32,22 @@ public class PeerInformationView extends ConstraintLayout {
     private TextView mPeerDetailText;
     private ImageView mPeerIcon;
 
-    public PeerInformationView(Context context) {
+    public PeerInformationView(@NonNull Context context) {
         super(context);
         initView(context);
     }
 
-    public PeerInformationView(Context context, @Nullable AttributeSet attrs) {
+    public PeerInformationView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         initView(context);
     }
 
-    public PeerInformationView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public PeerInformationView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         initView(context);
     }
 
-    public PeerInformationView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public PeerInformationView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         initView(context);
     }
@@ -63,7 +66,7 @@ public class PeerInformationView extends ConstraintLayout {
         mPeerIcon = view.findViewById(R.id.peer_icon);
     }
 
-    public void setPeer(@Nullable PeerInfo peer) {
+    public void setPeer(@Nullable IPeer peer) {
         mPeer = peer;
         if (peer == null) {
             mPeerIcon.setImageResource(Constants.DeviceType.UNKNOWN.getImgRes());
@@ -88,14 +91,12 @@ public class PeerInformationView extends ConstraintLayout {
 
         mPeerNameText.setText(peer.getDisplayName());
         Constants.DeviceType deviceType = Constants.DeviceType.parse(peer.getDeviceType());
-        org.exthmui.share.misc.Constants.ConnectionType connectionType = org.exthmui.share.misc.Constants.ConnectionType.parseFromCode(peer.getConnectionType());
+        IConnectionType connectionType = peer.getConnectionType();
         if (deviceType != null) {
             mPeerIcon.setImageResource(deviceType.getImgRes());
             mPeerDeviceTypeText.setText(deviceType.getFriendlyNameRes());
         } else Log.e(TAG, "Got null deviceType!");
-        if (connectionType != null) {
-            mPeerPluginText.setText(connectionType.getFriendlyName());
-        } else Log.e(TAG, "Got null connectionType!");
+        mPeerPluginText.setText(connectionType.getFriendlyName());
 
         if (peer.getDetailMessage() == null || peer.getDetailMessage().isEmpty())
             mPeerDetailText.setText("");
@@ -104,7 +105,8 @@ public class PeerInformationView extends ConstraintLayout {
         }
     }
 
-    public PeerInfo getPeer() {
+    @Nullable
+    public IPeer getPeer() {
         return mPeer;
     }
 
@@ -140,6 +142,6 @@ public class PeerInformationView extends ConstraintLayout {
         /**
          * On back pressed
          */
-        void onBackPressed(PeerInformationView view, PeerInfo peer);
+        void onBackPressed(PeerInformationView view, IPeer peer);
     }
 }

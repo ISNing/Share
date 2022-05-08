@@ -3,6 +3,7 @@ package org.exthmui.share.msnearshare;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
@@ -17,7 +18,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public class NearShareReceiver implements Receiver {
-    public static NearShareReceiver getInstance(Context context) {
+    @NonNull
+    public static NearShareReceiver getInstance(@NonNull Context context) {
         return new NearShareReceiver();
     }
     
@@ -73,13 +75,15 @@ public class NearShareReceiver implements Receiver {
 
     }
 
+    @Nullable
     @Override
     public UUID startWork(Context context) {
         return null;
     }
 
+    @Nullable
     @Override
-    public Map<Class<? extends EventObject>, Method[]> getEventTMethodMap() {
+    public Map<Class<? extends EventObject>, Method[]> getEventToMethodMap() {
         return null;
     }
 

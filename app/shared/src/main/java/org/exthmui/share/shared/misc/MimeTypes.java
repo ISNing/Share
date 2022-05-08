@@ -103,7 +103,8 @@ public final class MimeTypes {
      * @param fileName the file of which mime type to get
      * @return Mime type in form of String
      */
-    public static String getMimeType(String fileName) {
+    @NonNull
+    public static String getMimeType(@NonNull String fileName) {
         String type = ALL_MIME_TYPES;
         final String extension = getExtension(fileName);
 
@@ -120,7 +121,7 @@ public final class MimeTypes {
         return type;
     }
 
-    public static boolean mimeTypeMatch(String mime, String input) {
+    public static boolean mimeTypeMatch(@NonNull String mime, @NonNull String input) {
         return Pattern.matches(mime.replace("*", ".*"), input);
     }
 
@@ -131,6 +132,7 @@ public final class MimeTypes {
      * @param fileName the name of file
      * @return extension extracted from name in lowercase
      */
+    @NonNull
     public static String getExtension(@NonNull String fileName) {
         if(fileName.contains(".")) return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
         else return "";
@@ -141,6 +143,7 @@ public final class MimeTypes {
      * @param fileName the name of file
      * @return extension extracted from name in lowercase
      */
+    @NonNull
     public static String getDisplayName(@NonNull String fileName) {
         if(fileName.contains(".")) return fileName.substring(0, fileName.lastIndexOf(".") - 1);
         else return fileName;

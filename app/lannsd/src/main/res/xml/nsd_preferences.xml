@@ -1,0 +1,35 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:title="@string/prefs_header_lannsd">
+
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_lannsd_timeout"
+            android:key="@string/prefs_key_lannsd_timeout"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_lannsd_timeout" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_lannsd_server_port"
+            android:enabled="true"
+            android:key="@string/prefs_key_lannsd_server_port"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_lannsd_server_port" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_lannsd_client_port"
+            android:key="@string/prefs_key_lannsd_client_port"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_lannsd_client_port" />
+        <org.exthmui.share.shared.preferences.IntEditTextPreference
+            android:defaultValue="@integer/prefs_default_lannsd_buffer_size"
+            android:enabled="false"
+            android:key="@string/prefs_key_lannsd_buffer_size"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="@string/prefs_title_lannsd_buffer_size" />
+    </PreferenceCategory>
+</PreferenceScreen>

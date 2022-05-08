@@ -2,7 +2,7 @@ package org.exthmui.share.shared.base.discover;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 
 import java.util.Map;
@@ -22,5 +22,6 @@ public interface Discoverer {
     boolean isFeatureAvailable();
     void startDiscover();
     void stopDiscover();
-    Map<String, PeerInfo> getPeers();
+    @NonNull
+    Map<String, IPeer> getPeers();
 }

@@ -1,21 +1,25 @@
 package org.exthmui.share.web.exceptions;
 
-import com.yanzhenjie.andserver.error.HttpException;
+import androidx.annotation.NonNull;
 
-public class InvalidRequestException extends HttpException {
+import com.yanzhenjie.andserver.http.StatusCode;
 
-    public InvalidRequestException() {
-        super(400, "Invalid request");
-    }
-    public InvalidRequestException(int statusCode, String message) {
-        super(statusCode, message);
-    }
+public class InvalidRequestException extends AbstractApiException {
 
-    public InvalidRequestException(int statusCode, String message, Throwable cause) {
-        super(statusCode, message, cause);
+    @NonNull
+    @Override
+    public String getCode() {
+        return "invalid_request";
     }
 
-    public InvalidRequestException(int statusCode, Throwable cause) {
-        super(statusCode, cause);
+    @Override
+    protected int getDefaultStatusCode() {
+        return StatusCode.SC_BAD_REQUEST;
+    }
+
+    @NonNull
+    @Override
+    protected String getDefaultDescription() {
+        return "Invalid request";
     }
 }

@@ -19,6 +19,7 @@ import androidx.annotation.FloatRange;
 import androidx.annotation.IntDef;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.android.material.tabs.TabLayout;
 
@@ -31,7 +32,9 @@ import java.lang.reflect.Field;
 public class BadgeHelper extends View {
     public static final String TAG = "BadgeHelper";
     private float mDensity;
+    @NonNull
     private final Paint mTextPaint;
+    @NonNull
     private final Paint mBackgroundPaint;
     @NonNull
     private String mText = "0";
@@ -81,6 +84,7 @@ public class BadgeHelper extends View {
         mDensity = getResources().getDisplayMetrics().density;
     }
 
+    @NonNull
     public BadgeHelper setBadgeMargins(int left, int top, int right, int bottom) {
         mLeftMargin = left;
         mTopMargin = top;
@@ -89,6 +93,7 @@ public class BadgeHelper extends View {
         return this;
     }
 
+    @NonNull
     public BadgeHelper setBadgeCenterVertical(  ) {
         mIsCenterVertical = true;
         return this;
@@ -99,6 +104,7 @@ public class BadgeHelper extends View {
      *
      * @param type {@link Type}
      */
+    @NonNull
     public BadgeHelper setBadgeType(@Type int type) {
         this.mType = type;
         return this;
@@ -107,6 +113,7 @@ public class BadgeHelper extends View {
     /**
      * Set the size of text
      */
+    @NonNull
     public BadgeHelper setBadgeTextSize(int textSize) {
         Context c = getContext();
         Resources r;
@@ -123,6 +130,7 @@ public class BadgeHelper extends View {
     /**
      * Set the color of text
      */
+    @NonNull
     public BadgeHelper setBadgeTextColor(@ColorInt int textColor) {
         this.mTextColor = textColor;
         return this;
@@ -133,6 +141,7 @@ public class BadgeHelper extends View {
      *
      * @param isOverlap Whether to make the view overlapped on target view
      */
+    @NonNull
     public BadgeHelper setBadgeOverlap(boolean isOverlap) {
         this.mIsOverlap = isOverlap;
         return this;
@@ -143,6 +152,7 @@ public class BadgeHelper extends View {
      *
      * @param isIgnoreTargetPadding Whether to ignore the padding of target view
      */
+    @NonNull
     public BadgeHelper setIgnoreTargetPadding(boolean isIgnoreTargetPadding) {
         this.mIgnoreTargetPadding = isIgnoreTargetPadding;
         if (!mIsOverlap && isIgnoreTargetPadding) {
@@ -156,6 +166,7 @@ public class BadgeHelper extends View {
      *
      * @param badgeColor The color of badge itself
      */
+    @NonNull
     public BadgeHelper setBadgeColor(int badgeColor) {
         this.mBadgeColor = badgeColor;
         return this;
@@ -167,6 +178,7 @@ public class BadgeHelper extends View {
      * @param width Width
      * @param height Height
      */
+    @NonNull
     public BadgeHelper setBadgeSize(int width, int height) {
         this.mWidth = width;
         this.mHeight = height;
@@ -177,6 +189,7 @@ public class BadgeHelper extends View {
      * Set whether to show the badge
      * @param enabled Whether to show the badge
      */
+    @NonNull
     public BadgeHelper setBadgeEnabled(boolean enabled) {
 
         long duration = getResources().getInteger(
@@ -195,6 +208,7 @@ public class BadgeHelper extends View {
      *
      * @param text The text of badge
      */
+    @NonNull
     public BadgeHelper setBadgeText(@NonNull String text) {
         this.mText = text;
         if (mIsViewBound) {
@@ -203,7 +217,7 @@ public class BadgeHelper extends View {
         return this;
     }
 
-    public void bindToTargetView(TabLayout target, int tabIndex) {
+    public void bindToTargetView(@NonNull TabLayout target, int tabIndex) {
         TabLayout.Tab tab = target.getTabAt(tabIndex);
         View targetView = null;
         View tabView = null;
@@ -235,7 +249,7 @@ public class BadgeHelper extends View {
      *
      * @param target Target view
      */
-    public void bindToTargetView(View target) {
+    public void bindToTargetView(@Nullable View target) {
         init(mType, mIsOverlap);
         if (getParent() != null) {
             ((ViewGroup) getParent()).removeView(this);
@@ -249,7 +263,8 @@ public class BadgeHelper extends View {
             int groupIndex = parent.indexOfChild(target);
             parent.removeView(target);
 
-            if (mIsOverlap) {// Overlap mode
+            // Overlap mode
+            if (mIsOverlap) {
                 FrameLayout badgeContainer = new FrameLayout(getContext());
                 ViewGroup.LayoutParams targetLayoutParams = target.getLayoutParams();
                 badgeContainer.setLayoutParams(targetLayoutParams);
@@ -303,7 +318,8 @@ public class BadgeHelper extends View {
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (mWidth >= 0 && mHeight >= 0) {// Size specified
+        // Size specified
+        if (mWidth >= 0 && mHeight >= 0) {
             setMeasuredDimension(mWidth, mHeight);
             return;
         }
@@ -332,7 +348,7 @@ public class BadgeHelper extends View {
 
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
         mBackgroundPaint.setColor(mBadgeColor);
         mTextPaint.setColor(mTextColor);
@@ -377,11 +393,11 @@ public class BadgeHelper extends View {
         }
     }
 
-    private float getTextWidth(String text, Paint p) {
+    private float getTextWidth(@NonNull String text, @NonNull Paint p) {
         return p.measureText(text, 0, text.length());
     }
 
-    private float getTextHeight(String text, Paint p) {
+    private float getTextHeight(@NonNull String text, @NonNull Paint p) {
         Rect rect = new Rect();
         p.getTextBounds(text, 0, text.length(), rect);
         return rect.height();

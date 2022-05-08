@@ -1,14 +1,13 @@
 package org.exthmui.share.wifidirect;
 
-import static org.exthmui.share.shared.misc.Constants.CONNECTION_CODE_WIFIDIRECT;
-import static org.exthmui.share.shared.misc.Constants.PEER_ID_STRING;
-
 import android.content.Context;
 import android.net.wifi.WpsInfo;
 import android.net.wifi.p2p.WifiP2pConfig;
 import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.util.Log;
+
+import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.misc.Utils;
 
@@ -30,13 +29,13 @@ public abstract class DirectUtils {
         Random random = new Random();
         return random.nextInt(60534) + 5001;
     }
-    public static int getTimeout(Context context) {
+    public static int getTimeout(@NonNull Context context) {
         return Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_timeout), context.getResources().getInteger(R.integer.prefs_default_wifidirect_timeout));
     }
     public static boolean isTimeoutValid(int timeout) {
         return timeout > 0;
     }
-    public static int getServerPort(Context context) {
+    public static int getServerPort(@NonNull Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_server_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_server_port));
         if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
@@ -44,7 +43,7 @@ public abstract class DirectUtils {
         }
         return port;
     }
-    public static int getClientPort(Context context) {
+    public static int getClientPort(@NonNull Context context) {
         int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_client_port), context.getResources().getInteger(R.integer.prefs_default_wifidirect_client_port));
         if (!isClientPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
@@ -58,11 +57,11 @@ public abstract class DirectUtils {
     public static boolean isServerPortValid(Context context, int serverPort) {
         return serverPort == -1 || (isPortValid(serverPort));
     }
-    public static boolean isClientPortValid(Context context, int clientPort) {
+    public static boolean isClientPortValid(@NonNull Context context, int clientPort) {
         return clientPort == -1 || (isPortValid(clientPort) && clientPort != getServerPort(context));
     }
 
-    public static int getBufferSize(Context context) {
+    public static int getBufferSize(@NonNull Context context) {
         int defaultSize = context.getResources().getInteger(R.integer.prefs_default_wifidirect_buffer_size);
         int bufferSize = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_wifidirect_buffer_size), defaultSize);
         if (bufferSize <= 0) {
@@ -72,11 +71,12 @@ public abstract class DirectUtils {
         return bufferSize;
     }
 
+    @NonNull
     public static String genDirectId(String peerId) {
-        return String.format(PEER_ID_STRING, CONNECTION_CODE_WIFIDIRECT, peerId);
+        return peerId;
     }
 
-    public static void connectPeer(Context context, DirectPeer peer, CountDownLatch latch) {
+    public static void connectPeer(@NonNull Context context, @NonNull DirectPeer peer, @NonNull CountDownLatch latch) {
         WifiP2pDevice targetDevice = peer.getWifiP2pDevice();
         DirectManager manager = DirectManager.getInstance(context);
         WifiP2pManager wifiP2pManager = manager.getWifiP2pManager();

@@ -2,6 +2,8 @@ package org.exthmui.share.wifidirect.ssl;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import org.exthmui.share.wifidirect.R;
 
 import java.io.IOException;
@@ -21,7 +23,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 public class Auth {
-    public static SSLContext getSSLContextClient(Context context, boolean mutual) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
+    public static SSLContext getSSLContextClient(@NonNull Context context, boolean mutual) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
         InputStream inputStreamSSLConf = context.getResources().openRawResource(R.raw.sslconf);
         Properties properties = new Properties();
         properties.load(inputStreamSSLConf);
@@ -70,7 +72,7 @@ public class Auth {
         return sslContext;
     }
 
-    public static SSLContext getSSLContextServer(Context context, boolean mutual) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
+    public static SSLContext getSSLContextServer(@NonNull Context context, boolean mutual) throws IOException, KeyStoreException, CertificateException, NoSuchAlgorithmException, UnrecoverableKeyException, KeyManagementException {
         InputStream inputStreamSSLConf = context.getResources().openRawResource(R.raw.sslconf);
         Properties properties = new Properties();
         properties.load(inputStreamSSLConf);

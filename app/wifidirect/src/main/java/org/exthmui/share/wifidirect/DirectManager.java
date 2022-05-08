@@ -30,7 +30,7 @@ import androidx.work.WorkManager;
 
 import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.events.DiscovererErrorOccurredEvent;
@@ -80,7 +80,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;
-    private final Map<String, PeerInfo> mPeers = new HashMap<>();
+    private final Map<String, IPeer> mPeers = new HashMap<>();
     private final Map<String, Map<String, String>> mPeerRecords = new HashMap<>();
     private boolean mDiscovererStarted;
     private boolean mInitialized;
@@ -90,16 +90,19 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     private DirectBroadcastReceiver mBroadcastReceiver;
     private final WifiP2pDnsSdServiceRequest mServiceRequest = WifiP2pDnsSdServiceRequest.newInstance(LOCAL_SERVICE_INSTANCE_NAME, LOCAL_SERVICE_SERVICE_TYPE);
 
-    private DirectManager(Context context) {
+    private DirectManager(@NonNull Context context) {
         this.mContext = context.getApplicationContext();
     }
 
-    public static DirectManager getInstance(Context context) {
-        if (instance == null) instance = new DirectManager(context);
+    public static DirectManager getInstance(@NonNull Context context) {
+        if (instance == null)
+            synchronized (DirectManager.class) {
+                if (instance == null) instance = new DirectManager(context);
+            }
         return instance;
     }
 
-    private void notifyListeners(EventObject event) {
+    private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
@@ -141,8 +144,9 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
         return mDiscovererStarted;
     }
 
+    @NonNull
     @Override
-    public UUID send(DirectPeer peer, List<Entity> entities) {
+    public UUID send(@NonNull DirectPeer peer, @NonNull List<Entity> entities) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectMultiSendingWorker.class)
                 .setInputData(genSendingInputData(peer, entities))
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
@@ -152,7 +156,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
     }
 
     @Override
-    public void registerListener(BaseEventListener listener) {
+    public void registerListener(@NonNull BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
@@ -175,16 +179,16 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
             }
 
             @Override
-            public void onPeersListChanged(Collection<WifiP2pDevice> wifiP2pDeviceList) {
+            public void onPeersListChanged(@NonNull Collection<WifiP2pDevice> wifiP2pDeviceList) {
                 // Do not add peer here
-                Set<PeerInfo> notChanged = new HashSet<>();
-                Set<PeerInfo> updated = new HashSet<>();
-                Set<PeerInfo> removed = new HashSet<>(mPeers.values());
+                Set<IPeer> notChanged = new HashSet<>();
+                Set<IPeer> updated = new HashSet<>();
+                Set<IPeer> removed = new HashSet<>(mPeers.values());
 
                 for (WifiP2pDevice wifiP2pDevice : wifiP2pDeviceList) {
                     Map<String, String> record = mPeerRecords.get(wifiP2pDevice.deviceAddress);
                     if (record == null) return;
-                    DirectPeer oldPeer = (DirectPeer) mPeers.get(DirectUtils.genDirectId(record.get(RECORD_KEY_PEER_ID)));
+                    DirectPeer oldPeer = (DirectPeer) mPeers.get(record.get(RECORD_KEY_PEER_ID));
                     if (oldPeer != null) {
                         if (wifiP2pDevice.equals(oldPeer.getWifiP2pDevice()))
                             notChanged.add(oldPeer);
@@ -198,11 +202,11 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                 }
                 removed.removeAll(notChanged);
                 removed.removeAll(updated);
-                for (PeerInfo peer : updated) {
+                for (IPeer peer : updated) {
                     peer.notifyPeerUpdated();
                     notifyListeners(new PeerUpdatedEvent(this, peer));
                 }
-                for (PeerInfo peer : removed) {
+                for (IPeer peer : removed) {
                     mPeers.remove(peer.getId());
                     notifyListeners(new PeerRemovedEvent(this, peer));
                 }
@@ -246,8 +250,8 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
             WifiP2pManager.DnsSdTxtRecordListener txtListener = new WifiP2pManager.DnsSdTxtRecordListener() {
                 @Override
                 public void onDnsSdTxtRecordAvailable(
-                        String fullDomain, Map record, WifiP2pDevice device) {
-                    Log.d(TAG, "DnsSdTxtRecord available: " + record.toString());
+                        String fullDomain, @NonNull Map record, @NonNull WifiP2pDevice device) {
+                    Log.d(TAG, "DnsSdTxtRecord available: " + record);
                     try {
                         @SuppressWarnings("unchecked") Map<String, String> rec = (Map<String, String>) record;
                         mPeerRecords.put(device.deviceAddress, rec);
@@ -265,17 +269,16 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                             String peerId = rec.get(RECORD_KEY_PEER_ID);
                             String uidStr = rec.get(RECORD_KEY_UID);
                             String serverSign = rec.get(RECORD_KEY_ACCOUNT_SERVER_SIGN);
-                            if (serverPortStr == null || peerId == null || uidStr == null ||
-                                    serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
+                            if (peerId == null || serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
                                     !StringUtils.isNumeric(uidStr)) {
+                                Log.d(TAG, "Invalid DnsSdTxtRecord, ignoring...");
                                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                                 Log.d(TAG, "DnsSdTxtRecord: " + rec);
-                                Log.d(TAG, "Invalid DnsSdTxtRecord, ignoring...");
                                 return;
                             }
                             Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                             Log.d(TAG, "Valid DnsSdTxtRecord, adding peer...");
-                            PeerInfo peer = new DirectPeer(device, shareProtocolVersion,
+                            IPeer peer = new DirectPeer(device, shareProtocolVersion,
                                     Integer.parseInt(serverPortStr),
                                     peerId,
                                     Integer.parseInt(uidStr),
@@ -285,7 +288,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                             notifyListeners(new PeerAddedEvent(this, peer));
                         } else {
                             // Unsupported
-                            Log.d(TAG, "Unsupported protocol version: %s, ignoring...");
+                            Log.w(TAG, "Unsupported protocol version: %s, ignoring...");
                         }
                     } catch (ClassCastException e) {
                         Log.d(TAG, "Failed casting DnsSdTxtRecord,ignoring...");
@@ -377,8 +380,9 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
         });
     }
 
+    @NonNull
     @Override
-    public Map<String, PeerInfo> getPeers() {
+    public Map<String, IPeer> getPeers() {
         return mPeers;
     }
 }

@@ -23,7 +23,7 @@ public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragme
 
     private final String mPluginCode;
     private final SenderInfo mSenderInfo;
-    private final FileInfo mFileInfo;
+    private final FileInfo[] mFileInfos;
     private final String mRequestId;
     private final int mNotificationId;
 
@@ -32,10 +32,10 @@ public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragme
     private Button mAcceptButton;
     private Button mRejectButton;
 
-    public AcceptationRequestBottomSheetFragment(String pluginCode, SenderInfo senderInfo, FileInfo fileInfo, String requestId, int notificationId) {
+    public AcceptationRequestBottomSheetFragment(String pluginCode, SenderInfo senderInfo, FileInfo[] fileInfos, String requestId, int notificationId) {
         this.mPluginCode = pluginCode;
         this.mSenderInfo = senderInfo;
-        this.mFileInfo = fileInfo;
+        this.mFileInfos = fileInfos;
         this.mRequestId = requestId;
         this.mNotificationId = notificationId;
     }
@@ -56,8 +56,8 @@ public class AcceptationRequestBottomSheetFragment extends BaseBottomSheetFragme
         mAcceptButton = view.findViewById(R.id.fragment_acceptation_accept_button);
         mRejectButton = view.findViewById(R.id.fragment_acceptation_reject_button);
 
-        mTitle.setText(requireContext().getString(R.string.dialog_title_accept_or_reject_request, mSenderInfo.getDisplayName(), mFileInfo.getFileName()));
-        mSize.setText(requireContext().getString(R.string.dialog_accept_or_reject_request_size, Formatter.formatFileSize(requireContext(), mFileInfo.getFileSize())));
+        mTitle.setText(requireContext().getString(R.string.dialog_title_accept_or_reject_request, mSenderInfo.getDisplayName(), mFileInfos[0].getFileName()));//TODO: Implement mutliple files UI
+        mSize.setText(requireContext().getString(R.string.dialog_accept_or_reject_request_size, Formatter.formatFileSize(requireContext(), mFileInfos[0].getFileSize())));
 
         mAcceptButton.setOnClickListener(v -> {
             PendingIntent pendingIntent = ReceiverUtils.buildAcceptPendingIntent(requireContext(), mPluginCode, mRequestId, mNotificationId);

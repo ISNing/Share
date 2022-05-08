@@ -21,10 +21,14 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
     private final static int DISCOVER_GRANT_PREFERENCE_ORDER = -2;
     private final static int RECEIVE_GRANT_PREFERENCE_ORDER = -1;
 
+    @Nullable
     private Preference mGrantPreferenceDiscover;
+    @Nullable
     private Preference mGrantPreferenceReceive;
 
+    @Nullable
     private IDiscoverService discoverService;
+    @Nullable
     private IReceiveService receiveService;
 
     private boolean toAddGrantPreferenceDiscover;
@@ -39,6 +43,7 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         return ret;
     }
 
+    @Override
     public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
         onCreatePreferences(savedInstanceState, rootKey, null);
         PreferenceScreen preferenceScreen = getPreferenceScreen();
@@ -49,11 +54,13 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
                 preferenceScreen.addPreference(mGrantPreferenceReceive);
             if (toAddGrantPreferenceDiscover) {
                 toAddGrantPreferenceDiscover = false;
+                assert discoverService != null;
                 addDiscoverGrantPermissionPreference(discoverService);
                 discoverService = null;
             }
             if (toAddGrantPreferenceReceive) {
                 toAddGrantPreferenceReceive = false;
+                assert receiveService != null;
                 addReceiveGrantPermissionPreference(receiveService);
                 receiveService = null;
             }
@@ -62,7 +69,7 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
 
     public abstract void onCreatePreferences(Bundle savedInstanceState, String rootKey, Object ignored);
 
-    public void checkDiscoverPermissions(IDiscoverService discoverService) {
+    public void checkDiscoverPermissions(@NonNull IDiscoverService discoverService) {
         removeDiscoverGrantPermissionPreference();
         if (!discoverService.getDiscovererPermissionsNotGranted(getType().getCode()).isEmpty()) {
             if (isAdded()) {
@@ -74,7 +81,7 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         }
     }
 
-    public void checkReceivePermissions(IReceiveService receiveService) {
+    public void checkReceivePermissions(@NonNull IReceiveService receiveService) {
         removeReceiveGrantPermissionPreference();
 
         if (!receiveService.getReceiverPermissionsNotGranted(getType().getCode()).isEmpty()) {
@@ -87,7 +94,7 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         }
     }
 
-    public void addDiscoverGrantPermissionPreference(IDiscoverService service) {
+    public void addDiscoverGrantPermissionPreference(@NonNull IDiscoverService service) {
         IConnectionType type = getType();
         Preference grantPreference = new Preference(requireContext());
         grantPreference.setTitle(getString(R.string.prefs_title_global_permissions_not_granted_discover, type.getFriendlyName()));
@@ -106,7 +113,7 @@ public abstract class PluginPreferenceFragmentCompat extends PreferenceFragmentC
         getPreferenceScreen().addPreference(mGrantPreferenceDiscover);
     }
 
-    public void addReceiveGrantPermissionPreference(IReceiveService service) {
+    public void addReceiveGrantPermissionPreference(@NonNull IReceiveService service) {
         IConnectionType type = getType();
         Preference grantPreference = new Preference(requireContext());
         grantPreference.setTitle(getString(R.string.prefs_title_global_permissions_not_granted_receive, type.getFriendlyName()));

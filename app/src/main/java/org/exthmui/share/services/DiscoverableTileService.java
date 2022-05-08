@@ -7,6 +7,7 @@ import android.service.quicksettings.TileService;
 import android.util.Log;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
@@ -64,7 +65,7 @@ public class DiscoverableTileService extends TileService {
                 if (mService == null) {
                     mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
-                        public void onServiceConnected(ServiceUtils.MyService service) {
+                        public void onServiceConnected(@NonNull ServiceUtils.MyService service) {
                             ((ReceiveService) service).stopReceivers();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }
@@ -77,7 +78,7 @@ public class DiscoverableTileService extends TileService {
                 if (mService == null) {
                     mConnection.registerOnServiceConnectedListener(new ServiceUtils.OnServiceConnectedListener() {
                         @Override
-                        public void onServiceConnected(ServiceUtils.MyService service) {
+                        public void onServiceConnected(@NonNull ServiceUtils.MyService service) {
                             ((ReceiveService) service).startReceivers();
                             mConnection.unregisterOnServiceConnectedListener(this);
                         }

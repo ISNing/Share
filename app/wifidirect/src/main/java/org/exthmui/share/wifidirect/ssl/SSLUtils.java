@@ -2,6 +2,8 @@ package org.exthmui.share.wifidirect.ssl;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -19,11 +21,12 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 public abstract class SSLUtils {
-    public static SSLServerSocket genMutualServerSocket(Context context) throws UnrecoverableKeyException, CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+    @NonNull
+    public static SSLServerSocket genMutualServerSocket(@NonNull Context context) throws UnrecoverableKeyException, CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
         return SSLUtils.genSSLServerSocket(Auth.getSSLContextServer(context, true), true);
     }
 
-    public static SSLServerSocket genSSLServerSocket(SSLContext sslContext, boolean mutual) throws IOException {
+    public static SSLServerSocket genSSLServerSocket(@NonNull SSLContext sslContext, boolean mutual) throws IOException {
         SSLServerSocketFactory sslServerSocketFactory;
         SSLServerSocket sslServerSocket;
         sslServerSocketFactory = sslContext.getServerSocketFactory();
@@ -46,11 +49,13 @@ public abstract class SSLUtils {
         return sslServerSocket;
     }
 
-    public static SSLSocket genMutualSocket(Context context) throws UnrecoverableKeyException, CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
+    @NonNull
+    public static SSLSocket genMutualSocket(@NonNull Context context) throws UnrecoverableKeyException, CertificateException, IOException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
         return SSLUtils.genSSLSocket(Auth.getSSLContextClient(context, true), true);
     }
 
-    public static SSLSocket genSSLSocket(SSLContext sslContext, boolean mutual) throws IOException {
+    @NonNull
+    public static SSLSocket genSSLSocket(@NonNull SSLContext sslContext, boolean mutual) throws IOException {
         SSLSocketFactory factory = sslContext.getSocketFactory();
         SSLSocket socket = (SSLSocket) factory.createSocket();
         String[] pwdSuits = socket.getSupportedCipherSuites();
@@ -65,11 +70,13 @@ public abstract class SSLUtils {
         return socket;
     }
 
-    public static DataInputStream getDataInput(Socket socket) throws IOException{
+    @NonNull
+    public static DataInputStream getDataInput(@NonNull Socket socket) throws IOException{
         return new DataInputStream(socket.getInputStream());
     }
 
-    public static DataOutputStream getDataOutput(Socket socket) throws IOException{
+    @NonNull
+    public static DataOutputStream getDataOutput(@NonNull Socket socket) throws IOException{
         return new DataOutputStream(socket.getOutputStream());
     }
 }

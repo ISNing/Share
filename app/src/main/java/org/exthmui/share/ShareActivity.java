@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.exthmui.share.services.DiscoverService;
@@ -16,7 +18,7 @@ import java.util.ArrayList;
 public class ShareActivity extends AppCompatActivity {
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (savedInstanceState == null) {
             ShareBottomSheetFragment shareFragment = new ShareBottomSheetFragment();
@@ -26,6 +28,7 @@ public class ShareActivity extends AppCompatActivity {
         grantUriPermissions();
     }
 
+    @NonNull
     private ArrayList<Entity> getEntities() {
         final ArrayList<Entity> entities = new ArrayList<>();
         // From ClipData

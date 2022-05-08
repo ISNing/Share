@@ -7,27 +7,29 @@ import android.util.AttributeSet;
 import android.widget.EditText;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 
 public class IntEditTextPreference extends EditTextPreference implements EditTextPreference.OnBindEditTextListener {
+    @Nullable
     private String mText;
 
-    public IntEditTextPreference(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public IntEditTextPreference(@NonNull Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         setOnBindEditTextListener(this);
     }
 
-    public IntEditTextPreference(Context context, AttributeSet attrs, int defStyleAttr) {
+    public IntEditTextPreference(@NonNull Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         setOnBindEditTextListener(this);
     }
 
-    public IntEditTextPreference(Context context, AttributeSet attrs) {
+    public IntEditTextPreference(@NonNull Context context, AttributeSet attrs) {
         super(context, attrs);
         setOnBindEditTextListener(this);
     }
 
-    public IntEditTextPreference(Context context) {
+    public IntEditTextPreference(@NonNull Context context) {
         super(context);
         setOnBindEditTextListener(this);
     }
@@ -37,10 +39,13 @@ public class IntEditTextPreference extends EditTextPreference implements EditTex
      *
      * @param text The text to save
      */
-    public void setText(String text) {
+    @Override
+    public void setText(@Nullable String text) {
         final boolean wasBlocking = shouldDisableDependents();
 
         mText = text;
+
+        if (text == null) return;
 
         int value = Integer.parseInt(text);
 
@@ -59,12 +64,13 @@ public class IntEditTextPreference extends EditTextPreference implements EditTex
      *
      * @return The current preference value
      */
+    @Override
     public String getText() {
         return mText;
     }
 
     @Override
-    protected void onSetInitialValue(Object defaultValue) {
+    protected void onSetInitialValue(@Nullable Object defaultValue) {
         int value;
         if (defaultValue != null) {
             String strDefaultValue = (String) defaultValue;

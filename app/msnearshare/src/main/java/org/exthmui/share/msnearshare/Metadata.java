@@ -1,10 +1,11 @@
 package org.exthmui.share.msnearshare;
 
 import static org.exthmui.share.shared.misc.Constants.CONNECTION_CODE_MSNEARSHARE;
+import static org.exthmui.share.shared.misc.Constants.CONNECTION_PRIORITY_MSNEARSHARE;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.send.Sender;
@@ -25,9 +26,14 @@ public class Metadata implements IConnectionType {
         return CONNECTION_CODE_MSNEARSHARE;
     }
 
+    @Override
+    public int getPriority() {
+        return CONNECTION_PRIORITY_MSNEARSHARE;
+    }
+
     @NonNull
     @Override
-    public Class<? extends Sender<? extends PeerInfo>> getSenderClass() {
+    public Class<? extends Sender<? extends IPeer>> getSenderClass() {
         return NearShareManager.class;
     }
 
@@ -45,7 +51,7 @@ public class Metadata implements IConnectionType {
 
     @NonNull
     @Override
-    public Class<? extends PeerInfo> getPeerClass() {
+    public Class<? extends IPeer> getPeerClass() {
         return NearSharePeer.class;
     }
 

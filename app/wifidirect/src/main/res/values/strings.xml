@@ -2,16 +2,18 @@
     <!-- Preference Header -->
     <string name="prefs_header_wifidirect">Wifi Direct</string>
 
-    <!-- Port Preference -->
+    <!-- Ports Preference -->
     <string name="prefs_key_wifidirect_server_port" translatable="false">wifidirect_server_port</string>
     <string name="prefs_title_wifidirect_server_port">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
     <string name="prefs_tip_wifidirect_server_port_invalid">Invalid value</string>
-    <string name="prefs_key_wifidirect_buffer_size" translatable="false">wifidirect_buffer_size</string>
-    <string name="prefs_title_wifidirect_buffer_size">Buffer size (Must be same with target device)</string><!-- TODO: is this description precise?-->
-    <string name="prefs_tip_wifidirect_buffer_size_invalid">Invalid value</string>
     <string name="prefs_key_wifidirect_client_port" translatable="false">wifidirect_client_port</string>
     <string name="prefs_title_wifidirect_client_port">Client Port (From 5001 to 65535, -1 for dynamically generate)</string>
     <string name="prefs_tip_wifidirect_client_port_invalid">Invalid value</string>
+
+    <!-- BufferSize Preference -->
+    <string name="prefs_key_wifidirect_buffer_size" translatable="false">wifidirect_buffer_size</string>
+    <string name="prefs_title_wifidirect_buffer_size">Buffer size (Must be same with target device)</string><!-- TODO: is this description precise?-->
+    <string name="prefs_tip_wifidirect_buffer_size_invalid">Invalid value</string>
 
     <!-- Timeout Preference -->
     <string name="prefs_key_wifidirect_timeout" translatable="false">wifidirect_timeout</string>

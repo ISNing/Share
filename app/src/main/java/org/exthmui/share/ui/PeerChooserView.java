@@ -14,7 +14,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.MutableLiveData;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -78,13 +78,14 @@ public class PeerChooserView extends FrameLayout {
                 .addToBackStack(PeerChooserFragment.TAG)
                 .commit();
         mPeerChooserFragment.setOnPeerSelectedListener(new PeersAdapter.OnPeerSelectedListener() {
-            FragmentTransaction addSharedElements(FragmentTransaction transaction, PeerInfo peer, PeersAdapter.ViewHolder holder) {
+            @NonNull
+            FragmentTransaction addSharedElements(@NonNull FragmentTransaction transaction, @NonNull IPeer peer, @NonNull PeersAdapter.ViewHolder holder) {
                 return transaction.addSharedElement(holder.getPeerIcon(),
                         getContext().getString(R.string.transition_name_peer_icon, peer.getId()));
             }
 
             @Override
-            public boolean onPeerSelected(PeerInfo peer, PeersAdapter.ViewHolder holder) {
+            public boolean onPeerSelected(@NonNull IPeer peer, @NonNull PeersAdapter.ViewHolder holder) {
                 mPeerInformationFragment.setPeer(peer);
                 addSharedElements(fragmentManager.beginTransaction(), peer, holder)
                         .hide(mPeerChooserFragment)
@@ -94,14 +95,16 @@ public class PeerChooserView extends FrameLayout {
             }
         });
         mPeerInformationFragment.setOnBackPressedListener(new PeerInformationView.OnBackPressedListener() {
-            FragmentTransaction addSharedElements(FragmentTransaction transaction, PeerInfo peer, PeerInformationView view) {
+            @NonNull
+            FragmentTransaction addSharedElements(@NonNull FragmentTransaction transaction, @NonNull IPeer peer, @NonNull PeerInformationView view) {
                 return transaction.addSharedElement(view.getPeerIcon(),
                         getContext().getString(R.string.transition_name_peer_icon, peer.getId()));
             }
 
             @Override
-            public void onBackPressed(PeerInformationView view, PeerInfo peer) {
-                mPeerChooserFragment.getPeerSelectedLiveData().setValue(null);
+            public void onBackPressed(@NonNull PeerInformationView view, @NonNull IPeer peer) {
+                MutableLiveData<String> peerSelected = mPeerChooserFragment.getPeerSelectedLiveData();
+                if (peerSelected != null) peerSelected.setValue(null);
                 addSharedElements(fragmentManager.beginTransaction(), peer, view)
                         .hide(mPeerInformationFragment)
                         .show(mPeerChooserFragment)
@@ -110,33 +113,35 @@ public class PeerChooserView extends FrameLayout {
         });
     }
 
-    public void setData(Map<String, PeerInfo> peers) {
+    public void setData(@NonNull Map<String, IPeer> peers) {
         mPeerChooserFragment.setData(peers);
         if (peers.isEmpty()) {
             setState(STATE_ENABLED_NO_PEER);
         } else setStateInternal(STATE_ENABLED);
     }
 
-    public void addPeer(PeerInfo peer) {
+    public void addPeer(@NonNull IPeer peer) {
         mPeerChooserFragment.addPeer(peer);
         setStateInternal(STATE_ENABLED);
     }
 
-    public void updatePeer(PeerInfo peer) {
+    public void updatePeer(@NonNull IPeer peer) {
         mPeerChooserFragment.updatePeer(peer);
     }
 
-    public void removePeer(PeerInfo peer) {
+    public void removePeer(@NonNull IPeer peer) {
         mPeerChooserFragment.removePeer(peer);
         if (mPeerChooserFragment.getAdapter().getItemCount() == 0) {
             setState(STATE_ENABLED_NO_PEER);
         }
     }
 
+    @Nullable
     public String getPeerSelected() {
         return mPeerChooserFragment.getPeerSelected();
     }
 
+    @Nullable
     public MutableLiveData<String> getPeerSelectedLiveData() {
         return mPeerChooserFragment.getPeerSelectedLiveData();
     }
@@ -154,8 +159,8 @@ public class PeerChooserView extends FrameLayout {
 
     /**
      * Set state of scanning service
-     * ATTENTION: Can be overwritten by {@link #setData(Map)}, {@link #addPeer(PeerInfo)},
-     * {@link #removePeer(PeerInfo)}
+     * ATTENTION: Can be overwritten by {@link #setData(Map)}, {@link #addPeer(IPeer)},
+     * {@link #removePeer(IPeer)}
      *
      * @param state A value in range of {@link #STATE_ENABLED_NO_PEER}, {@link #STATE_DISABLED},
      *              {@link #STATE_UNAVAILABLE}

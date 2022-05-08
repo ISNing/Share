@@ -2,7 +2,7 @@ package org.exthmui.share.shared.base.file;
 
 import androidx.annotation.NonNull;
 
-public class ImgFolderBean {
+public class ImageFolder {
     /**
      * 当前文件夹的路径
      */
@@ -24,7 +24,7 @@ public class ImgFolderBean {
         return dir;
     }
 
-    public void setDir(String dir) {
+    public void setDir(@NonNull String dir) {
         this.dir = dir;
         int lastIndex = dir.lastIndexOf("/");
         this.name = dir.substring(lastIndex + 1);
@@ -50,10 +50,10 @@ public class ImgFolderBean {
         this.count = count;
     }
 
-    public ImgFolderBean() {
+    public ImageFolder() {
     }
 
-    public ImgFolderBean(String dir, String fistImgPath, String name, int count) {
+    public ImageFolder(String dir, String fistImgPath, String name, int count) {
         this.dir = dir;
         this.fistImgPath = fistImgPath;
         this.name = name;

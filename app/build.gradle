@@ -23,13 +23,20 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    
     compileOptions {
         sourceCompatibility rootProject.ext.sourceCompatibility
         targetCompatibility rootProject.ext.targetCompatibility
     }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+    }
 }
 
 dependencies {
+
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
 
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
@@ -42,4 +49,7 @@ dependencies {
     implementation 'androidx.preference:preference:1.2.0'
     implementation project(path: ':app:wifidirect')
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
+    implementation project(path: ':app:web')
+    implementation project(path: ':app:web')
+    implementation project(path: ':app:lannsd')
 }

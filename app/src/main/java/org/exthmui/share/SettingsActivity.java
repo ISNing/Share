@@ -45,7 +45,7 @@ public class SettingsActivity extends AppCompatActivity {
     LinearLayout mPreferencesContainer;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.settings_activity);
 
@@ -65,7 +65,7 @@ public class SettingsActivity extends AppCompatActivity {
 
             try {
                 addFragments();
-            } catch (IllegalAccessException | InstantiationException e) {
+            } catch (@NonNull IllegalAccessException | InstantiationException e) {
                 e.printStackTrace();
             }
         } else {
@@ -110,7 +110,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void checkGrantPermissionPreferences(PluginPreferenceFragmentCompat preferenceFragment) {
+    private void checkGrantPermissionPreferences(@NonNull PluginPreferenceFragmentCompat preferenceFragment) {
             Constants.ConnectionType type = Constants.ConnectionType.parseFromPreferenceFragmentClass(preferenceFragment.getClass());
             if (type == null) return;
             if (mDiscoverService == null)
@@ -172,14 +172,16 @@ public class SettingsActivity extends AppCompatActivity {
             mDiscoverService.beforeUnbind();
         }
         unbindService(mDiscoverConnection);
+        mDiscoverService = null;
         if (mReceiveService != null) {
             mReceiveService.beforeUnbind();
         }
         unbindService(mReceiveConnection);
+        mReceiveService = null;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         if (item.getItemId() == android.R.id.home) {
             onBackPressed();
         }

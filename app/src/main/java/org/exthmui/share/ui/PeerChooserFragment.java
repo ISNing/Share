@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.MutableLiveData;
@@ -20,7 +21,7 @@ import com.google.android.material.transition.MaterialContainerTransform;
 import com.google.android.material.transition.MaterialFadeThrough;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.misc.CrossFadeUtils;
 
 import java.util.Map;
@@ -37,6 +38,7 @@ public class PeerChooserFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private final PeersAdapter mAdapter = new PeersAdapter();
 
+    @Nullable
     private View.OnClickListener mEnableButtonOnClickListener;
 
     @PeerChooserView.State
@@ -60,7 +62,7 @@ public class PeerChooserFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_peer_chooser, container, false);
 
@@ -161,30 +163,33 @@ public class PeerChooserFragment extends Fragment {
         }
     }
 
-    void setData(Map<String, PeerInfo> peers) {
+    void setData(Map<String, IPeer> peers) {
         mAdapter.setData(peers);
     }
 
-    void addPeer(PeerInfo peer) {
+    void addPeer(@NonNull IPeer peer) {
         mAdapter.addPeer(peer);
     }
 
-    void updatePeer(PeerInfo peer) {
+    void updatePeer(@NonNull IPeer peer) {
         mAdapter.updatePeer(peer);
     }
 
-    void removePeer(PeerInfo peer) {
+    void removePeer(@NonNull IPeer peer) {
         mAdapter.removePeer(peer);
     }
 
+    @Nullable
     String getPeerSelected() {
         return mAdapter.getPeerSelected();
     }
 
+    @Nullable
     MutableLiveData<String> getPeerSelectedLiveData() {
         return mAdapter.getPeerSelectedLiveData();
     }
 
+    @NonNull
     PeersAdapter getAdapter() {
         return mAdapter;
     }

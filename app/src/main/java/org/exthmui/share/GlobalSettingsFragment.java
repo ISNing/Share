@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.text.InputFilter;
 import android.text.InputType;
+import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,15 +41,19 @@ import java.util.Set;
 public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     MultiSelectListPreference pluginsEnabledPrefs;
     ServiceConnection mDiscoverConnection;
+    @Nullable
     DiscoverService mDiscoverService;
     ServiceConnection mReceiveConnection;
+    @Nullable
     ReceiveService mReceiveService;
 
+    @Nullable
     ClickableStringPreference mDestinationDirectoryPrefs;
 
     ActivityResultLauncher<?> mDestinationDirectoryActivityResultLauncher;
 
-    public String buildSummaryForPluginsEnabledPrefs(Collection<String> codes) {
+    @NonNull
+    public String buildSummaryForPluginsEnabledPrefs(@Nullable Collection<String> codes) {
         if (codes == null) codes = Collections.emptySet();
         Constants.ConnectionType[] types = Constants.ConnectionType.values();
         String summaryPrefix = getString(R.string.prefs_summary_global_plugins_enabled_prefix);
@@ -160,7 +166,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                     }
                 }
             } catch (ClassCastException ignored) {
-            } catch (IllegalAccessException | java.lang.InstantiationException exception) {
+            } catch (@NonNull IllegalAccessException | java.lang.InstantiationException exception) {
                 exception.printStackTrace();
             }
             return true;
@@ -174,12 +180,12 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             return true;
         });
         mDestinationDirectoryPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
-            if (newValue == null) {
+            if (TextUtils.isEmpty((String) newValue)) {
                 mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
             } else mDestinationDirectoryPrefs.setSummary((String) newValue);
             return true;
         });
-        if (mDestinationDirectoryPrefs.getValue() == null) {
+        if (TextUtils.isEmpty(mDestinationDirectoryPrefs.getValue())) {
             mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
         } else mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
 
@@ -194,7 +200,13 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
 
         EditTextPreference deviceNamePrefs = findPreference(getString(R.string.prefs_key_global_device_name));
         assert deviceNamePrefs != null;
-        deviceNamePrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT));
+        deviceNamePrefs.setOnBindEditTextListener(editText -> {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT);
+            editText.setFilters(new InputFilter[]{
+                    new InputFilter.LengthFilter(
+                            org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH)
+            });
+        });
         deviceNamePrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             if (newValue != null){
                 String newValueStr = (String) newValue;
@@ -207,13 +219,15 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                     return false;
                 }
             } else {
-                deviceNamePrefs.setSummary(Utils.getDeviceNameOnBoard(requireContext()));
+                String deviceName = Utils.getDeviceNameOnBoard(requireContext());
+                if (deviceName.length() > org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH)
+                    deviceName = deviceName.substring(0,
+                        org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH);
+                deviceNamePrefs.setSummary(deviceName);
                 return true;
             }
         });
-        if (deviceNamePrefs.getText() != null)
-            deviceNamePrefs.setSummary(deviceNamePrefs.getText());
-        else deviceNamePrefs.setSummary(Utils.getDeviceNameOnBoard(requireContext()));
+        deviceNamePrefs.setSummary(Utils.getSelfName(requireContext()));
 
         ClickableStringPreference peerIdPrefs = findPreference(getString(R.string.prefs_key_global_peer_id));
         assert peerIdPrefs != null;
@@ -241,7 +255,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
-            if (uri != null) mDestinationDirectoryPrefs.setValue(uri.toString());
+            if (mDestinationDirectoryPrefs != null) mDestinationDirectoryPrefs.setValue(uri == null ? "" : uri.toString());
         });
     }
 }

@@ -2,67 +2,69 @@ package org.exthmui.share.controller;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
-import android.os.CancellationSignal;
 import android.provider.MediaStore;
 import android.util.Size;
 
-import androidx.annotation.RequiresApi;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.exthmui.share.shared.base.file.AppInfo;
 import org.exthmui.share.shared.base.file.AudioFile;
 import org.exthmui.share.shared.base.file.File;
-import org.exthmui.share.shared.base.file.ImgFolderBean;
+import org.exthmui.share.shared.base.file.ImageFile;
+import org.exthmui.share.shared.base.file.ImageFolder;
 import org.exthmui.share.shared.base.file.VideoFile;
+import org.exthmui.share.shared.base.mediastore.Audio;
+import org.exthmui.share.shared.base.mediastore.Image;
+import org.exthmui.share.shared.base.mediastore.Utils;
+import org.exthmui.share.shared.base.mediastore.Video;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.FileUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class FileManager {
+    private final ContentResolver mContentResolver;
+    private final Size mThumbSize;
+    private final int mThumbKind;
 
-    private static FileManager mInstance;
-    private final Context mContext;
-    private static ContentResolver mContentResolver;
-    private static final Object mLock = new Object();
-
-    public static FileManager getInstance(Context context){
-        if (mInstance == null){
-            synchronized (mLock){
-                if (mInstance == null){
-                    mInstance = new FileManager(context);
-                }
-            }
-        }
-        return mInstance;
-    }
-
-    public FileManager(Context ctx){
-        mContext = ctx;
+    public FileManager(@NonNull Context ctx, @Nullable Size thumbSize, int mThumbKind){
         mContentResolver = ctx.getContentResolver();
+        mThumbSize = thumbSize;
+        this.mThumbKind = mThumbKind;
     }
 
+    @NonNull
     public List<AudioFile> getAudios() {
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI;
+        }
+
         ArrayList<AudioFile> audios = new ArrayList<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null,
+
+        try (Cursor c = mContentResolver.query(collection, null, null, null,
                 MediaStore.Audio.Media.DEFAULT_SORT_ORDER)) {
 
             while (c.moveToNext()) {
-                AudioFile audioFile = new AudioFile(c);
-                if (!FileUtils.isExists(audioFile.getFilePath())) {
-                    continue;
-                }
+                Audio audio = new Audio(c);
+                AudioFile audioFile = new AudioFile(audio);
+
+                Bitmap thumbnail;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    thumbnail = Utils.getThumbnail(mContentResolver, audio.getUri(), mThumbSize);
+                else thumbnail = Utils.getAudioAlbumArt(mContentResolver, audio.getAlbumUri());
+                audioFile.setThumbnail(thumbnail);
 
                 audios.add(audioFile);
             }
@@ -73,16 +75,28 @@ public class FileManager {
         return audios;
     }
 
+    @NonNull
     public List<VideoFile> getVideos() {
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        }
 
         List<VideoFile> videos = new ArrayList<>();
 
-        try (Cursor c = mContentResolver.query(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Video.Media.DEFAULT_SORT_ORDER)) {
+        try (Cursor c = mContentResolver.query(collection, null, null, null, MediaStore.Video.Media.DEFAULT_SORT_ORDER)) {
             while (c.moveToNext()) {
-                VideoFile videoFile = new VideoFile(c);
-                if (!FileUtils.isExists(videoFile.getFilePath())) {
-                    continue;
-                }
+                Video video = new Video(c);
+                VideoFile videoFile = new VideoFile(video);
+
+                Bitmap thumbnail;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    thumbnail = Utils.getThumbnail(mContentResolver, video.getUri(), mThumbSize);
+                else thumbnail = Utils.getVideoThumbnail(mContentResolver, video.getId(), mThumbKind);
+                videoFile.setThumbnail(thumbnail);
+
                 videos.add(videoFile);
             }
         } catch (Exception e) {
@@ -91,36 +105,53 @@ public class FileManager {
         return videos;
     }
 
-    // For Api lower than Q
-    @SuppressWarnings("deprecated")
-    public Bitmap getVideoThumbnail(int id) {
-        Bitmap bitmap;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        bitmap = MediaStore.Video.Thumbnails.getThumbnail(mContentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, options);
-        return bitmap;
-    }
+    @NonNull
+    public List<ImageFile> getImages() {
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        }
 
-    @RequiresApi(api = Build.VERSION_CODES.Q)
-    public Bitmap getVideoThumbnail(Context context, Uri mediaUri, Size size) throws IOException {
-        Bitmap bitmap;
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inPreferredConfig = Bitmap.Config.ARGB_8888;
-        CancellationSignal cs = new CancellationSignal();
-        bitmap = context.getContentResolver().loadThumbnail(mediaUri, size, cs);
-        return bitmap;
-    }
+        List<ImageFile> images = new ArrayList<>();
 
-    public List<File> getFilesByType(int fileType) {
-        List<File> files = new ArrayList<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Files.getContentUri("external"), null, null, null, null)) {
+        try (Cursor c = mContentResolver.query(collection, null, null, null, MediaStore.Images.Media.DEFAULT_SORT_ORDER)) {
             while (c.moveToNext()) {
-                File file = new File(c);
+                Image image = new Image(c);
+                ImageFile imageFile = new ImageFile(image);
 
-                if (FileUtils.getFileType(file.getFilePath()).getNumVal() == fileType) {
-                    if (!FileUtils.isExists(file.getFilePath())) {
-                        continue;
-                    }
+                Bitmap thumbnail;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                    thumbnail = Utils.getThumbnail(mContentResolver, image.getUri(), mThumbSize);
+                else thumbnail = Utils.getImageThumbnail(mContentResolver, image.getId(), mThumbKind);
+                imageFile.setThumbnail(thumbnail);
+
+                images.add(imageFile);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return images;
+    }
+
+    @NonNull
+    public List<File> getFilesByType(int fileType) {
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Files.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Files.getContentUri("external");
+        }
+
+        List<File> files = new ArrayList<>();
+
+        try (Cursor c = mContentResolver.query(collection, null, null, null, null)) {
+            while (c.moveToNext()) {
+                org.exthmui.share.shared.base.mediastore.File fileM = new org.exthmui.share.shared.base.mediastore.File(c);
+                File file = new File(fileM);
+
+                if (FileUtils.getFileType(file.getName() == null ? "" : file.getName()).getNumVal() == fileType) {
                     files.add(file);
                 }
             }
@@ -130,9 +161,18 @@ public class FileManager {
         return files;
     }
 
-    public List<ImgFolderBean> getImageFolders() {
-        List<ImgFolderBean> folders = new ArrayList<>();
-        try (Cursor c = mContentResolver.query(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, null,
+    @NonNull
+    public List<ImageFolder> getImageFolders() {
+        Uri collection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            collection = MediaStore.Images.Media.getContentUri(MediaStore.VOLUME_EXTERNAL);
+        } else {
+            collection = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        }
+
+        List<ImageFolder> folders = new ArrayList<>();
+
+        try (Cursor c = mContentResolver.query(collection, null,
                 MediaStore.Images.Media.MIME_TYPE + "= ? or " + MediaStore.Images.Media.MIME_TYPE + "= ?",
                 new String[]{"image/jpeg", "image/png"}, MediaStore.Images.Media.DATE_MODIFIED)) {
             List<String> mDirs = new ArrayList<>();// Directories added
@@ -147,7 +187,7 @@ public class FileManager {
                     continue;
 
                 mDirs.add(dir);
-                ImgFolderBean folderBean = new ImgFolderBean();
+                ImageFolder folderBean = new ImageFolder();
                 folderBean.setDir(dir);
                 folderBean.setFistImgPath(path);
                 if (parentFile.list() == null)
@@ -164,7 +204,8 @@ public class FileManager {
         return folders;
     }
 
-    public List<String> getImgListByDir(String dir) {
+    @NonNull
+    public List<String> getImageListByDir(@NonNull String dir) {
         ArrayList<String> imgPaths = new ArrayList<>();
         java.io.File directory = new java.io.File(dir);
         if (!directory.exists()) {
@@ -182,44 +223,18 @@ public class FileManager {
         return imgPaths;
     }
 
-    @SuppressWarnings("deprecated")
-    public List<AppInfo> getAppInfos(Context ctx) {
+    @NonNull
+    public List<AppInfo> getAppInfos(@NonNull Context ctx) {
 
         ArrayList<AppInfo> appInfos = new ArrayList<>();
         PackageManager packageManager = ctx.getPackageManager();
         List<PackageInfo> installedPackages = packageManager.getInstalledPackages(0);
 
         for (PackageInfo packageInfo : installedPackages) {
-
-            AppInfo appInfo = new AppInfo();
-
-            appInfo.setApplicationInfo(packageInfo.applicationInfo);
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-                appInfo.setVersionCode(packageInfo.getLongVersionCode());
-            else appInfo.setVersionCode(packageInfo.versionCode);
-
-            Drawable drawable = packageInfo.applicationInfo.loadIcon(packageManager);
-            appInfo.setIcon(drawable);
-
-            String apkName = packageInfo.applicationInfo.loadLabel(packageManager).toString();
-            appInfo.setApkName(apkName);
-
-            String packageName = packageInfo.packageName;
-            appInfo.setApkPackageName(packageName);
-
-            String sourceDir = packageInfo.applicationInfo.sourceDir;
-            java.io.File file = new java.io.File(sourceDir);
-
-            long size = file.length();
-            appInfo.setApkSize(size);
-
-            int flags = packageInfo.applicationInfo.flags;
-
-            appInfo.setIsUserApp((flags & ApplicationInfo.FLAG_SYSTEM) == 0);
-
-            appInfo.setIsRom((flags & ApplicationInfo.FLAG_EXTERNAL_STORAGE) == 0);
+            AppInfo appInfo = new AppInfo(packageInfo, packageManager);
             appInfos.add(appInfo);
         }
+
         return appInfos;
     }
 

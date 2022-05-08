@@ -6,21 +6,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.List;
 
-public interface PeerInfo {
-    void registerOnPeerUpdatedListener(OnPeerUpdatedListener listener);
-    void unregisterOnPeerUpdatedListener(OnPeerUpdatedListener listener);
+public interface IPeer {
+    void registerOnPeerUpdatedListener(@NonNull OnPeerUpdatedListener listener);
+    void unregisterOnPeerUpdatedListener(@NonNull OnPeerUpdatedListener listener);
 
     void notifyPeerUpdated();
 
     /**
-     * @return The identifier of this peer. MUST conform with the form of "{@link #getConnectionType()}:[CUSTOMIZED_INTERNAL_ID]"
+     * @return The identifier of this peer. MUST conform with the form of "{@link #getConnectionType().getCode()}:[CUSTOMIZED_INTERNAL_ID]"
      */
     @NonNull String getId();
 
@@ -54,7 +54,8 @@ public interface PeerInfo {
     /**
      * @return Constant, the type of the connection e.g."wlandirect, "msnearshare"...
      */
-    @NonNull String getConnectionType();
+    @NonNull
+    IConnectionType getConnectionType();
 
     /**
      * @return Whether this peer is paired/trusted
@@ -81,8 +82,5 @@ public interface PeerInfo {
     /**
      * @return The detail message will be shown on user interface. Allowed to be customized by each type of Peer.
      */
-    default LiveData<List<WorkInfo>> getAllWorkInfosLiveData(Context ctx) {
-        String workName = Constants.WORK_NAME_PREFIX_SEND + getId();
-        return WorkManager.getInstance(ctx).getWorkInfosForUniqueWorkLiveData(workName);
-    }
+    @NonNull LiveData<List<WorkInfo>> getAllWorkInfosLiveData(@NonNull Context ctx);
 }

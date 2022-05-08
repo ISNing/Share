@@ -44,7 +44,7 @@ public class UnknownErrorException extends TransmissionException {
     @NonNull
     @Override
     public Constants.TransmissionStatus getStatus() {
-        return Constants.TransmissionStatus.UNKNOWN_ERROR;
+        return Constants.TransmissionStatus.ERROR;
     }
 
     @NonNull

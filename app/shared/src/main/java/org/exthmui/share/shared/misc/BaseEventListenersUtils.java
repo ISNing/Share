@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.EventObject;
 
 public abstract class BaseEventListenersUtils {
-    public static boolean isThisListenerSuitable(BaseEventListener listener, Class<? extends BaseEventListener>[] listenerTypesAllowed) {
+    public static boolean isThisListenerSuitable(@NonNull BaseEventListener listener, @NonNull Class<? extends BaseEventListener>[] listenerTypesAllowed) {
         for (Class<? extends BaseEventListener> t : listenerTypesAllowed) {
             if (t.isAssignableFrom(listener.getClass())) {
                 return true;
@@ -21,16 +21,16 @@ public abstract class BaseEventListenersUtils {
 
     public static void notifyListeners(@NonNull EventObject event, @NonNull Collection<BaseEventListener> listeners) {
         for (BaseEventListener listener : listeners) {
-            for (Class<? extends EventObject> t: listener.getEventTMethodMap().keySet()) {
+            for (Class<? extends EventObject> t: listener.getEventToMethodMap().keySet()) {
                 if (t.isAssignableFrom(event.getClass())){
-                    Method[] methods = listener.getEventTMethodMap().get(t);
+                    Method[] methods = listener.getEventToMethodMap().get(t);
                     if (methods == null) break;
                     for (Method method: methods) {
                         try {
                             Method actualMethod = listener.getClass().getDeclaredMethod(method.getName(), method.getParameterTypes());
 
                             actualMethod.invoke(listener, event);
-                        } catch (NoSuchMethodException | IllegalAccessException e) {
+                        } catch (@NonNull NoSuchMethodException | IllegalAccessException e) {
                             e.printStackTrace();
                         } catch (InvocationTargetException e) {
                             Throwable targetException = e.getTargetException();

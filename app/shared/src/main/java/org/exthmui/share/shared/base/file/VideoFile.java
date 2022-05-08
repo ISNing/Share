@@ -1,35 +1,49 @@
 package org.exthmui.share.shared.base.file;
 
-import android.database.Cursor;
-import android.os.Build;
-import android.provider.MediaStore;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public class VideoFile extends File implements FileInfo {
+import org.exthmui.share.shared.base.mediastore.Video;
 
-    private float capture_framerate;
+public class VideoFile extends File {
+
     private int height;
     private int width;
     private int duration;
+    private float captureFramerate;
+    private int bitrate;
+    @Nullable
+    private String category;
+    @Nullable
+    private String description;
+    @Nullable
+    private String language;
+    @Nullable
+    private String tags;
 
-    public VideoFile(Cursor c) {
-        super(c);
-
-        this.height = c.getInt(c.getColumnIndexOrThrow(MediaStore.Audio.Media.HEIGHT));
-        this.width = c.getInt(c.getColumnIndexOrThrow(MediaStore.Audio.Media.WIDTH));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            this.duration = c.getInt(c.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));
-        }
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            this.capture_framerate = c.getFloat(c.getColumnIndexOrThrow(MediaStore.Audio.Media.CAPTURE_FRAMERATE));
-        }
+    public VideoFile() {
     }
 
-    public float getCapture_framerate() {
-        return capture_framerate;
+    public VideoFile(@NonNull Video video) {
+        super(video);
+
+        this.height = video.getHeight();
+        this.width = video.getWidth();
+        this.duration = video.getDuration();
+        this.captureFramerate = video.getCaptureFrameRate();
+        this.bitrate = video.getBitrate();
+        this.category = video.getCategory();
+        this.description = video.getDescription();
+        this.language = video.getLanguage();
+        this.tags = video.getTags();
     }
 
-    public void setCapture_framerate(float capture_framerate) {
-        this.capture_framerate = capture_framerate;
+    public float getCaptureFramerate() {
+        return captureFramerate;
+    }
+
+    public void setCaptureFramerate(float captureFramerate) {
+        this.captureFramerate = captureFramerate;
     }
 
     public int getHeight() {
@@ -54,5 +68,49 @@ public class VideoFile extends File implements FileInfo {
 
     public void setDuration(int duration) {
         this.duration = duration;
+    }
+
+    public int getBitrate() {
+        return bitrate;
+    }
+
+    public void setBitrate(int bitrate) {
+        this.bitrate = bitrate;
+    }
+
+    @Nullable
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(@Nullable String category) {
+        this.category = category;
+    }
+
+    @Nullable
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(@Nullable String description) {
+        this.description = description;
+    }
+
+    @Nullable
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(@Nullable String language) {
+        this.language = language;
+    }
+
+    @Nullable
+    public String getTags() {
+        return tags;
+    }
+
+    public void setTags(@Nullable String tags) {
+        this.tags = tags;
     }
 }

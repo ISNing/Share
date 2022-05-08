@@ -16,6 +16,7 @@ import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 import androidx.work.impl.utils.futures.SettableFuture;
@@ -78,6 +79,7 @@ public class DirectMultiSendingWorker extends SendingWorker {
         return new Metadata();
     }
 
+    @Nullable
     final AtomicReference<ServerSocket> serverSocketToClientReference = new AtomicReference<>(null);
 
     @SuppressLint("RestrictedApi")
@@ -180,7 +182,9 @@ public class DirectMultiSendingWorker extends SendingWorker {
         succeeded[0] = SettableFuture.create();
 
         Thread senderServerThread = new Thread() {
+            @Nullable
             DataInputStream dataInputStream = null;
+            @Nullable
             BufferedReader bufferedReader = null;
 
             @SuppressLint("RestrictedApi")
@@ -340,7 +344,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
                     socketToClientReference.get().close();// Disconnect if connected
                     socketToClientReference.set(null);
                 }
-                serverSocketToClientReference.get().setSoTimeout(timeout);// Set timeout TODO: check timeout working
+                // Set timeout TODO: check timeout working
+                serverSocketToClientReference.get().setSoTimeout(timeout);
                 try {
                     socketToClientReference.set(serverSocketToClientReference.get().accept());
                 } catch (SocketTimeoutException e) {
@@ -348,7 +353,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
                 }
                 if (socketToClientReference.get() == null) continue;
                 address = socketToClientReference.get().getInetAddress().getAddress();
-            } while (!Arrays.equals(oriAddress, address)); // Ensure the connection is from identical address
+                // Ensure the connection is from identical address
+            } while (!Arrays.equals(oriAddress, address));
             // Connection established
             serverSocketToClientReference.get().setSoTimeout(0);
             updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
@@ -357,10 +363,12 @@ public class DirectMultiSendingWorker extends SendingWorker {
             senderServerThread.start();
 
             // Read ACCEPT or REJECT command
-            isAccepted[0] = SettableFuture.create();// Re-initialize acceptation status
+            // Re-initialize acceptation status
+            isAccepted[0] = SettableFuture.create();
 
             updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-            if (!isAccepted[0].get()) {// Will block until accepted or rejected
+            // Will block until accepted or rejected
+            if (!isAccepted[0].get()) {
                 Log.d(TAG, "User rejected receiving file");
                 return genRejectedResult(getApplicationContext());
             }
@@ -414,7 +422,8 @@ public class DirectMultiSendingWorker extends SendingWorker {
             socketToServer = null;
 
             // Read SUCCESS or FAILURE command
-            succeeded[0] = SettableFuture.create();// Re-initialize success status
+            // Re-initialize success status
+            succeeded[0] = SettableFuture.create();
 
             if (!succeeded[0].get()) {// Will block until accepted or rejected
                 Log.d(TAG, "User failed receiving file");
@@ -436,10 +445,10 @@ public class DirectMultiSendingWorker extends SendingWorker {
         } catch (SocketTimeoutException e) {
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new TimedOutException(getApplicationContext(), e));
-        } catch (IOException | ExecutionException | InterruptedException e) {
+        } catch (@NonNull IOException | ExecutionException | InterruptedException e) {
             Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
-        } catch (UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
+        } catch (@NonNull UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
             Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return genFailureResult(new UnknownErrorException(getApplicationContext(), e));

@@ -10,11 +10,12 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Objects;
 
 public class NearSharePeer extends Peer {
-    public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_MSNEARSHARE;
+
     final RemoteSystem remoteSystem;
 
     public NearSharePeer(RemoteSystem remoteSystem) {
@@ -22,7 +23,7 @@ public class NearSharePeer extends Peer {
     }
 
     @Override
-    public void registerOnPeerUpdatedListener(OnPeerUpdatedListener listener) {
+    public void registerOnPeerUpdatedListener(@NonNull OnPeerUpdatedListener listener) {
 
     }
 
@@ -34,7 +35,7 @@ public class NearSharePeer extends Peer {
     @NonNull
     @Override
     public String getId() {
-        return String.format(Constants.PEER_ID_STRING, getConnectionType(), remoteSystem.getId());
+        return String.format(Constants.PEER_ID_STRING, getConnectionType().getCode(), remoteSystem.getId());
     }
 
     @NonNull
@@ -73,8 +74,8 @@ public class NearSharePeer extends Peer {
 
     @NonNull
     @Override
-    public String getConnectionType() {
-        return CONNECTION_CODE;
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     @Override
@@ -98,5 +99,18 @@ public class NearSharePeer extends Peer {
     @Override
     public String getDetailMessage() {
         return null;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NearSharePeer)) return false;
+        NearSharePeer that = (NearSharePeer) o;
+        return Objects.equals(remoteSystem, that.remoteSystem);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(remoteSystem);
     }
 }

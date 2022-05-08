@@ -3,7 +3,7 @@ package org.exthmui.share.shared.base.receive;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.PeerInfoTransfer;
 
 public class SenderInfo extends PeerInfoTransfer {
@@ -12,7 +12,7 @@ public class SenderInfo extends PeerInfoTransfer {
     public SenderInfo() {
     }
 
-    public SenderInfo(@NonNull PeerInfo peer, @IntRange(from = 5001, to = 65535) int clientPort) {
+    public SenderInfo(@NonNull IPeer peer, @IntRange(from = 5001, to = 65535) int clientPort) {
         super(peer);
         this.clientPort = clientPort;
     }

@@ -9,6 +9,8 @@ import android.net.wifi.p2p.WifiP2pDevice;
 import android.net.wifi.p2p.WifiP2pManager;
 import android.text.TextUtils;
 
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +30,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
         mDirectActionListener = directActionListener;
     }
 
+    @NonNull
     public static IntentFilter getIntentFilter() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -38,7 +41,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(Context context, @NonNull Intent intent) {
         if (!TextUtils.isEmpty(intent.getAction())) {
             switch (intent.getAction()) {
                 // Whether WiFi P2P is available

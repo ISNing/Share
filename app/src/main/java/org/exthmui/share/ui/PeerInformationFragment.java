@@ -6,20 +6,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.google.android.material.transition.MaterialContainerTransform;
 import com.google.android.material.transition.MaterialFadeThrough;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 
 public class PeerInformationFragment extends Fragment {
 
     public static final String TAG = "PeerInformationFragment";
 
     private PeerInformationView mView;
-    private PeerInfo mPeer;
+    private IPeer mPeer;
+    @Nullable
     private PeerInformationView.OnBackPressedListener mOnBackPressedListener;
 
     public PeerInformationFragment() {
@@ -37,7 +40,7 @@ public class PeerInformationFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View fragment = inflater.inflate(R.layout.fragment_peer_information, container, false);
         mView = fragment.findViewById(R.id.fragment_peer_information_view);
@@ -49,12 +52,13 @@ public class PeerInformationFragment extends Fragment {
         return fragment;
     }
 
-    public void setPeer(PeerInfo peer) {
+    public void setPeer(IPeer peer) {
         mPeer = peer;
         if (mView != null) mView.setPeer(mPeer);
     }
 
-    public PeerInfo getPeer() {
+    @Nullable
+    public IPeer getPeer() {
         return mView == null ? mPeer : mView.getPeer();
     }
 

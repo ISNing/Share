@@ -2,7 +2,7 @@ package org.exthmui.share.shared.misc;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.send.Sender;
@@ -15,8 +15,10 @@ public interface IConnectionType {
     @NonNull
     String getCode();
 
+    int getPriority();
+
     @NonNull
-    Class<? extends Sender<? extends PeerInfo>> getSenderClass();
+    Class<? extends Sender<? extends IPeer>> getSenderClass();
 
     @NonNull
     Class<? extends Discoverer> getDiscovererClass();
@@ -25,7 +27,7 @@ public interface IConnectionType {
     Class<? extends Receiver> getReceiverClass();
 
     @NonNull
-    Class<? extends PeerInfo> getPeerClass();
+    Class<? extends IPeer> getPeerClass();
 
     @NonNull
     Class<? extends PluginPreferenceFragmentCompat> getPreferenceFragmentClass();

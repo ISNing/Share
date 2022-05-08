@@ -7,6 +7,9 @@ import android.content.ServiceConnection;
 import android.os.Binder;
 import android.os.IBinder;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.EventListener;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -23,6 +26,7 @@ public abstract class ServiceUtils {
 
     public static abstract class MyService extends Service {
         public class MyBinder extends Binder {
+            @NonNull
             public Service getService() {
                 return MyService.this;
             }
@@ -30,6 +34,7 @@ public abstract class ServiceUtils {
 
         private final MyBinder mBinder = new MyBinder();
 
+        @NonNull
         @Override
         public IBinder onBind(Intent intent) {
             onBind(intent, null);
@@ -61,6 +66,7 @@ public abstract class ServiceUtils {
             mOnServiceDisconnectedListeners.remove(listener);
         }
 
+        @Nullable
         private MyService mService;
 
         @Override

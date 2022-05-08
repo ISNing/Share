@@ -44,7 +44,7 @@ public abstract class ReceiverUtils {
     private static final String RECEIVE_PROGRESS_CHANNEL_ID = "org.exthmui.share.notification.channel.RECEIVE";
     private static final String RECEIVE_SERVICE_CHANNEL_ID = "org.exthmui.share.notification.channel.RECEIVE_SERVICE";
 
-    public static void createProgressNotificationChannel(Context context) {
+    public static void createProgressNotificationChannel(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationUtils.createProgressNotificationChannelGroup(context);
             String name = context.getString(R.string.notification_channel_receive_name);
@@ -58,7 +58,7 @@ public abstract class ReceiverUtils {
         }
     }
 
-    public static void createServiceNotificationChannel(Context context) {
+    public static void createServiceNotificationChannel(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationUtils.createServiceNotificationChannelGroup(context);
             String name = context.getString(R.string.notification_channel_receive_service_name);
@@ -72,7 +72,7 @@ public abstract class ReceiverUtils {
         }
     }
 
-    public static void createRequestNotificationChannel(Context context) {
+    public static void createRequestNotificationChannel(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationUtils.createRequestNotificationChannelGroup(context);
             String name = context.getString(R.string.notification_channel_request_name);
@@ -90,20 +90,20 @@ public abstract class ReceiverUtils {
         }
     }
 
-    public static PendingIntent buildStopReceiverPendingIntent(Context context, String pluginCode) {
-        Intent dialogIntent = new Intent()
+    public static PendingIntent buildStopReceiverPendingIntent(@NonNull Context context, String pluginCode) {
+        Intent stopReceiverIntent = new Intent()
                 .setAction(ACTION_STOP_RECEIVER)
                 .setPackage(context.getApplicationContext().getPackageName())
                 .putExtra(IShareBroadcastReceiver.EXTRA_PLUGIN_CODE, pluginCode);
-        return PendingIntent.getBroadcast(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getBroadcast(context, 0, stopReceiverIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     public static PendingIntent buildOpenFilePendingIntent(Context context, Uri uri) {
-        Intent dialogIntent = new Intent()
+        Intent openFileIntent = new Intent()
                 .setAction(Intent.ACTION_VIEW)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 .setData(uri);
-        return PendingIntent.getBroadcast(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        return PendingIntent.getBroadcast(context, 0, openFileIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     public static PendingIntent buildDialogPendingIntent(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
@@ -135,11 +135,11 @@ public abstract class ReceiverUtils {
         return PendingIntent.getBroadcast(context, 0, rejectIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_ONE_SHOT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    public static void requestAcceptation(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
+    public static void requestAcceptation(@NonNull Context context, String pluginCode, String requestId, @NonNull SenderInfo senderInfo, @NonNull FileInfo[] fileInfos, int notificationId) {
         createRequestNotificationChannel(context);
 
         String fileNameStr = Utils.genFileInfosStr(context, fileInfos);
-        String text = context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileNameStr);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileInfos.length);
         String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_receive_request, fileInfos.length, senderInfo.getDisplayName(), fileInfos.length);
 
         @SuppressLint("LaunchActivityFromNotification") NotificationCompat.Builder builder = new NotificationCompat.Builder(context, REQUEST_CHANNEL_ID)
@@ -160,7 +160,7 @@ public abstract class ReceiverUtils {
         notificationManager.notify(notificationId, builder.build());
     }
 
-    public static void startRequestActivity(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
+    public static void startRequestActivity(@NonNull Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
         Intent intent = new Intent(context, AcceptationRequestActivity.class)
                 .putExtra(EXTRA_PLUGIN_CODE, pluginCode)
                 .putExtra(EXTRA_REQUEST_ID, requestId)
@@ -171,7 +171,8 @@ public abstract class ReceiverUtils {
         context.startActivity(intent);
     }
 
-    public static Notification buildServiceNotification(Context context) {
+    @NonNull
+    public static Notification buildServiceNotification(@NonNull Context context) {
         createServiceNotificationChannel(context);
 
         return new NotificationCompat.Builder(context, RECEIVE_SERVICE_CHANNEL_ID)
@@ -182,7 +183,8 @@ public abstract class ReceiverUtils {
                 .build();
     }
 
-    public static Notification buildReceivingNotification(Context context, IConnectionType connectionType, int statusCode, UUID workerId, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable SenderInfo senderInfo, boolean indeterminate) {
+    @NonNull
+    public static Notification buildReceivingNotification(@NonNull Context context, @NonNull IConnectionType connectionType, int statusCode, @NonNull UUID workerId, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable SenderInfo senderInfo, boolean indeterminate) {
         createProgressNotificationChannel(context);
 
         String title;
@@ -229,7 +231,8 @@ public abstract class ReceiverUtils {
         return builder.build();
     }
 
-    public static Notification buildReceivingSucceededNotification(Context context, Data output) {
+    @NonNull
+    public static Notification buildReceivingSucceededNotification(@NonNull Context context, @NonNull Data output) {
         createProgressNotificationChannel(context);
 
         String senderName = output.getString(Receiver.FROM_PEER_NAME);
@@ -255,10 +258,11 @@ public abstract class ReceiverUtils {
         return builder.build();
     }
 
-    public static Notification buildReceivingFailedNotification(Context context, Data output) {
+    @NonNull
+    public static Notification buildReceivingFailedNotification(@NonNull Context context, @NonNull Data output) {
         createProgressNotificationChannel(context);
 
-        int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal());
+        int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.ERROR.getNumVal());
         String message = output.getString(BaseWorker.F_MESSAGE);
         String localizedMessage = output.getString(BaseWorker.F_LOCALIZED_MESSAGE);
 

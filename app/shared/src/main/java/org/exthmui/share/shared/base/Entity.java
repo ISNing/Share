@@ -47,15 +47,18 @@ public class Entity implements Parcelable {
     private String filePath = null;
     private int fileType;
     private final long fileSize;
+    @Nullable
     private String MD5;
     private final boolean initialized;
 
     private static final Creator<Entity> CREATOR = new Creator<>() {
+        @NonNull
         @Override
-        public Entity createFromParcel(Parcel source) {
+        public Entity createFromParcel(@NonNull Parcel source) {
             return new Entity(source);
         }
 
+        @NonNull
         @Override
         public Entity[] newArray(int size) {
             return new Entity[size];
@@ -69,7 +72,7 @@ public class Entity implements Parcelable {
      * @param uri     Content uri or File uri required
      * @throws FailedResolvingUriException Failed resolving uri
      */
-    public Entity(Context context, @NonNull Uri uri) throws FailedResolvingUriException {
+    public Entity(@NonNull Context context, @NonNull Uri uri) throws FailedResolvingUriException {
         switch (uri.getScheme()) {
             case SCHEME_FILE:
                 try {
@@ -121,13 +124,13 @@ public class Entity implements Parcelable {
      * @param type    File type
      * @throws FailedResolvingUriException Failed resolving uri
      */
-    public Entity(Context context, @NonNull Uri uri, int type) throws FailedResolvingUriException {
+    public Entity(@NonNull Context context, @NonNull Uri uri, int type) throws FailedResolvingUriException {
         this(context, uri);
         this.fileType = type;
     }
 
     private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath,
-        int fileType, long fileSize, String MD5) {
+                   int fileType, long fileSize, @Nullable String MD5) {
         this.uri = uri;
         this.fileName = fileName;
         this.filePath = filePath;
@@ -157,7 +160,7 @@ public class Entity implements Parcelable {
     }
 
     @Override
-    public void writeToParcel(Parcel parcel, int i) {
+    public void writeToParcel(@NonNull Parcel parcel, int i) {
         parcel.writeParcelable(uri, 0);
         parcel.writeString(fileName);
         parcel.writeString(filePath);
@@ -171,7 +174,7 @@ public class Entity implements Parcelable {
         }
     }
 
-    private Uri generateContentUri(Context context, Uri uri)
+    private Uri generateContentUri(@NonNull Context context, @NonNull Uri uri)
         throws EmptyPathException, FileNotExistsException {
         final String path = uri.getPath();
         if (path.isEmpty()) {
@@ -236,11 +239,12 @@ public class Entity implements Parcelable {
         return fileSize;
     }
 
+    @Nullable
     public String getMD5() {
         return MD5;
     }
 
-    public void setMD5(String MD5) {
+    public void setMD5(@Nullable String MD5) {
         this.MD5 = MD5;
     }
 }

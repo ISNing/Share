@@ -1,5 +1,7 @@
 package org.exthmui.share.shared.listeners;
 
+import androidx.annotation.NonNull;
+
 import org.exthmui.share.shared.events.SenderErrorOccurredEvent;
 
 import java.lang.reflect.Method;
@@ -17,8 +19,9 @@ public interface OnSenderErrorOccurredListener extends BaseEventListener {
     }};
 
 
+    @NonNull
     @Override
-    default Map<Class<? extends EventObject>, Method[]> _getEventTMethodMap() {
+    default Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap() {
         return EVENT_TYPES_ALLOWED;
     }
 

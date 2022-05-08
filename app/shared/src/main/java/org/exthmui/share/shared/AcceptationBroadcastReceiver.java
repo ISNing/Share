@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationManagerCompat;
 
@@ -31,6 +32,7 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
         mOnReceiveShareBroadcastActionListener = listener;
     }
 
+    @NonNull
     public static IntentFilter getIntentFilter() {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(ACTION_ACCEPTATION_DIALOG);
@@ -40,7 +42,7 @@ public class AcceptationBroadcastReceiver extends BroadcastReceiver {
     }
 
     @Override
-    public void onReceive(Context context, Intent intent) {
+    public void onReceive(@NonNull Context context, @NonNull Intent intent) {
         if (mOnReceiveShareBroadcastActionListener == null) return;
         int notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, -1);
         String pluginCode = intent.getStringExtra(EXTRA_PLUGIN_CODE);

@@ -20,7 +20,7 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.base.send.SendingWorker;
@@ -72,7 +72,7 @@ public class NearShareMultiSendingWorker extends SendingWorker {
 
         final NearShareManager manager = NearShareManager.getInstance(getApplicationContext());
         String peerId = input.getString(Sender.TARGET_PEER_ID);
-        PeerInfo peer = manager.getPeers().get(peerId);
+        IPeer peer = manager.getPeers().get(peerId);
         if (peer == null)
             return genFailureResult(new PeerDisappearedException(getApplicationContext()));
 

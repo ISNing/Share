@@ -41,72 +41,86 @@ public abstract class ReceivingWorker extends BaseWorker {
         return ReceiverUtils.buildReceivingNotification(getApplicationContext(), getConnectionType(), statusCode, getId(), totalBytesToSend, bytesReceived, fileInfos, (SenderInfo) senderInfo, indeterminate);
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected final Result genSuccessResult() {
         throw new RuntimeException("Stub! Use the genSuccessResult(SenderInfo, List<Entity>) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected final Result genRejectedResult(@NonNull Context context) {
         throw new RuntimeException("Stub! Use the genRejectedResult(Context, SenderInfo, String[]) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected final Result genSenderCancelledResult(@NonNull Context context) {
         throw new RuntimeException("Stub! Use the genSenderCancelledResult(Context, SenderInfo, String[]) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected final Result genReceiverCancelledResult(@NonNull Context context) {
         throw new RuntimeException("Stub! Use the genReceiverCancelledResult(Context, SenderInfo, String[]) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected Result genFailureResult(@NonNull TransmissionException e) {
         throw new RuntimeException("Stub! Use the genFailureResult(TransmissionException, SenderInfo, String[]) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     protected final Result genSuccessResult(@NonNull SenderInfo peer, @NonNull List<Entity> entities) {
         return Result.failure(genSuccessData(peer, entities));
     }
 
+    @NonNull
     protected final Result genRejectedResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         return genFailureResult(new RejectedException(context), peer, fileInfos);
     }
 
+    @NonNull
     protected final Result genSenderCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         return genFailureResult(new SenderCancelledException(context), peer, fileInfos);
     }
 
+    @NonNull
     protected final Result genReceiverCancelledResult(@NonNull Context context, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         return genFailureResult(new ReceiverCancelledException(context), peer, fileInfos);
     }
 
+    @NonNull
     protected Result genFailureResult(@NonNull TransmissionException e, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage(), peer, fileInfos);
     }
 
+    @NonNull
     private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         return Result.failure(genFailureData(errCode, message, localizedMessage, peer, fileInfos));
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected Data genSuccessData() {
         throw new RuntimeException("Stub! Use the genSuccessData(SenderInfo, List<Entity>) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     @Deprecated
     @Override
     protected Data genFailureData(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
         throw new RuntimeException("Stub! Use the genFailureData(int, String, String, SenderInfo, String[]) defined in ReceivingWorker instead");
     }
 
+    @NonNull
     protected final Data genSuccessData(@NonNull SenderInfo peer, @NonNull List<Entity> entities) {
         String[] uriStrings = new String[entities.size()];
         String[] fileNames = new String[entities.size()];
@@ -131,6 +145,7 @@ public abstract class ReceivingWorker extends BaseWorker {
                 .build();
     }
 
+    @NonNull
     protected final Data genFailureData(int errCode, @Nullable String message, @Nullable String localizedMessage, @Nullable SenderInfo peer, @Nullable FileInfo[] fileInfos) {
         Data.Builder builder = genFailureDataBuilder(errCode, message, localizedMessage);
         if (peer != null) {

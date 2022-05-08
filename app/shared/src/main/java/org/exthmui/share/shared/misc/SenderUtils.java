@@ -27,7 +27,7 @@ public abstract class SenderUtils {
     private static final String SEND_PROGRESS_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND";
     private static final String SEND_SERVICE_CHANNEL_ID = "org.exthmui.share.notification.channel.SEND_SERVICE";
 
-    public static void createProgressNotificationChannel(Context context) {
+    public static void createProgressNotificationChannel(@NonNull Context context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationUtils.createProgressNotificationChannelGroup(context);
             CharSequence name = context.getString(R.string.notification_channel_send_name);
@@ -41,7 +41,7 @@ public abstract class SenderUtils {
         }
     }
 
-    public static void createServiceNotificationChannel(Context context) {
+    public static void createServiceNotificationChannel(@NonNull Context context) {
         NotificationUtils.createServiceNotificationChannelGroup(context);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = context.getString(R.string.notification_channel_send_service_name);
@@ -55,7 +55,8 @@ public abstract class SenderUtils {
         }
     }
 
-    public static Notification buildServiceNotification(Context context) {
+    @NonNull
+    public static Notification buildServiceNotification(@NonNull Context context) {
         createServiceNotificationChannel(context);
 
         return new NotificationCompat.Builder(context, SEND_SERVICE_CHANNEL_ID)
@@ -66,9 +67,10 @@ public abstract class SenderUtils {
                 .build();
     }
 
-    public static Notification buildSendingNotification(Context context,
+    @NonNull
+    public static Notification buildSendingNotification(@NonNull Context context,
                                                         IConnectionType connectionType,
-                                                        int statusCode, UUID workerId,
+                                                        int statusCode, @NonNull UUID workerId,
                                                         long totalBytesToSend, long bytesSent,
                                                         @NonNull FileInfo[] fileInfos,
                                                         @Nullable ReceiverInfo receiverInfo,
@@ -88,7 +90,7 @@ public abstract class SenderUtils {
         PendingIntent cancelPendingIntent = WorkManager.getInstance(context).createCancelPendingIntent(workerId);
 
         if (statusCode == Constants.TransmissionStatus.INITIALIZING.getNumVal()) {
-            title = context.getString(R.string.notification_title_receive_initializing);
+            title = context.getString(R.string.notification_title_send_initializing);
             text = context.getString(Constants.TransmissionStatus.parse(statusCode).getStrRes());
         }
         return new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
@@ -104,7 +106,8 @@ public abstract class SenderUtils {
                 .build();
     }
 
-    public static Notification buildSendingSucceededNotification(Context context, Data output) {
+    @NonNull
+    public static Notification buildSendingSucceededNotification(@NonNull Context context, @NonNull Data output) {
         createProgressNotificationChannel(context);
 
         String receiverName = output.getString(Sender.TARGET_PEER_NAME);
@@ -130,10 +133,11 @@ public abstract class SenderUtils {
         return builder.build();
     }
 
-    public static Notification buildSendingFailedNotification(Context context, Data output) {
+    @NonNull
+    public static Notification buildSendingFailedNotification(@NonNull Context context, @NonNull Data output) {
         createProgressNotificationChannel(context);
 
-        int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal());
+        int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.ERROR.getNumVal());
         String message = output.getString(BaseWorker.F_MESSAGE);
         String localizedMessage = output.getString(BaseWorker.F_LOCALIZED_MESSAGE);
 

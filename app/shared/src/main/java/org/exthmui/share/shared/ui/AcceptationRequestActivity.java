@@ -22,14 +22,14 @@ public class AcceptationRequestActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         String pluginCode = getIntent().getStringExtra(EXTRA_PLUGIN_CODE);
         SenderInfo senderInfo = (SenderInfo) getIntent().getSerializableExtra(EXTRA_PEER_INFO_TRANSFER);
-        FileInfo fileInfo = (FileInfo) getIntent().getSerializableExtra(EXTRA_FILE_INFOS);
+        FileInfo[] fileInfos = (FileInfo[]) getIntent().getSerializableExtra(EXTRA_FILE_INFOS);
         String requestId = getIntent().getStringExtra(EXTRA_REQUEST_ID);
         int notificationId = getIntent().getIntExtra(EXTRA_NOTIFICATION_ID, -1);
-        if (pluginCode == null || senderInfo == null || fileInfo == null || requestId == null) {
+        if (pluginCode == null || senderInfo == null || fileInfos == null || requestId == null) {
             Log.e(TAG, "Invalid extras");
             this.finish();
         }
-        AcceptationRequestBottomSheetFragment shareFragment = new AcceptationRequestBottomSheetFragment(pluginCode, senderInfo, fileInfo, requestId, notificationId);
+        AcceptationRequestBottomSheetFragment shareFragment = new AcceptationRequestBottomSheetFragment(pluginCode, senderInfo, fileInfos, requestId, notificationId);
         shareFragment.show(getSupportFragmentManager(), shareFragment.getTag());
     }
 }

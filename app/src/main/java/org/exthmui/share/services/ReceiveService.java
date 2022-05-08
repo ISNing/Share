@@ -52,7 +52,6 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
                     OnReceiverStartedListener.class,
                     OnReceiverStoppedListener.class
             };
-    private static ReceiveService instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 
@@ -69,13 +68,8 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         initializeInternalListeners();
     }
 
-    public static ReceiveService getInstance() {
-        if (instance == null) instance = new ReceiveService();
-        return instance;
-    }
-
     @Override
-    public void registerListener(BaseEventListener listener) {
+    public void registerListener(@NonNull BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
@@ -154,7 +148,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void unregisterReceiverListeners(Collection<BaseEventListener> listeners) {
+    public void unregisterReceiverListeners(@NonNull Collection<BaseEventListener> listeners) {
         for (Receiver receiver : mReceiverList) {
             for (BaseEventListener listener : listeners) {
                 receiver.unregisterListener(listener);
@@ -194,7 +188,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void registerInternalListeners(Receiver receiver) {
+    public void registerInternalListeners(@NonNull Receiver receiver) {
         for (BaseEventListener listener: mInternalListenerList) {
             receiver.registerListener(listener);
         }
@@ -214,16 +208,17 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         try {
             Method method = type.getReceiverClass().getDeclaredMethod("getInstance", Context.class);
             Receiver receiver = (Receiver) method.invoke(null, this);
+            assert receiver != null;
             mReceiverList.add(receiver);
             registerInternalListeners(receiver);
             updateTileState();
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
+        } catch (@NonNull IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
         }
     }
 
     @Override
-    public void notifyListeners(EventObject event) {
+    public void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
@@ -233,7 +228,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void registerReceiverListeners(Collection<? extends BaseEventListener> listeners) {
+    public void registerReceiverListeners(@NonNull Collection<? extends BaseEventListener> listeners) {
         for (Receiver receiver : mReceiverList) {
             for (BaseEventListener listener : listeners) {
                 receiver.registerListener(listener);
@@ -294,7 +289,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void registerReceiverListeners(Collection<? extends BaseEventListener> listeners, String code) {
+    public void registerReceiverListeners(@NonNull Collection<? extends BaseEventListener> listeners, String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
         for (BaseEventListener listener : listeners) {
@@ -303,7 +298,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void unregisterReceiverListeners(Collection<? extends BaseEventListener> listeners, String code) {
+    public void unregisterReceiverListeners(@NonNull Collection<? extends BaseEventListener> listeners, String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
         for (BaseEventListener listener : listeners) {
@@ -354,7 +349,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void grantReceiversPermissions(Activity activity) {
+    public void grantReceiversPermissions(@NonNull Activity activity) {
         ActivityCompat.requestPermissions(activity, getReceiversPermissionsNotGranted().toArray(new String[0]), REQUEST_CODE_GRANT_PERMISSIONS);
     }
 
@@ -369,7 +364,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     }
 
     @Override
-    public void grantReceiverPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode) {
+    public void grantReceiverPermissions(String code, @NonNull Activity activity, @IntRange(from = 0) int requestCode) {
         ActivityCompat.requestPermissions(activity, getReceiverPermissionsNotGranted(code).toArray(new String[0]), requestCode);
     }
 

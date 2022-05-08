@@ -2,8 +2,10 @@ package org.exthmui.share.shared.misc;
 
 import android.graphics.PorterDuff.Mode;
 
+import androidx.annotation.NonNull;
+
 public abstract class PorterDuffUtils {
-    public static int modeToInt(Mode val) {
+    public static int modeToInt(@NonNull Mode val) {
         switch (val) {
             default:
             case CLEAR:
@@ -44,6 +46,7 @@ public abstract class PorterDuffUtils {
         }
     }
 
+    @NonNull
     public static Mode intToMode(int val) {
         switch (val) {
             default:

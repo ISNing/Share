@@ -2,12 +2,6 @@ plugins {
     id 'com.android.library'
 }
 
-repositories {
-    maven {
-        url "https://raw.github.com/microsoft/project-rome/mvn-repo/"
-    }
-}
-
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion

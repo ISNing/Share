@@ -30,6 +30,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        mavenLocal()
         maven {
             url "https://raw.github.com/microsoft/project-rome/mvn-repo/"
         }

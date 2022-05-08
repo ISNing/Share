@@ -33,7 +33,7 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatusTypeFilter
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemWatcher;
 
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.events.DiscovererErrorOccurredEvent;
@@ -86,7 +86,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     private static NearShareManager instance;
     private final Context mContext;
-    private final Map<String, PeerInfo> mPeers = new HashMap<>();
+    private final Map<String, IPeer> mPeers = new HashMap<>();
     private boolean mDiscovererStarted;
     private boolean mInitialized;
 
@@ -96,7 +96,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     private RemoteSystemWatcher mRemoteSystemWatcher;
 
     @Override
-    public void registerListener(BaseEventListener listener) {
+    public void registerListener(@NonNull BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
@@ -106,16 +106,19 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         mListeners.remove(listener);
     }
 
-    private void notifyListeners(EventObject event){
+    private void notifyListeners(@NonNull EventObject event){
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
-    public static NearShareManager getInstance(Context context){
-        if(instance == null) instance = new NearShareManager(context);
+    public static NearShareManager getInstance(@NonNull Context context){
+        if(instance == null)
+            synchronized (NearShareManager.class){
+                if(instance == null) instance = new NearShareManager(context);
+            }
         return instance;
     }
 
-    private NearShareManager(Context context) {
+    private NearShareManager(@NonNull Context context) {
         this.mContext = context.getApplicationContext();
         initialize();
     }
@@ -145,7 +148,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     /**
      * NearShare just works with anonymous account.
      */
-    private void createAndAddAnonymousAccount(ConnectedDevicesPlatform platform) {
+    private void createAndAddAnonymousAccount(@NonNull ConnectedDevicesPlatform platform) {
         ConnectedDevicesAccount account = ConnectedDevicesAccount.getAnonymousAccount();
         platform.getAccountManager().addAccountAsync(account).whenComplete((ConnectedDevicesAddAccountResult result, Throwable throwable) -> {
             if (result.getStatus() == ConnectedDevicesAccountAddedStatus.SUCCESS) {
@@ -228,7 +231,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         });
         weakRemoteSystemWatcher.get().remoteSystemUpdated().subscribe((remoteSystemWatcher, args) -> {
             final RemoteSystem remoteSystem = args.getRemoteSystem();
-            PeerInfo peer = new NearSharePeer(remoteSystem);
+            IPeer peer = new NearSharePeer(remoteSystem);
             mPeers.remove(peer.getId());
             mPeers.put(peer.getId(), peer);
             notifyListeners(new PeerUpdatedEvent(this, peer));
@@ -262,8 +265,9 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
         notifyListeners(new DiscovererStoppedEvent(this));
     }
 
+    @NonNull
     @Override
-    public Map<String, PeerInfo> getPeers() {
+    public Map<String, IPeer> getPeers() {
         return mPeers;
     }
 
@@ -280,8 +284,9 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 //        }
 //    }
 
+    @NonNull
     @Override
-    public UUID send(NearSharePeer peer, List<Entity> entities) {
+    public UUID send(@NonNull NearSharePeer peer, @NonNull List<Entity> entities) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NearShareMultiSendingWorker.class)
                 .setInputData(genSendingInputData(peer, entities))
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)

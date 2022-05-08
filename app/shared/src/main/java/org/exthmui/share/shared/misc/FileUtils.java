@@ -7,6 +7,7 @@ import android.system.Os;
 import android.system.StructStatVfs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.documentfile.provider.DocumentFile;
 
 import org.apache.commons.codec.binary.Hex;
@@ -22,15 +23,15 @@ import java.util.HashMap;
 @SuppressWarnings("SpellCheckingInspection")
 public abstract class FileUtils {
     // construct a with an approximation of the capacity
-    private static final HashMap<String, Constants.FileType> sMimeIds = new HashMap<>(1 + (int) (114 / 0.75));
+    private static final HashMap<String, Constants.FileType> MIME_IDS = new HashMap<>(1 + (int) (114 / 0.75));
 
     private static void put(String mimeType, Constants.FileType type) {
-        if (sMimeIds.put(mimeType, type) != null) {
+        if (MIME_IDS.put(mimeType, type) != null) {
             throw new RuntimeException(mimeType + " already registered!");
         }
     }
 
-    private static void putKeys(Constants.FileType fileType, String... mimeTypes) {
+    private static void putKeys(Constants.FileType fileType, @NonNull String... mimeTypes) {
         for (String type : mimeTypes) {
             put(type, fileType);
         }
@@ -191,20 +192,22 @@ public abstract class FileUtils {
      * @param path The path of file
      * @return Whether the file exists
      */
-    public static boolean isExists(String path) {
+    public static boolean isExists(@NonNull String path) {
         File file = new File(path);
         return file.exists();
     }
 
-    public static Constants.FileType getFileType(String path) {
+    @NonNull
+    public static Constants.FileType getFileType(@NonNull String path) {
         String mimeType = MimeTypes.getMimeType(path);
         return getFileTypeByMime(mimeType);
     }
 
-    public static Constants.FileType getFileTypeByMime(String mimeType) {
+    @NonNull
+    public static Constants.FileType getFileTypeByMime(@Nullable String mimeType) {
         if (mimeType == null) return Constants.FileType.UNKNOWN;
 
-        Constants.FileType type = sMimeIds.get(mimeType);
+        Constants.FileType type = MIME_IDS.get(mimeType);
         if (type != null) return type;
         else {
             if (checkType(mimeType, "text")) return Constants.FileType.TEXT;
@@ -216,10 +219,11 @@ public abstract class FileUtils {
         }
     }
 
-    private static boolean checkType(String mime, String check) {
+    private static boolean checkType(@Nullable String mime, @NonNull String check) {
         return mime != null && mime.contains("/") && check.equals(mime.substring(0, mime.indexOf("/")));
     }
 
+    @Nullable
     public static String getMD5(@NonNull InputStream inputStream) throws IOException {
         try {
             MessageDigest MD5 = MessageDigest.getInstance("MD5");

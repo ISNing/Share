@@ -1,64 +1,63 @@
 package org.exthmui.share.shared.base.file;
 
-import android.database.Cursor;
-import android.os.Build;
-import android.provider.MediaStore;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
-public class AudioFile extends File implements FileInfo {
+import org.exthmui.share.shared.base.mediastore.Audio;
 
+public class AudioFile extends File {
+
+    @Nullable
     private String album;
-    private String album_artist;
+    @Nullable
     private String artist;
+    @Nullable
     private String author;
+    @Nullable
+    private String composer;
     private int bitrate;
-    private String display_name;
+    @Nullable
+    private String displayName;
     private int duration;
-    private String title;
 
-    public AudioFile(Cursor c) {
-        super(c);
-        this.display_name = c.getString(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DISPLAY_NAME));
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            this.duration = c.getInt(c.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION));
-        }
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            this.album = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM));
-            this.album_artist = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ARTIST));
-            this.artist = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST));
-            this.author = c.getString(c.getColumnIndexOrThrow(MediaStore.Audio.Media.AUTHOR));
-            this.bitrate = c.getInt(c.getColumnIndexOrThrow(MediaStore.MediaColumns.BITRATE));
-        }
+    public AudioFile() {
     }
 
+    public AudioFile(@NonNull Audio audio) {
+        super(audio);
+        this.displayName = audio.getDisplayName();
+        this.duration = audio.getDuration();
+        this.album = audio.getAlbum();
+        this.artist = audio.getArtist();
+        this.composer = audio.getComposer();
+        this.author = audio.getAuthor();
+        this.bitrate = audio.getBitrate();
+    }
+
+    @Nullable
     public String getAlbum() {
         return album;
     }
 
-    public void setAlbum(String album) {
+    public void setAlbum(@Nullable String album) {
         this.album = album;
     }
 
-    public String getAlbum_artist() {
-        return album_artist;
-    }
-
-    public void setAlbum_artist(String album_artist) {
-        this.album_artist = album_artist;
-    }
-
+    @Nullable
     public String getArtist() {
         return artist;
     }
 
-    public void setArtist(String artist) {
+    public void setArtist(@Nullable String artist) {
         this.artist = artist;
     }
 
+    @Nullable
     public String getAuthor() {
         return author;
     }
 
-    public void setAuthor(String author) {
+    public void setAuthor(@Nullable String author) {
         this.author = author;
     }
 
@@ -70,12 +69,13 @@ public class AudioFile extends File implements FileInfo {
         this.bitrate = bitrate;
     }
 
-    public String getDisplay_name() {
-        return display_name;
+    @Nullable
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public void setDisplay_name(String display_name) {
-        this.display_name = display_name;
+    public void setDisplayName(@Nullable String displayName) {
+        this.displayName = displayName;
     }
 
     public int getDuration() {
@@ -86,11 +86,12 @@ public class AudioFile extends File implements FileInfo {
         this.duration = duration;
     }
 
-    public String getTitle() {
-        return title;
+    @Nullable
+    public String getComposer() {
+        return composer;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
+    public void setComposer(@Nullable String composer) {
+        this.composer = composer;
     }
 }

@@ -14,6 +14,7 @@ import android.util.TypedValue;
 import android.view.View;
 
 import androidx.annotation.ColorInt;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
@@ -21,17 +22,19 @@ import org.exthmui.share.shared.misc.PorterDuffUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class WaveView extends View {
     public static final int WAVING_MODE_LIMITED = 0x01;
     public static final int WAVING_MODE_NON_LIMITED = 0x02;
     private final float DEFAULT_LENGTH_PX = TypedValue.applyDimension(COMPLEX_UNIT_DIP, 200f, getResources().getDisplayMetrics());
 
-    private ScalingTimerTask scalingTask;
-    private final Timer mTimer = new Timer();
+    private ScalingRunnable mScalingRunnable;
+    private final ScheduledExecutorService mScheduledExecuter = new ScheduledThreadPoolExecutor(1, (ThreadFactory) Thread::new);
 
     private boolean mWaving;
 
@@ -55,12 +58,12 @@ public class WaveView extends View {
     private Paint mPaint;
     private List<Float> mRadii;
 
-    public WaveView(Context context) {
+    public WaveView(@NonNull Context context) {
         super(context);
         init(context, null);
     }
 
-    private void init(Context context, @Nullable AttributeSet attrs) {
+    private void init(@NonNull Context context, @Nullable AttributeSet attrs) {
         TypedArray ta = context.obtainStyledAttributes(attrs, R.styleable.WaveView);
         mWaveNum = ta.getInteger(R.styleable.WaveView_waveNumber, 3);
         mRadiusMin = ta.getDimension(R.styleable.WaveView_minRadius, -1);
@@ -109,23 +112,23 @@ public class WaveView extends View {
         this.mWaveNum = waveNum;
     }
 
-    public WaveView(Context context, @Nullable AttributeSet attrs) {
+    public WaveView(@NonNull Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public WaveView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public WaveView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs);
     }
 
-    public WaveView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public WaveView(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context, attrs);
     }
 
     @Override
-    protected void onDraw(Canvas canvas) {
+    protected void onDraw(@NonNull Canvas canvas) {
         super.onDraw(canvas);
 
         float centerX = getCircleCenterCoordinateX();
@@ -169,7 +172,8 @@ public class WaveView extends View {
         setMeasuredDimension(w, h);
     }
 
-    private List<Float> transList(List<Float> list) {
+    @NonNull
+    private List<Float> transList(@NonNull List<Float> list) {
         List<Float> newList = new ArrayList<>(getWaveNum());
         for (int i = 1; i < list.size(); i++) {
             newList.add(list.get(i));
@@ -187,22 +191,23 @@ public class WaveView extends View {
 
     public void startWave() {
         if (!mWaving) {
-            scalingTask = new ScalingTimerTask();
-            mTimer.schedule(scalingTask, 0, mMillisecondsPerFrame);
+            mScalingRunnable = new ScalingRunnable();
+            mScheduledExecuter.schedule(mScalingRunnable, mMillisecondsPerFrame, TimeUnit.MILLISECONDS);
             mWaving = true;
         }
     }
 
     public void stopWave() {
         if (mWaving) {
-            scalingTask.cancel();
+            mScalingRunnable.stop();
             resetWave();
             mWaving = false;
         }
     }
 
     public void forceStopWave() {
-        scalingTask.cancel();
+        mScheduledExecuter.shutdown();
+        resetWave();
     }
 
     public void resetWave() {
@@ -279,30 +284,31 @@ public class WaveView extends View {
         int paddingRight = getPaddingRight();
         boolean isRtl = getLayoutDirection() == LAYOUT_DIRECTION_RTL;
         float x = getWidth() / 2f;
-        if (getGravity().contains(Gravity.CENTER_HORIZONTAL) ||
-                (getGravity().contains(Gravity.INNER_START) && getGravity().contains(Gravity.INNER_END)) ||
-                (getGravity().contains(Gravity.OUTER_START) && getGravity().contains(Gravity.OUTER_END)) ||
-                (getGravity().contains(Gravity.INNER_LEFT) && getGravity().contains(Gravity.INNER_RIGHT)) ||
-                (getGravity().contains(Gravity.OUTER_LEFT) && getGravity().contains(Gravity.OUTER_RIGHT)))
+        List<Gravity> gravity = getGravity();
+        if (gravity.contains(Gravity.CENTER_HORIZONTAL) ||
+                (gravity.contains(Gravity.INNER_START) && gravity.contains(Gravity.INNER_END)) ||
+                (gravity.contains(Gravity.OUTER_START) && gravity.contains(Gravity.OUTER_END)) ||
+                (gravity.contains(Gravity.INNER_LEFT) && gravity.contains(Gravity.INNER_RIGHT)) ||
+                (gravity.contains(Gravity.OUTER_LEFT) && gravity.contains(Gravity.OUTER_RIGHT)))
             x = getWidth() / 2f;
-        else if (getGravity().contains(Gravity.INNER_LEFT)) x = getRadiusMin() + paddingLeft;
-        else if (getGravity().contains(Gravity.INNER_RIGHT))
+        else if (gravity.contains(Gravity.INNER_LEFT)) x = getRadiusMin() + paddingLeft;
+        else if (gravity.contains(Gravity.INNER_RIGHT))
             x = getWidth() - getRadiusMin() - paddingRight;
-        else if (getGravity().contains(Gravity.OUTER_LEFT)) x = getRadiusMax() + paddingLeft;
-        else if (getGravity().contains(Gravity.OUTER_RIGHT))
+        else if (gravity.contains(Gravity.OUTER_LEFT)) x = getRadiusMax() + paddingLeft;
+        else if (gravity.contains(Gravity.OUTER_RIGHT))
             x = getWidth() - getRadiusMax() - paddingRight;
         else if (isRtl) {
-            if (getGravity().contains(Gravity.INNER_START))
+            if (gravity.contains(Gravity.INNER_START))
                 x = getWidth() - getRadiusMin() - paddingRight;
-            else if (getGravity().contains(Gravity.INNER_END)) x = getRadiusMin() + paddingLeft;
-            else if (getGravity().contains(Gravity.OUTER_START))
+            else if (gravity.contains(Gravity.INNER_END)) x = getRadiusMin() + paddingLeft;
+            else if (gravity.contains(Gravity.OUTER_START))
                 x = getWidth() - getRadiusMax() - paddingRight;
-            else if (getGravity().contains(Gravity.OUTER_END)) x = getRadiusMax() + paddingLeft;
-        } else if (getGravity().contains(Gravity.INNER_START)) x = getRadiusMin() + paddingLeft;
-        else if (getGravity().contains(Gravity.INNER_END))
+            else if (gravity.contains(Gravity.OUTER_END)) x = getRadiusMax() + paddingLeft;
+        } else if (gravity.contains(Gravity.INNER_START)) x = getRadiusMin() + paddingLeft;
+        else if (gravity.contains(Gravity.INNER_END))
             x = getWidth() - getRadiusMin() - paddingRight;
-        else if (getGravity().contains(Gravity.OUTER_START)) x = getRadiusMax() + paddingLeft;
-        else if (getGravity().contains(Gravity.OUTER_END))
+        else if (gravity.contains(Gravity.OUTER_START)) x = getRadiusMax() + paddingLeft;
+        else if (gravity.contains(Gravity.OUTER_END))
             x = getWidth() - getRadiusMax() - paddingRight;
         return x;
     }
@@ -311,15 +317,16 @@ public class WaveView extends View {
         int paddingTop = getPaddingTop();
         int paddingBottom = getPaddingBottom();
         float y = getHeight() / 2f;
-        if (getGravity().contains(Gravity.CENTER_VERTICAL) ||
-                (getGravity().contains(Gravity.INNER_TOP) && getGravity().contains(Gravity.INNER_BOTTOM)) ||
-                (getGravity().contains(Gravity.OUTER_TOP) && getGravity().contains(Gravity.OUTER_BOTTOM)))
+        List<Gravity> gravity = getGravity();
+        if (gravity.contains(Gravity.CENTER_VERTICAL) ||
+                (gravity.contains(Gravity.INNER_TOP) && gravity.contains(Gravity.INNER_BOTTOM)) ||
+                (gravity.contains(Gravity.OUTER_TOP) && gravity.contains(Gravity.OUTER_BOTTOM)))
             y = getHeight() / 2f;
-        else if (getGravity().contains(Gravity.INNER_TOP)) y = getRadiusMin() + paddingTop;
-        else if (getGravity().contains(Gravity.INNER_BOTTOM))
+        else if (gravity.contains(Gravity.INNER_TOP)) y = getRadiusMin() + paddingTop;
+        else if (gravity.contains(Gravity.INNER_BOTTOM))
             y = getHeight() - getRadiusMin() - paddingBottom;
-        else if (getGravity().contains(Gravity.OUTER_TOP)) y = getRadiusMax() + paddingTop;
-        else if (getGravity().contains(Gravity.OUTER_BOTTOM))
+        else if (gravity.contains(Gravity.OUTER_TOP)) y = getRadiusMax() + paddingTop;
+        else if (gravity.contains(Gravity.OUTER_BOTTOM))
             y = getHeight() - getRadiusMax() - paddingBottom;
         return y;
     }
@@ -419,6 +426,7 @@ public class WaveView extends View {
             this.numVal = numVal;
         }
 
+        @Nullable
         public static Gravity parse(int numVal) {
             for (Gravity o : Gravity.values()) {
                 if (o.getNumVal() == numVal) {
@@ -433,7 +441,7 @@ public class WaveView extends View {
         }
     }
 
-    class ScalingTimerTask extends TimerTask {
+    class ScalingRunnable implements  Runnable {
         boolean stopRequested = false;
 
         @Override
@@ -455,7 +463,7 @@ public class WaveView extends View {
             }
 
             invalidate();
-            if (stopRequested && mRadii.size() == 0) this.cancel();
+            if (stopRequested && mRadii.size() == 0) mScheduledExecuter.shutdown();
         }
 
         public void stop() {

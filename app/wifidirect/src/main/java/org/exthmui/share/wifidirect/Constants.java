@@ -12,7 +12,7 @@ public class Constants {
     public static final String SHARE_PROTOCOL_VERSION_1 = "1.0";
 
     public static final String LOCAL_SERVICE_INSTANCE_NAME = "_share";
-    public static final String LOCAL_SERVICE_SERVICE_TYPE = "_share._tcp";
+    public static final String LOCAL_SERVICE_SERVICE_TYPE = "_share._p2p._tcp.";
 
     public static final String RECORD_KEY_SHARE_PROTOCOL_VERSION = "shareProtocolVersion";
     public static final String RECORD_KEY_SERVER_PORT = "serverPort";

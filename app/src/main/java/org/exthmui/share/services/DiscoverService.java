@@ -11,6 +11,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 import androidx.preference.PreferenceManager;
@@ -18,9 +19,11 @@ import androidx.preference.PreferenceManager;
 import org.exthmui.share.BuildConfig;
 import org.exthmui.share.R;
 import org.exthmui.share.misc.Constants;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.events.DiscovererStoppedEvent;
+import org.exthmui.share.shared.events.PeerAddedEvent;
+import org.exthmui.share.shared.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.listeners.OnDiscovererStartedListener;
@@ -65,14 +68,14 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     private final Set<Discoverer> mDiscovererList = new HashSet<>();
     private final Set<BaseEventListener> mInternalListenerList = new HashSet<>();
     private final Set<BaseEventListener> mDiscovererListenerList = new HashSet<>();
-    private final Map<String, PeerInfo> mPeerInfoMap = new HashMap<>();
+    private final Map<String, IPeer> mPeerInfoMap = new HashMap<>();
 
     public DiscoverService() {
         initializeInternalListeners();
     }
 
     @Override
-    public void registerListener(BaseEventListener listener) {
+    public void registerListener(@NonNull BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
@@ -117,12 +120,63 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
             }
         });
         mInternalListenerList.add((OnPeerAddedListener) event -> {
-            mPeerInfoMap.put(event.getPeer().getId(), event.getPeer());
-            notifyListeners(event);
+            IPeer origPeer = mPeerInfoMap.get(event.getPeer().getId());
+            if (origPeer == null) {
+                mPeerInfoMap.put(event.getPeer().getId(), event.getPeer());// Then add it.
+                notifyListeners(event);
+            } else {// Add event notified, but a peer with same id found, handle as peer updated
+                // Connection type is same
+                if (origPeer.getConnectionType().getCode().equals(event.getPeer().getConnectionType().getCode())){
+                    Log.w(TAG, "Got PeerAddedEvent, but a peer with same id found (with same " +
+                            "connection type), dropping a new PeerUpdatedEvent");
+                    mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());// Then replace it.
+                }
+
+                // Connection type are not same, but the new one's connection type's priority
+                // is grater than the older one's
+                else if (origPeer.getConnectionType().getPriority() < event.getPeer().getConnectionType().getPriority()) {
+                    Log.d(TAG, String.format("Got PeerAddedEvent, the original peer has " +
+                                    "connection type \"%s\"(Priority: %d), the newer one has " +
+                                    "connection type \"%s\"(Priority: %d)replacing the older one," +
+                                    "dropping a new PeerUpdatedEvent",
+                            origPeer.getConnectionType().getCode(),
+                            origPeer.getConnectionType().getPriority(),
+                            event.getPeer().getConnectionType().getCode(),
+                            event.getPeer().getConnectionType().getPriority()));
+                    mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());// Then replace it.
+                }
+
+                notifyListeners(new PeerUpdatedEvent(event, event.getPeer()));
+            }
         });
         mInternalListenerList.add((OnPeerUpdatedListener) event -> {
-            mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());
-            notifyListeners(event);
+            IPeer origPeer = mPeerInfoMap.get(event.getPeer().getId());
+            if (origPeer != null) {
+                // Connection type is same
+                if (origPeer.getConnectionType().getCode().equals(event.getPeer().getConnectionType().getCode()))
+                    mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());// Then replace it.
+
+                // Connection type are not same, but the new one's connection type's priority
+                // is grater than the older one's
+                else if (origPeer.getConnectionType().getPriority() <
+                        event.getPeer().getConnectionType().getPriority()) {
+                    Log.d(TAG, String.format("Got PeerUpdatedEvent, the original peer has " +
+                            "connection type \"%s\"(Priority: %d), the newer one has " +
+                            "connection type \"%s\"(Priority: %d)replacing the older one.",
+                            origPeer.getConnectionType().getCode(),
+                            origPeer.getConnectionType().getPriority(),
+                            event.getPeer().getConnectionType().getCode(),
+                            event.getPeer().getConnectionType().getPriority()));
+                    mPeerInfoMap.replace(event.getPeer().getId(), event.getPeer());// Then replace it.
+                }
+
+                notifyListeners(event);
+            } else {// Update event notified, but no original peer found, handle as new peer added
+                Log.w(TAG, "Got PeerUpdatedEvent, but no original peer found, dropping a new" +
+                        "PeerAddedEvent");
+                mPeerInfoMap.put(event.getPeer().getId(), event.getPeer());// Then add it.
+                notifyListeners(new PeerAddedEvent(event, event.getPeer()));
+            }
         });
         mInternalListenerList.add((OnPeerRemovedListener) event -> {
             mPeerInfoMap.remove(event.getPeer().getId(), event.getPeer());
@@ -147,7 +201,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void unregisterDiscoverersListeners(Collection<BaseEventListener> listeners) {
+    public void unregisterDiscoverersListeners(@NonNull Collection<BaseEventListener> listeners) {
         for (Discoverer discoverer : mDiscovererList) {
             for (BaseEventListener listener : listeners) {
                 discoverer.unregisterListener(listener);
@@ -184,7 +238,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void registerInternalListeners(Discoverer discoverer) {
+    public void registerInternalListeners(@NonNull Discoverer discoverer) {
         for (BaseEventListener listener: mInternalListenerList) {
             discoverer.registerListener(listener);
         }
@@ -198,7 +252,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void notifyListeners(EventObject event) {
+    public void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
@@ -208,7 +262,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void registerDiscoverersListeners(Collection<? extends BaseEventListener> listeners) {
+    public void registerDiscoverersListeners(@NonNull Collection<? extends BaseEventListener> listeners) {
         for (BaseEventListener listener : listeners) {
             for (Discoverer discoverer : mDiscovererList) {
                 discoverer.registerListener(listener);
@@ -232,10 +286,11 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         try {
             Method method = type.getDiscovererClass().getDeclaredMethod("getInstance", Context.class);
             Discoverer discoverer = (Discoverer) method.invoke(null, this);
+            assert discoverer != null;
             mDiscovererList.add(discoverer);
             registerInternalListeners(discoverer);
             updateTileState();
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
+        } catch (@NonNull IllegalAccessException | NoSuchMethodException | InvocationTargetException exception) {
             exception.printStackTrace();
         }
     }
@@ -286,7 +341,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void registerDiscovererListeners(Collection<? extends BaseEventListener> listeners, String code) {
+    public void registerDiscovererListeners(@NonNull Collection<? extends BaseEventListener> listeners, String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         for (BaseEventListener listener : listeners) {
@@ -295,7 +350,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void unregisterDiscovererListeners(Collection<? extends BaseEventListener> listeners, String code) {
+    public void unregisterDiscovererListeners(@NonNull Collection<? extends BaseEventListener> listeners, String code) {
         Discoverer discoverer = getDiscoverer(code);
         if (discoverer == null) return;
         for (BaseEventListener listener : listeners) {
@@ -349,6 +404,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         return discoverer.isFeatureAvailable() && discoverer.getPermissionNotGranted().isEmpty();
     }
 
+    @NonNull
     @Override
     public Set<String> getDiscoverersPermissionsNotGranted() {
         Set<String> permissions = new HashSet<>();
@@ -358,6 +414,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         return permissions;
     }
 
+    @NonNull
     @Override
     public Set<String> getDiscovererPermissionsNotGranted(String code) {
         Discoverer discoverer = getDiscoverer(code);
@@ -366,21 +423,22 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void grantDiscoverPermissions(Activity activity) {
+    public void grantDiscoverPermissions(@NonNull Activity activity) {
         String[] permissions = getDiscoverersPermissionsNotGranted().toArray(new String[0]);
         if (permissions.length == 0) return;
         ActivityCompat.requestPermissions(activity, permissions, REQUEST_CODE_GRANT_PERMISSIONS);
     }
 
     @Override
-    public void grantDiscovererPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode) {
+    public void grantDiscovererPermissions(String code, @NonNull Activity activity, @IntRange(from = 0) int requestCode) {
         String[] permissions = getDiscovererPermissionsNotGranted(code).toArray(new String[0]);
         if (permissions.length == 0) return;
         ActivityCompat.requestPermissions(activity, permissions, requestCode);
     }
 
+    @NonNull
     @Override
-    public Map<String, PeerInfo> getPeerInfoMap() {
+    public Map<String, IPeer> getPeerInfoMap() {
         return mPeerInfoMap;
     }
 
@@ -420,7 +478,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         Log.d(TAG, "Checking whether to start service and in foreground or in background(beforeUnbind)");
         if (isAnyDiscovererStarted()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                Log.d(TAG, String.format("Discoverer running, API newer than %d starting service in foreground", Build.VERSION_CODES.O));
+                Log.d(TAG, String.format("Discoverer running, API newer than %d, starting service in foreground", Build.VERSION_CODES.O));
                 startForegroundService(new Intent(getApplicationContext(), DiscoverService.class));
                 startForeground();
             } else {

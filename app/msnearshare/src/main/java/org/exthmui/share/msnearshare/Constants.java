@@ -12,7 +12,7 @@ import java.util.HashMap;
 public abstract class Constants {
     public static final HashMap<NearShareStatus, org.exthmui.share.shared.misc.Constants.TransmissionStatus> STATUS_MAPPING = new HashMap<>() {
         {
-            put(NearShareStatus.UNKNOWN, org.exthmui.share.shared.misc.Constants.TransmissionStatus.UNKNOWN_ERROR);
+            put(NearShareStatus.UNKNOWN, org.exthmui.share.shared.misc.Constants.TransmissionStatus.ERROR);
             put(NearShareStatus.COMPLETED, org.exthmui.share.shared.misc.Constants.TransmissionStatus.COMPLETED);
             put(NearShareStatus.IN_PROGRESS, org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS);
             put(NearShareStatus.TIMED_OUT, org.exthmui.share.shared.misc.Constants.TransmissionStatus.TIMED_OUT);

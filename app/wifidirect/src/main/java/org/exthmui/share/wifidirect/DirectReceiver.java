@@ -19,6 +19,7 @@ import android.os.Looper;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.OneTimeWorkRequest;
@@ -79,18 +80,22 @@ public class DirectReceiver implements Receiver {
 
     private WifiP2pManager mWifiP2pManager;
     private WifiP2pManager.Channel mChannel;
+    @Nullable
     private WifiP2pDnsSdServiceInfo mServiceInfo;
 
-    private DirectReceiver(Context context) {
+    private DirectReceiver(@NonNull Context context) {
         this.mContext = context.getApplicationContext();
     }
 
-    public static DirectReceiver getInstance(Context context) {
-        if (instance == null) instance = new DirectReceiver(context);
+    public static DirectReceiver getInstance(@NonNull Context context) {
+        if (instance == null)
+            synchronized (DirectReceiver.class) {
+                if (instance == null) instance = new DirectReceiver(context);
+            }
         return instance;
     }
 
-    private void notifyListeners(EventObject event) {
+    private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
     }
 
@@ -125,7 +130,7 @@ public class DirectReceiver implements Receiver {
     }
 
     @Override
-    public void registerListener(BaseEventListener listener) {
+    public void registerListener(@NonNull BaseEventListener listener) {
         if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
@@ -174,7 +179,7 @@ public class DirectReceiver implements Receiver {
             int serverPort = DirectUtils.getServerPort(mContext);
 
             //  Create a string map containing information about your service.
-            Map<String, String> record = new HashMap<>();
+            Map<String, String> record = new HashMap<>(6);
             record.put(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION_1);
             record.put(RECORD_KEY_SERVER_PORT, String.valueOf(serverPort));
             record.put(RECORD_KEY_DISPLAY_NAME, Utils.getSelfName(mContext));
@@ -212,7 +217,9 @@ public class DirectReceiver implements Receiver {
         // Here shouldn't cause any exception, we should only register BroadcastReceiver after permissions are granted.
     }
 
-    public UUID startWork(Context context) {
+    @NonNull
+    @Override
+    public UUID startWork(@NonNull Context context) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
@@ -234,7 +241,7 @@ public class DirectReceiver implements Receiver {
                 }
             }
             notifyListeners(new ReceiverStoppedEvent(this));
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (@NonNull ExecutionException | InterruptedException e) {
             e.printStackTrace();
         }
         if (mServiceInfo == null) return;
@@ -256,12 +263,12 @@ public class DirectReceiver implements Receiver {
     }
 
     @Override
-    public void onReceiveActionAccept(ReceiveActionAcceptEvent event) {
+    public void onReceiveActionAccept(@NonNull ReceiveActionAcceptEvent event) {
         notifyListeners(event);
     }
 
     @Override
-    public void onReceiveActionReject(ReceiveActionRejectEvent event) {
+    public void onReceiveActionReject(@NonNull ReceiveActionRejectEvent event) {
         notifyListeners(event);
     }
 }

@@ -7,9 +7,11 @@ import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
+
+import java.util.Objects;
 
 public class DirectPeer extends Peer {
-    public static final String CONNECTION_CODE = Constants.CONNECTION_CODE_WIFIDIRECT;
 
     @NonNull
     private WifiP2pDevice wifiP2pDevice;
@@ -39,7 +41,11 @@ public class DirectPeer extends Peer {
     @NonNull
     @Override
     public String getId() {
-        return DirectUtils.genDirectId(getPeerId());
+        return DirectUtils.genDirectId(peerId);
+    }
+
+    public void setId(@NonNull String peerId) {
+        this.peerId = peerId;
     }
 
     @NonNull
@@ -74,8 +80,8 @@ public class DirectPeer extends Peer {
 
     @NonNull
     @Override
-    public String getConnectionType() {
-        return CONNECTION_CODE;
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     @Override
@@ -111,7 +117,7 @@ public class DirectPeer extends Peer {
                 stat = Constants.TransmissionStatus.IN_PROGRESS.getNumVal();
                 break;
             case WifiP2pDevice.FAILED:
-                stat = Constants.TransmissionStatus.UNKNOWN_ERROR.getNumVal();
+                stat = Constants.TransmissionStatus.ERROR.getNumVal();
                 break;
             case WifiP2pDevice.AVAILABLE:
             case WifiP2pDevice.UNAVAILABLE:
@@ -156,15 +162,7 @@ public class DirectPeer extends Peer {
         this.protocolVersion = protocolVersion;
     }
 
-    @NonNull
-    public String getPeerId() {
-        return peerId;
-    }
-
-    public void setPeerId(@NonNull String peerId) {
-        this.peerId = peerId;
-    }
-
+    @Override
     @IntRange(from = 0)
     public int getUid() {
         return uid;
@@ -182,5 +180,18 @@ public class DirectPeer extends Peer {
 
     public void setAccountServerSign(@NonNull String accountServerSign) {
         this.accountServerSign = accountServerSign;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof DirectPeer)) return false;
+        DirectPeer that = (DirectPeer) o;
+        return getServerPort() == that.getServerPort() && getUid() == that.getUid() && getWifiP2pDevice().equals(that.getWifiP2pDevice()) && getProtocolVersion().equals(that.getProtocolVersion()) && peerId.equals(that.peerId) && getAccountServerSign().equals(that.getAccountServerSign());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getWifiP2pDevice(), getServerPort(), getProtocolVersion(), peerId, getUid(), getAccountServerSign());
     }
 }

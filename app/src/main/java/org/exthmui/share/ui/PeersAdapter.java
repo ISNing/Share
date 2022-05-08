@@ -26,7 +26,7 @@ import androidx.work.Data;
 import androidx.work.WorkInfo;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.misc.Constants;
 
 import java.util.Map;
@@ -36,11 +36,12 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
     public static final int REQUEST_CODE_PICK_FILE = 0;
 
     private LayoutInflater mInflater;
-    private final ArrayMap<String, PeerInfo> mPeers = new ArrayMap<>();
+    private final ArrayMap<String, IPeer> mPeers = new ArrayMap<>();
 
     @Nullable
     private OnPeerSelectedListener mOnPeerSelectedListener;
 
+    @NonNull
     private final MutableLiveData<String> mPeerSelectedLiveData = new MutableLiveData<>(null);
 
     public PeersAdapter() {
@@ -74,7 +75,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
     public void onBindViewHolder(@NonNull PeersAdapter.ViewHolder holder, int position) {
         final String id;
         id = mPeers.keyAt(position);
-        final PeerInfo peer = mPeers.valueAt(position);
+        final IPeer peer = mPeers.valueAt(position);
         holder.setPeer(peer);
         final boolean selected = id.equals(mPeerSelectedLiveData.getValue());
         holder.itemView.setSelected(selected);
@@ -96,34 +97,36 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void setData(Map<String, PeerInfo> peers) {
+    public void setData(Map<String, IPeer> peers) {
         mPeers.clear();
         mPeers.putAll(peers);
         notifyDataSetChanged();
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void addPeer(PeerInfo peer) {
+    public void addPeer(@NonNull IPeer peer) {
         mPeers.put(peer.getId(), peer);
         notifyDataSetChanged();
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void updatePeer(PeerInfo peer) {
+    public void updatePeer(@NonNull IPeer peer) {
         mPeers.replace(peer.getId(), peer);
         notifyDataSetChanged();
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void removePeer(PeerInfo peer) {
+    public void removePeer(@NonNull IPeer peer) {
         mPeers.remove(peer.getId());
         notifyDataSetChanged();
     }
 
+    @Nullable
     public MutableLiveData<String> getPeerSelectedLiveData() {
         return mPeerSelectedLiveData;
     }
 
+    @Nullable
     public String getPeerSelected() {
         return mPeerSelectedLiveData.getValue();
     }
@@ -134,11 +137,14 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
 
     static class ViewHolder extends RecyclerView.ViewHolder {
 
-        private PeerInfo peer;
+        private IPeer peer;
+        @NonNull
         private final BadgeHelper badgeHelper;
 
+        @Nullable
         final LifecycleOwner mLifecycleOwner;
 
+        @NonNull
         private final View mView;
         private final ConstraintLayout mPeerIconContainer;
         private final TextView mPeerNameText;
@@ -146,7 +152,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
         private final ProgressBar mPeerProgressBar;
         private final ImageView mPeerIcon;
 
-        ViewHolder(View view) {
+        ViewHolder(@NonNull View view) {
             super(view);
 
             mView = view;
@@ -164,6 +170,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             badgeHelper.bindToTargetView(mPeerIcon);
         }
 
+        @NonNull
         public View getView() {
             return mView;
         }
@@ -188,11 +195,11 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             return mPeerIcon;
         }
 
-        public PeerInfo getPeer() {
+        public IPeer getPeer() {
             return peer;
         }
 
-        public void setPeer(@NonNull PeerInfo peer) {
+        public void setPeer(@NonNull IPeer peer) {
             this.peer = peer;
 
             // Set transition name
@@ -210,6 +217,7 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
             int tStatus = peer.getTransmissionStatus();
             if (tStatus == Constants.TransmissionStatus.IN_PROGRESS.getNumVal()) {
                 mPeerDetailText.setVisibility(View.VISIBLE);
+                assert mLifecycleOwner != null;
                 peer.getAllWorkInfosLiveData(mView.getContext())
                         .observe(mLifecycleOwner, workInfos -> {
                             Context context = itemView.getContext();
@@ -217,7 +225,6 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
                             long bytesSent = -1;
                             long bytesTotal = -1;
 
-                            // add badge
                             int succeededNumber = 0;
                             int failedNumber = 0;
                             int waitingNumber = 0;
@@ -310,6 +317,6 @@ public class PeersAdapter extends RecyclerView.Adapter<PeersAdapter.ViewHolder> 
          * @param peer The peer requested to be selected
          * @return Whether to select the peer
          */
-        boolean onPeerSelected(PeerInfo peer, ViewHolder viewHolder);
+        boolean onPeerSelected(IPeer peer, ViewHolder viewHolder);
     }
 }

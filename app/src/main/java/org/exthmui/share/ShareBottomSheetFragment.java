@@ -19,7 +19,7 @@ import androidx.annotation.Nullable;
 import org.exthmui.share.misc.SendingHelper;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.exceptions.NoEntityPassedException;
 import org.exthmui.share.shared.exceptions.PeerDisappearedException;
 import org.exthmui.share.shared.listeners.BaseEventListener;
@@ -74,20 +74,6 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
 
     private ArrayList<Entity> mEntities = new ArrayList<>();
 
-//    private final WifiStateMonitor mWifiStateMonitor = new WifiStateMonitor() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            setupIfNeeded();
-//        }
-//    };
-//
-//    private final BluetoothStateMonitor mBluetoothStateMonitor = new BluetoothStateMonitor() {
-//        @Override
-//        public void onReceive(Context context, Intent intent) {
-//            setupIfNeeded();
-//        }
-//    };
-
     public ShareBottomSheetFragment() {
     }
 
@@ -102,7 +88,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
         mConnection.registerOnServiceConnectedListener(service -> {
             mService = (DiscoverService) service;
             if (mService.isAnyDiscovererStarted()) {
-                Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+                Map<String, IPeer> peers = mService.getPeerInfoMap();
                 mPeerChooser.setData(peers);
             } else if (!mService.isDiscoverersAvailable()) {
                 mPeerChooser.setState(PeerChooserView.STATE_UNAVAILABLE);
@@ -114,7 +100,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                 int state = mPeerChooser.getState();
                 if (state != PeerChooserView.STATE_ENABLED &&
                         state != PeerChooserView.STATE_ENABLED_NO_PEER) {
-                    Map<String, PeerInfo> peers = mService.getPeerInfoMap();
+                    Map<String, IPeer> peers = mService.getPeerInfoMap();
                     requireActivity().runOnUiThread(() -> mPeerChooser.setData(peers));
                 }
             });
@@ -152,6 +138,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
             mService.beforeUnbind();
         }
         requireContext().unbindService(mConnection);
+        mService = null;
     }
 
     @Nullable
@@ -186,7 +173,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
             if (mService == null) {
                 mConnection.registerOnServiceConnectedListener(s -> {
                     DiscoverService service = (DiscoverService) s;
-                    PeerInfo peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+                    IPeer peer = service.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                     try {
                         if (peer == null) {
                             throw new PeerDisappearedException(requireContext());
@@ -198,7 +185,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
                     dismiss();
                 });
             } else {
-                PeerInfo peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
+                IPeer peer = mService.getPeerInfoMap().get(mPeerChooser.getPeerSelected());
                 try {
                     if (peer == null) {
                         throw new PeerDisappearedException(requireContext());

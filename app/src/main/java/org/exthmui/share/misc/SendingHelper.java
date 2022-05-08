@@ -10,12 +10,12 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.exceptions.FailedInvokingSendingMethodException;
 import org.exthmui.share.shared.exceptions.FailedStartSendingException;
-import org.exthmui.share.shared.exceptions.InvalidConnectionTypeException;
 import org.exthmui.share.shared.exceptions.InvalidSenderException;
+import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.SenderUtils;
 import org.exthmui.share.shared.misc.StackTraceUtils;
 
@@ -26,7 +26,9 @@ import java.util.UUID;
 
 public class SendingHelper {
 
+    @NonNull
     private final Context mContext;
+    @NonNull
     private final WorkManager mWorkManager;
 
     public static final String TAG = "SendingHelper";
@@ -36,13 +38,9 @@ public class SendingHelper {
         mWorkManager = WorkManager.getInstance(mContext);
     }
 
-    public UUID send(@NonNull PeerInfo target, @NonNull List<Entity> entities)
+    public UUID send(@NonNull IPeer target, @NonNull List<Entity> entities)
         throws FailedStartSendingException {
-        Constants.ConnectionType connectionType = Constants.ConnectionType
-            .parseFromCode(target.getConnectionType());
-        if (connectionType == null) {
-            throw new InvalidConnectionTypeException(mContext);
-        }
+        IConnectionType connectionType = target.getConnectionType();
         try {
             Method method = connectionType.getSenderClass()
                     .getDeclaredMethod("getInstance", Context.class);
@@ -66,7 +64,7 @@ public class SendingHelper {
                 }
             });
             return workId;
-        } catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (@NonNull IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             throw new FailedInvokingSendingMethodException(mContext, e);
         }

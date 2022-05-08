@@ -1,6 +1,7 @@
 package org.exthmui.share.web;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.yanzhenjie.andserver.annotation.Converter;
@@ -17,11 +18,12 @@ import java.nio.charset.Charset;
 
 @Converter
 public class AppMessageConverter implements MessageConverter {
-    final static Gson gson = new Gson();
+    final static Gson GSON = new Gson();
 
+    @NonNull
     @Override
     public ResponseBody convert(Object output, MediaType mediaType) {
-        String data = gson.toJson(output);
+        String data = GSON.toJson(output);
         ResponseBody returned = new JsonBody(data);
 //        returned.setSuccess(true);
 //        returned.setData(data);
@@ -29,11 +31,11 @@ public class AppMessageConverter implements MessageConverter {
     }
 
     @Override
-    public <T> T convert(@NonNull InputStream stream, MediaType mediaType, Type type) throws IOException {
+    public <T> T convert(@NonNull InputStream stream, @Nullable MediaType mediaType, Type type) throws IOException {
         Charset charset = mediaType == null ? null : mediaType.getCharset();
         if (charset == null) {
-            return gson.fromJson(IOUtils.toString(stream), type);
+            return GSON.fromJson(IOUtils.toString(stream), type);
         }
-        return gson.fromJson(IOUtils.toString(stream, charset), type);
+        return GSON.fromJson(IOUtils.toString(stream, charset), type);
     }
 }

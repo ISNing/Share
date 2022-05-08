@@ -1,19 +1,19 @@
 package org.exthmui.share.shared.events;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 
 import java.util.EventObject;
 
 public class PeerAddedEvent extends EventObject {
 
-    private final PeerInfo peer;
+    private final IPeer peer;
 
-    public PeerAddedEvent(Object source, PeerInfo peer) {
+    public PeerAddedEvent(Object source, IPeer peer) {
         super(source);
         this.peer = peer;
     }
 
-    public PeerInfo getPeer() {
+    public IPeer getPeer() {
         return peer;
     }
 }

@@ -1,6 +1,7 @@
 package org.exthmui.share.shared.base;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.Serializable;
 
@@ -10,15 +11,17 @@ public class PeerInfoTransfer implements Serializable {
     /**
      * Optional
      */
+    @Nullable
     private String protocolVersion;
     private int uid;
+    @Nullable
     private String accountServerSign;
 
     public PeerInfoTransfer() {
 
     }
 
-    public PeerInfoTransfer(@NonNull PeerInfo peer) {
+    public PeerInfoTransfer(@NonNull IPeer peer) {
         this.accountServerSign = peer.getAccountServerSign();
         this.id = peer.getId();
         this.uid = peer.getUid();
@@ -42,11 +45,12 @@ public class PeerInfoTransfer implements Serializable {
         this.id = id;
     }
 
+    @Nullable
     public String getProtocolVersion() {
         return protocolVersion;
     }
 
-    public void setProtocolVersion(String protocolVersion) {
+    public void setProtocolVersion(@Nullable String protocolVersion) {
         this.protocolVersion = protocolVersion;
     }
 
@@ -58,11 +62,12 @@ public class PeerInfoTransfer implements Serializable {
         this.uid = uid;
     }
 
+    @Nullable
     public String getAccountServerSign() {
         return accountServerSign;
     }
 
-    public void setAccountServerSign(String accountServerSign) {
+    public void setAccountServerSign(@Nullable String accountServerSign) {
         this.accountServerSign = accountServerSign;
     }
 }

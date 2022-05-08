@@ -11,8 +11,10 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
+            <option value="$PROJECT_DIR$/app/lannsd" />
             <option value="$PROJECT_DIR$/app/msnearshare" />
             <option value="$PROJECT_DIR$/app/shared" />
+            <option value="$PROJECT_DIR$/app/udptransport" />
             <option value="$PROJECT_DIR$/app/web" />
             <option value="$PROJECT_DIR$/app/wifidirect" />
           </set>

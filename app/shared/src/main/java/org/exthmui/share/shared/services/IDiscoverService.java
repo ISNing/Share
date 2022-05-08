@@ -5,9 +5,10 @@ import android.content.ComponentCallbacks2;
 import android.content.Intent;
 
 import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 
@@ -78,13 +79,16 @@ public interface IDiscoverService extends ComponentCallbacks2 {
 
     boolean isDiscovererAvailable(String code);
 
+    @NonNull
     Set<String> getDiscoverersPermissionsNotGranted();
 
+    @NonNull
     Set<String> getDiscovererPermissionsNotGranted(String code);
 
     void grantDiscoverPermissions(Activity activity);
 
     void grantDiscovererPermissions(String code, Activity activity, @IntRange(from = 0) int requestCode);
 
-    Map<String, PeerInfo> getPeerInfoMap();
+    @NonNull
+    Map<String, IPeer> getPeerInfoMap();
 }

@@ -65,6 +65,7 @@ public abstract class BaseWorker extends Worker {
      * @see #genFailureResult(int, String, String)
      * ***** Extra values is allowed *****
      */
+    @Override
     @NonNull
     public abstract Result doWork();
 
@@ -85,46 +86,55 @@ public abstract class BaseWorker extends Worker {
     @NonNull
     protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate);
 
-    private void setForegroundInfo(ForegroundInfo foregroundInfo) {
+    private void setForegroundInfo(@NonNull ForegroundInfo foregroundInfo) {
         this.foregroundInfo.set(foregroundInfo);
         NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
         notificationManager.notify(getNotificationId(), foregroundInfo.getNotification());
     }
 
+    @NonNull
     protected Result genSuccessResult() {
         return Result.success(genSuccessData());
     }
 
+    @NonNull
     protected Result genRejectedResult(@NonNull Context context) {
         return genFailureResult(new RejectedException(context));
     }
 
+    @NonNull
     protected Result genSenderCancelledResult(@NonNull Context context) {
         return genFailureResult(new SenderCancelledException(context));
     }
 
+    @NonNull
     protected Result genReceiverCancelledResult(@NonNull Context context) {
         return genFailureResult(new ReceiverCancelledException(context));
     }
 
+    @NonNull
     protected Result genFailureResult(@NonNull TransmissionException e) {
         return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage());
     }
 
+    @NonNull
     private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage) {
         return Result.failure(genFailureData(errCode, message, localizedMessage));
     }
 
+    @NonNull
     protected Data.Builder genSuccessDataBuilder() {
         return new Data.Builder()
                 .putAll(getInputData());
     }
 
+    @NonNull
     protected Data genSuccessData() {
         return genSuccessDataBuilder()
                 .build();
     }
 
+    @NonNull
     protected Data.Builder genProgressDataBuilder(int statusCode, long totalBytesToSend, long bytesTransmitted) {
         return new Data.Builder()
                 .putAll(getInputData())
@@ -133,11 +143,13 @@ public abstract class BaseWorker extends Worker {
                 .putLong(P_BYTES_TRANSMITTED, bytesTransmitted);
     }
 
+    @NonNull
     protected Data genProgressData(int statusCode, long totalBytesToSend, long bytesTransmitted) {
         return genProgressDataBuilder(statusCode, totalBytesToSend, bytesTransmitted)
                 .build();
     }
 
+    @NonNull
     protected Data.Builder genFailureDataBuilder(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
         return new Data.Builder()
                 .putAll(getInputData())
@@ -146,6 +158,7 @@ public abstract class BaseWorker extends Worker {
                 .putString(F_LOCALIZED_MESSAGE, localizedMessage);
     }
 
+    @NonNull
     protected Data genFailureData(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
         return genFailureDataBuilder(statusCode, message, localizedMessage)
                 .build();

@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 
 import org.exthmui.share.shared.base.Entity;
-import org.exthmui.share.shared.base.PeerInfo;
+import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.exceptions.FailedCastingPeerException;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 
@@ -16,7 +16,7 @@ import java.util.UUID;
 /**
  * IMPORTANT: Should have a static method "getInstance({@link android.content.Context} context)"
  */
-public interface Sender<T extends PeerInfo> {
+public interface Sender<T extends IPeer> {
     String TAG = "Sender";
     String TARGET_PEER_ID = "TARGET_PEER_ID";
     String TARGET_PEER_NAME = "TARGET_PEER_NAME";
@@ -29,10 +29,12 @@ public interface Sender<T extends PeerInfo> {
      * @return Identifier of work. Can be used to get {@link androidx.work.WorkInfo} form
      * {@link androidx.work.WorkManager}
      */
+    @NonNull
     UUID send(T peer, List<Entity> entities);
 
+    @NonNull
     @SuppressWarnings("unchecked")
-    default UUID sendToPeerInfo(Context context, PeerInfo peer, List<Entity> entities) throws FailedCastingPeerException {
+    default UUID sendToPeerInfo(@NonNull Context context, IPeer peer, List<Entity> entities) throws FailedCastingPeerException {
         try {
             return send((T) peer, entities);
         } catch (ClassCastException e) {
@@ -47,7 +49,8 @@ public interface Sender<T extends PeerInfo> {
 
     boolean isFeatureAvailable();
 
-    default Data genSendingInputData(PeerInfo peer, @NonNull List<Entity> entities) {
+    @NonNull
+    default Data genSendingInputData(@NonNull IPeer peer, @NonNull List<Entity> entities) {
         String[] uriStrings = new String[entities.size()];
         String[] fileNames = new String[entities.size()];
         String[] filePaths = new String[entities.size()];

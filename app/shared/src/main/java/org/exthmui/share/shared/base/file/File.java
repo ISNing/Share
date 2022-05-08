@@ -1,101 +1,135 @@
 package org.exthmui.share.shared.base.file;
 
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.provider.MediaStore;
+import android.net.Uri;
 
+import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import org.exthmui.share.shared.base.mediastore.Audio;
+import org.exthmui.share.shared.base.mediastore.Image;
+import org.exthmui.share.shared.base.mediastore.Media;
+import org.exthmui.share.shared.base.mediastore.Video;
 import org.exthmui.share.shared.misc.Constants;
 
-public class File implements FileInfo {
+public class File {
+    @Nullable
     private Bitmap thumbnail = null;
-    private String fileName;
-    private String filePath;
+    @Nullable
+    private String title;
+    @Nullable
+    private String name;
+    @Nullable
+    private Uri uri;
+    @Nullable
+    private String path;
+    @IntRange(from = -1)
     private long fileSize = -1;
-    private int fileAddedTime;
-    private int fileModifiedTime;
-    private int fileType = Constants.FileType.UNKNOWN.getNumVal();
+    @IntRange(from = 0)
+    private int dateAdded;
+    @IntRange(from = 0)
+    private int dateModified;
+    private int type = Constants.FileType.UNKNOWN.getNumVal();
 
     @SuppressWarnings("deprecated")
-    public File(Cursor c) {
-        this.filePath = c.getString(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA));
-        this.fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-        this.fileSize = c.getLong(c.getColumnIndexOrThrow(MediaStore.MediaColumns.SIZE));
-        this.fileAddedTime = c.getInt(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_ADDED));
-        this.fileModifiedTime = c.getInt(c.getColumnIndexOrThrow(MediaStore.MediaColumns.DATE_MODIFIED));
+    public File(@NonNull Media media) {
+        if (media instanceof Audio) {
+            this.uri = ((Audio) media).getUri();
+        } else if (media instanceof Image) {
+            this.uri = ((Image) media).getUri();
+        } else if (media instanceof Video) {
+            this.uri = ((Video) media).getUri();
+        }
+
+        this.title = media.getTitle();
+        this.path = media.getData();
+        this.name = path.substring(path.lastIndexOf('/') + 1);
+        this.fileSize = media.getSize();
+        this.dateAdded = media.getDateAdded();
+        this.dateModified = media.getDateModified();
     }
 
-    public File(Bitmap thumbnail, String fileName, String filePath, int fileAddedTime, int fileModifiedTime, int fileType) {
-        this.thumbnail = thumbnail;
-        this.fileName = fileName;
-        this.filePath = filePath;
-        this.fileAddedTime = fileAddedTime;
-        this.fileModifiedTime = fileModifiedTime;
-        this.fileType = fileType;
+    public File() {
     }
 
-    @Override
+    @Nullable
     public Bitmap getThumbnail() {
         return thumbnail;
     }
 
-    @Override
-    public void setThumbnail(Bitmap thumbnail) {
+    public void setThumbnail(@Nullable Bitmap thumbnail) {
         this.thumbnail = thumbnail;
     }
 
-    @Override
-    public String getFileName() {
-        return fileName;
+    @Nullable
+    public String getName() {
+        return name;
     }
 
-    @Override
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setName(@Nullable String name) {
+        this.name = name;
     }
 
-    @Override
-    public String getFilePath() {
-        return filePath;
+    @Nullable
+    public String getPath() {
+        return path;
     }
 
-    @Override
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
+    public void setPath(@Nullable String path) {
+        this.path = path;
     }
 
+    @IntRange(from = -1)
     public long getFileSize() {
         return fileSize;
     }
 
-    public void setFileSize(long fileSize) {
+    public void setFileSize(@IntRange(from = -1) long fileSize) {
         this.fileSize = fileSize;
     }
 
-    public int getFileAddedTime() {
-        return fileAddedTime;
+    @IntRange(from = 0)
+    public int getDateAdded() {
+        return dateAdded;
     }
 
-    public void setFileAddedTime(int fileAddedTime) {
-        this.fileAddedTime = fileAddedTime;
+    public void setDateAdded(@IntRange(from = 0) int dateAdded) {
+        this.dateAdded = dateAdded;
     }
 
-    @Override
-    public int getFileModifiedTime() {
-        return fileModifiedTime;
+    @IntRange(from = 0)
+    public int getDateModified() {
+        return dateModified;
     }
 
-    @Override
-    public void setFileModifiedTime(int fileModifiedTime) {
-        this.fileModifiedTime = fileModifiedTime;
+    public void setDateModified(@IntRange(from = 0) int dateModified) {
+        this.dateModified = dateModified;
     }
 
-    @Override
-    public int getFileType() {
-        return fileType;
+    public int getType() {
+        return type;
     }
 
-    @Override
-    public void setFileType(int fileType) {
-        this.fileType = fileType;
+    public void setType(int type) {
+        this.type = type;
+    }
+
+    @Nullable
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(@Nullable String title) {
+        this.title = title;
+    }
+
+    @Nullable
+    public Uri getUri() {
+        return uri;
+    }
+
+    public void setUri(@Nullable Uri uri) {
+        this.uri = uri;
     }
 }
