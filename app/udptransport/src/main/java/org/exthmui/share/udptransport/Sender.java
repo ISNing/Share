@@ -160,7 +160,7 @@ public class Sender {
     }
 
     public Future<Integer> sendAsync(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
-                            @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) throws IOException {
+                            @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) {
         if (entities.length != fileInfos.length) throw new IllegalArgumentException();
         return coreThreadPool.submit((Callable<Integer>) () -> {
                 try {
@@ -224,7 +224,7 @@ public class Sender {
     public void sendFile(BufferedInputStream inputStream) throws IOException {
         assert datagramSocket != null;
         FilePacket sendPacket = new FilePacket();
-        byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE][];
+        byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
         byte[] buf = new byte[Constants.DATA_LEN_MAX_HI];
         byte curGroup = Byte.MIN_VALUE;
         short curPacket = Short.MIN_VALUE;
@@ -235,7 +235,7 @@ public class Sender {
 
             if (checkCanceled()) return;
 
-            if (curPacket + 1 > Short.MAX_VALUE) {
+            if (curPacket == Short.MAX_VALUE) {
                 sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER);// (10), (11)
                 curPacket = Byte.MIN_VALUE;
 

@@ -5,7 +5,7 @@ import java.nio.ByteOrder;
 /**
  * Packet structure:
  * Byte 1: Command
- * Byte 2: Connection Id (0 is invalid)
+ * Byte 2: Connection Id (0 as well as {@link Byte#MIN_VALUE} is invalid)
  * Bytes 3+: Data {@link #DATA_LEN_MAX}
  *
  * @see org.exthmui.share.udptransport.packets.AbstractCommandPacket Base Packet Object
@@ -76,12 +76,25 @@ public class Constants {
 
     public static final String STRING_CHARSET = "UTF-8";
 
+    /**
+     * Group id to start as extra
+     */
     public static final byte START_IDENTIFIER = 0x0;
     public static final byte START_ACK_IDENTIFIER = 0x1;
+
+    /**
+     * Group id before reset as extra
+     * Receiver will reset current group id io {@link Byte#MIN_VALUE}
+     */
     public static final byte GROUP_ID_RESET_IDENTIFIER = 0x2;
     public static final byte GROUP_ID_RESET_ACK_IDENTIFIER = 0x3;
+
+    /**
+     * Group id to end as extra
+     */
     public static final byte END_IDENTIFIER = 0x4;
     public static final byte END_ACK_IDENTIFIER = 0x5;
+
     public static final byte FILE_END_IDENTIFIER = 0x6;
     public static final byte FILE_END_ACK_IDENTIFIER = 0x7;
 }
