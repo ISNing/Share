@@ -117,12 +117,12 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        mAcceptationBroadcastReceiver.setListener(null);
+        mAcceptationBroadcastReceiver.setListener(null);// Avoid memory leaking
         unregisterReceiver(mAcceptationBroadcastReceiver);
         unregisterReceiverListeners(mReceiverListenerList);
         Log.d(TAG, "Service going down(onDestroy), stopping receivers");
         stopReceivers();
+        super.onDestroy();
     }
 
     private void initializeInternalListeners() {
@@ -133,7 +133,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         mInternalListenerList.add((OnReceiverStoppedListener) event -> {
             updateTileState();
             if (isAllReceiversStopped()) {
-                notifyListeners(new ReceiverStoppedEvent(ReceiveService.this));
+                notifyListeners(new ReceiverStoppedEvent(this));
                 stopForeground();
             }
         });

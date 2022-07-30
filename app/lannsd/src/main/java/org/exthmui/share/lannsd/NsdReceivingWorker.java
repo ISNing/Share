@@ -40,6 +40,7 @@ import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.udptransport.UDPReceiver;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -87,8 +88,6 @@ public class NsdReceivingWorker extends ReceivingWorker {
         Socket socketToClient = null;
         Socket socketToServer = null;
         int timeout = NsdUtils.getTimeout(getApplicationContext());
-        int serverPort = NsdUtils.getServerPort(getApplicationContext());
-        int bufferSize = NsdUtils.getBufferSize(getApplicationContext());
 
         SenderInfo senderInfo = null;
         FileInfo[] fileInfos = null;
@@ -97,16 +96,10 @@ public class NsdReceivingWorker extends ReceivingWorker {
         final SettableFuture<Boolean> isAccepted = SettableFuture.create();
 
         try {
-            // Hold port for request
-            serverSocketToServer = new ServerSocket();
-//                    SSLUtils.genMutualServerSocket(getApplicationContext());TODO
-            serverSocketToServer.setReuseAddress(true);
-
-            serverSocketToServer.bind(new InetSocketAddress(serverPort));
             updateProgress(Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal(), 0, 0, new FileInfo[]{null,}, null);
             NsdReceiver receiver = NsdReceiver.getInstance(getApplicationContext());
-            NsdReceiver.OnListeningPortListener listeningPortListener = receiver.getOnListeningPortListener();
-            listeningPortListener.onListening(serverPort);
+            UDPReceiver udpReceiver = receiver.getUdpReceiver();
+            udpReceiver.
             socketToServer = serverSocketToServer.accept();// Handled cancel by closing serverSocket in onStopped
 
             InetAddress clientAddress = socketToServer.getInetAddress();
@@ -334,13 +327,5 @@ public class NsdReceivingWorker extends ReceivingWorker {
     public void onStopped() {
         super.onStopped();
         getForegroundInfoAsync().cancel(true);//TODO
-        if (serverSocketToServer != null) {
-            try {
-                serverSocketToServer.close();
-                serverSocketToServer = null;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

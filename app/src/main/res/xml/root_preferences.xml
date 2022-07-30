@@ -24,6 +24,11 @@
         android:title="@string/prefs_title_global_device_name"
         tools:summary="@string/prefs_summary_global_device_name_default" />
 
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="@string/prefs_key_global_use_saf"
+        android:title="@string/prefs_title_global_use_saf" />
+
     <org.exthmui.share.shared.preferences.ClickableStringPreference
         android:defaultValue="@string/prefs_default_global_peer_id"
         android:key="@string/prefs_key_global_peer_id"

@@ -41,8 +41,12 @@ import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.ReceiverUtils;
+import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.udptransport.UDPReceiver;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.EventObject;
 import java.util.HashSet;
@@ -74,12 +78,14 @@ public class NsdReceiver implements Receiver {
 
     private static final Gson GSON = new Gson();
 
-    private static NsdReceiver instance;
+    private static volatile NsdReceiver instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;
     private boolean mReceiverStarted;
     private boolean mInitialized;
+
+    private UDPReceiver mUdpReceiver;
 
     private NsdManager mNsdManager;
     private NsdManager.RegistrationListener mRegistrationListener;
@@ -102,6 +108,10 @@ public class NsdReceiver implements Receiver {
 
     private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    public UDPReceiver getUdpReceiver() {
+        return mUdpReceiver;
     }
 
     public OnListeningPortListener getOnListeningPortListener() {
@@ -144,6 +154,24 @@ public class NsdReceiver implements Receiver {
 
     @Override
     public void initialize() {
+        int serverPortTcp = NsdUtils.getServerPortTcp(mContext);
+        int serverPortUdp = NsdUtils.getServerPortUdp(mContext);
+        try {
+            mUdpReceiver = new UDPReceiver(fileInfo -> ReceiverUtils.openFileOutputStream(mContext, fileInfo.getFileName()), new UDPReceiver.ConnectionListener() {
+                @Override
+                public void onConnectionEstablished(byte connId) {
+                    startWorkWrapped(mContext);//TODO: Make use of connId(Monitoring)
+                }
+            }, serverPortTcp, serverPortUdp, true);
+        } catch (IOException e) {
+            String message = String.format(Locale.ENGLISH, "UdpReceiver initialize failed: %s", e.getMessage());
+            String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_initialize_failed, e.getLocalizedMessage());
+            notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
+            Log.e(TAG, message);
+            Log.e(TAG, e.getMessage());
+            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return;
+        }
         mNsdManager = (android.net.nsd.NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
 
         mRegistrationListener = new NsdManager.RegistrationListener() {
@@ -185,6 +213,8 @@ public class NsdReceiver implements Receiver {
             }
             ServiceNameModel serviceName = new ServiceNameModel()
                     .setDeviceType(Utils.getSelfDeviceType(mContext))
+                    //TODO: Move device name/type to extra to make it possible to make device name
+                    // limit longer, only use id as service name
                     .setDisplayName(Utils.getSelfName(mContext))
                     .setPeerId(Utils.getSelfId(mContext));
 
@@ -211,10 +241,11 @@ public class NsdReceiver implements Receiver {
                     break;
                 }
             }
-            if (isReceiverStarted() && !isRunning) {
-                startWorkWrapped(mContext);// Restart when finished but receiver not stopped
+            if (!isReceiverStarted() && !isRunning) {
+                mUdpReceiver.stopReceive();// Stop UdpReceiver after the last task is finished
             }
         });
+
         this.mInitialized = true;
     }
 
@@ -231,9 +262,19 @@ public class NsdReceiver implements Receiver {
 
     @Override
     public void startReceive() {
+        try {
+            mUdpReceiver.startReceive();
+            mOnListeningPortListener.onListening(mUdpReceiver.getServerPortTcp());
+        } catch (IOException e) {
+            String message = String.format(Locale.ENGLISH, "UdpReceiver start failed: %s", e.getMessage());
+            String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_start_failed, e.getLocalizedMessage());
+            notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
+            Log.e(TAG, message);
+            Log.e(TAG, e.getMessage());
+            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            return;
+        }
         mReceiverStarted = true;
-
-        startWorkWrapped(mContext);
     }
 
     @NonNull
@@ -242,21 +283,17 @@ public class NsdReceiver implements Receiver {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NsdReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.REPLACE, work);
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
     }
 
     @Override
     public void stopReceive() {
-        mReceiverStarted = false;
         try {
             List<WorkInfo> workInfo = WorkManager.getInstance(mContext).getWorkInfosForUniqueWork(WORK_UNIQUE_NAME).get();
             if (workInfo == null) return;
             for (WorkInfo info : workInfo) {
                 if (!info.getState().isFinished()) {
-                    if (info.getProgress().getInt(ReceivingWorker.STATUS_CODE, Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) == Constants.TransmissionStatus.WAITING_FOR_REQUEST.getNumVal()) {
-                        WorkManager.getInstance(mContext).cancelUniqueWork(WORK_UNIQUE_NAME);
-                    }
                 }
             }
             notifyListeners(new ReceiverStoppedEvent(this));
@@ -269,6 +306,7 @@ public class NsdReceiver implements Receiver {
         } catch (IllegalArgumentException ignored) {
         }
         mServiceInfo = null;
+        mReceiverStarted = false;
     }
 
     @Override

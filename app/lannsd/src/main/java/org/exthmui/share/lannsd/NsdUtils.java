@@ -79,8 +79,8 @@ public abstract class NsdUtils {
         return timeout > 0;
     }
 
-    public static int getServerPort(@NonNull Context context) {
-        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port));
+    public static int getServerPortTcp(@NonNull Context context) {
+        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_tcp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port));
         if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort();
@@ -88,11 +88,11 @@ public abstract class NsdUtils {
         return port;
     }
 
-    public static int getClientPort(@NonNull Context context) {
-        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_client_port), context.getResources().getInteger(R.integer.prefs_default_lannsd_client_port));
-        if (!isClientPortValid(context, port) || port == -1) {
+    public static int getServerPortUdp(@NonNull Context context) {
+        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_udp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port));
+        if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
-            return generatePort(getServerPort(context));
+            return generatePort();
         }
         return port;
     }
@@ -103,20 +103,6 @@ public abstract class NsdUtils {
 
     public static boolean isServerPortValid(Context context, int serverPort) {
         return serverPort == -1 || (isPortValid(serverPort));
-    }
-
-    public static boolean isClientPortValid(@NonNull Context context, int clientPort) {
-        return clientPort == -1 || (isPortValid(clientPort) && clientPort != getServerPort(context));
-    }
-
-    public static int getBufferSize(@NonNull Context context) {
-        int defaultSize = context.getResources().getInteger(R.integer.prefs_default_lannsd_buffer_size);
-        int bufferSize = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_buffer_size), defaultSize);
-        if (bufferSize <= 0) {
-            Log.d(TAG, "Got a illegal buffer size, returning default size");
-            return defaultSize;
-        }
-        return bufferSize;
     }
 
     @NonNull

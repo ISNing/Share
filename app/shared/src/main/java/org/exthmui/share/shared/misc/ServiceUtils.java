@@ -25,14 +25,18 @@ public abstract class ServiceUtils {
     }
 
     public static abstract class MyService extends Service {
-        public class MyBinder extends Binder {
+        public static class MyBinder extends Binder {
+            private MyService mService;
+            private MyBinder(MyService s) {
+                mService = s;
+            }
             @NonNull
             public Service getService() {
-                return MyService.this;
+                return mService;
             }
         }
 
-        private final MyBinder mBinder = new MyBinder();
+        private final MyBinder mBinder = new MyBinder(this);
 
         @NonNull
         @Override
@@ -42,6 +46,12 @@ public abstract class ServiceUtils {
         }
 
         public void onBind(Intent intent, Object ignored) {
+        }
+
+        @Override
+        public void onDestroy() {
+            mBinder.mService = null;
+            super.onDestroy();
         }
     }
 
@@ -66,22 +76,18 @@ public abstract class ServiceUtils {
             mOnServiceDisconnectedListeners.remove(listener);
         }
 
-        @Nullable
-        private MyService mService;
-
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
             MyService.MyBinder binder = (MyService.MyBinder) service;
-            mService = (MyService) binder.getService();
+            MyService myService = (MyService) binder.getService();
             for (OnServiceConnectedListener l:
                     mOnServiceConnectedListeners) {
-                l.onServiceConnected(mService);
+                l.onServiceConnected(myService);
             }
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            mService=null;
             for (OnServiceDisconnectedListener l:
                     mOnServiceDisconnectedListeners) {
                 l.onServiceDisconnected(name);

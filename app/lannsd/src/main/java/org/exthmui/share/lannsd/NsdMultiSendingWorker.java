@@ -12,6 +12,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +42,7 @@ import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.udptransport.UDPSender;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -51,8 +53,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -74,9 +79,6 @@ public class NsdMultiSendingWorker extends SendingWorker {
         return new Metadata();
     }
 
-    @NonNull
-    final AtomicReference<ServerSocket> serverSocketToClientReference = new AtomicReference<>(null);
-
     @SuppressLint("RestrictedApi")
     @NonNull
     @Override
@@ -92,9 +94,6 @@ public class NsdMultiSendingWorker extends SendingWorker {
         Uri[] uris = new Uri[uriStrings.length];
         FileInfo[] fileInfos = new FileInfo[uriStrings.length];
         Entity[] entities = new Entity[uris.length];
-
-        long totalBytesToSend = 0;
-        long bytesSent = 0;
 
         for (int i = 0; i < uriStrings.length; i++) {
             if (uriStrings[i] == null)
@@ -115,9 +114,9 @@ public class NsdMultiSendingWorker extends SendingWorker {
                 return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
             }
             fileInfos[i].putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
-            totalBytesToSend += fileInfos[i].getFileSize();
         }
 
+        // Load Peer
         NsdManager manager = NsdManager.getInstance(getApplicationContext());
 
         String peerId = input.getString(Sender.TARGET_PEER_ID);
@@ -151,308 +150,67 @@ public class NsdMultiSendingWorker extends SendingWorker {
                 return genFailureResult(new FailedResolvingPeerException(getApplicationContext(), e));
             }
         }
+        // End Load Peer
 
+        // Initialize ReceiverInfo
         ReceiverInfo receiverInfo = new ReceiverInfo(peer[0], peer[0].getServerPort());
-
-        final InetAddress[] serverAddress = new InetAddress[]{peer[0].getAddress()};
 
         AtomicReference<Result> result = new AtomicReference<>(null);
 
         int timeout = NsdUtils.getTimeout(getApplicationContext());
         int serverPort = peer[0].getServerPort();
-        int clientPort = NsdUtils.getClientPort(getApplicationContext());
-        int bufferSize = NsdUtils.getBufferSize(getApplicationContext());
 
-        InputStream entityInputStream = null;
-        OutputStream stsOutputStream = null;
-        Socket socketToServer = null;
-        DataOutputStream stsDataOutputStream = null;
-        final AtomicReference<Socket> socketToClientReference = new AtomicReference<>(null);
+        // Initial SenderInfo object
+        SenderInfo senderInfo = new SenderInfo();
+        senderInfo.setDisplayName(Utils.getSelfName(getApplicationContext()));
+        senderInfo.setId(Utils.getSelfId(getApplicationContext()));
+        senderInfo.setProtocolVersion(SHARE_PROTOCOL_VERSION_1);
+        senderInfo.setUid(0);//TODO: Get from account sdk
+        senderInfo.setAccountServerSign("");//TODO: Get from account sdk
 
-        final AtomicBoolean cancelledByReceiver = new AtomicBoolean(false);
-        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] isAccepted = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
-        isAccepted[0] = SettableFuture.create();
-        @SuppressWarnings("unchecked") final ListenableFuture<Boolean>[] succeeded = (ListenableFuture<Boolean>[]) new ListenableFuture<?>[1];
-        succeeded[0] = SettableFuture.create();
-
-        //noinspection AlibabaAvoidManuallyCreateThread
-        Thread senderServerThread = new Thread() {
-            @Nullable
-            DataInputStream dataInputStream = null;
-
-            @SuppressLint("RestrictedApi")
+        UDPSender sender = new UDPSender(getApplicationContext(), new UDPSender.SendingListener() {
             @Override
-            public void run() {
-                // Read commands
-                try {
-                    dataInputStream = SSLUtils.getDataInput(socketToClientReference.get());
-                    socketToClientReference.get().setSoTimeout(0);
+            public void onAccepted(String[] fileIdsAccepted) {
 
-                    String command;
-                    label:
-                    while (true) {
-                        if (dataInputStream.available() > 0) //noinspection AlibabaAvoidManuallyCreateThread
-                        {
-                            command = dataInputStream.readUTF();
-                            switch (command) {
-                                case COMMAND_CANCEL:
-                                    Log.d(TAG, String.format("Received cancel command \"%s\"", command));
-                                    cancelledByReceiver.set(true);
-                                    break label;
-                                case COMMAND_ACCEPT:
-                                    Log.d(TAG, String.format("Received  command \"%s\"", command));
-                                    ((SettableFuture<Boolean>) isAccepted[0]).set(true);
-                                    break;
-                                case COMMAND_REJECT:
-                                    Log.d(TAG, String.format("Received command \"%s\"", command));
-                                    ((SettableFuture<Boolean>) isAccepted[0]).set(false);
-                                    break;
-                                case COMMAND_SUCCESS:
-                                    Log.d(TAG, String.format("Received command \"%s\"", command));
-                                    ((SettableFuture<Boolean>) succeeded[0]).set(true);
-                                    break;
-                                case COMMAND_FAILURE:
-                                    Log.d(TAG, String.format("Received command \"%s\"", command));
-                                    ((SettableFuture<Boolean>) succeeded[0]).set(false);
-                                    break;
-                                default:
-                                    Log.w(TAG, String.format("Received unknown command \"%s\"", command));
-                            }
-                        }
-                        if (interrupted()) break;
-                    }
-                    dataInputStream.close();
-                    dataInputStream = null;
-                    socketToClientReference.get().close();
-                    socketToClientReference.set(null);
-                    serverSocketToClientReference.get().close();
-                    serverSocketToClientReference.set(null);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                } finally {
-                    if (dataInputStream != null) {
-                        try {
-                            dataInputStream.close();
-                            dataInputStream = null;
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (socketToClientReference.get() != null) {
-                        try {
-                            socketToClientReference.get().close();
-                            socketToClientReference.set(null);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (serverSocketToClientReference.get() != null) {
-                        try {
-                            serverSocketToClientReference.get().close();
-                            serverSocketToClientReference.set(null);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
             }
-        };
 
+            @Override
+            public void onProgressUpdate(int status, long totalBytesToSend, long bytesSent, long curFileBytesToSend, long curFileBytesSent, String curFileId) {
+                updateProgress(status, totalBytesToSend, bytesSent, fileInfos, receiverInfo);//TODO:Improvement required
+            }
+
+            @Override
+            public void onComplete(int status, Map<String, Pair<Integer, String>> resultMap) {
+                if ((status & Constants.TransmissionStatus.COMPLETED.getNumVal()) == status)
+                    result.set(genSuccessResult());
+                else if ((status & Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal()) == status)
+                    result.set(genSenderCancelledResult(getApplicationContext()));
+                else if ((status & Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal()) == status)
+                    result.set(genReceiverCancelledResult(getApplicationContext()));
+                else if ((status & Constants.TransmissionStatus.ERROR.getNumVal()) == status)
+                    result.set(genFailureResult(new UnknownErrorException(getApplicationContext())));
+            }
+        });
         try {
-            // Initial SenderInfo object
-            SenderInfo senderInfo = new SenderInfo();
-            senderInfo.setDisplayName(Utils.getSelfName(getApplicationContext()));
-            senderInfo.setId(Utils.getSelfId(getApplicationContext()));
-            senderInfo.setProtocolVersion(SHARE_PROTOCOL_VERSION_1);
-            senderInfo.setUid(0);//TODO: Get from account sdk
-            senderInfo.setAccountServerSign("");//TODO: Get from account sdk
-            senderInfo.setClientPort(clientPort);
+            sender.initialize();
+        } catch (SocketException e) {
+            e.printStackTrace();
+        }
+        sender.sendAsync(entities, fileInfos, senderInfo, new InetSocketAddress(peer[0].getAddress(), peer[0].getServerPort()));
 
-            socketToServer = new Socket();
-//            SSLUtils.genMutualSocket(getApplicationContext()); TODO
-            socketToServer.bind(null);
-            Log.d(TAG, "Trying to connect to server(receiver): " + serverAddress[0].getHostAddress() + ":" + serverPort);
-            socketToServer.connect((new InetSocketAddress(serverAddress[0], serverPort)), timeout);
-            stsOutputStream = socketToServer.getOutputStream();
-            stsDataOutputStream = SSLUtils.getDataOutput(socketToServer);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), 0, 0, fileInfos, receiverInfo);
-
-            // Send senderInfo
-            String senderInfoStr = GSON.toJson(senderInfo);
-            Log.d(TAG, "Trying to send \"" + senderInfoStr + "\" -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
-            stsDataOutputStream.writeUTF(senderInfoStr);
-
-            // Send fileTransfer
-            String fileInfosStr = GSON.toJson(fileInfos);
-            Log.d(TAG, "Trying to send " + fileInfosStr + " -> " + serverAddress[0].getHostAddress() + ":" + serverPort);
-            stsDataOutputStream.writeUTF(fileInfosStr);
-
-            // Start sender server
-            byte[] oriAddress = serverAddress[0].getAddress();
-            byte[] address = null;
-            // Bind ServerSocket
-            serverSocketToClientReference.set(new ServerSocket());
-//                    SSLUtils.genMutualServerSocket(getApplicationContext()));
-            serverSocketToClientReference.get().setReuseAddress(true);
-            serverSocketToClientReference.get().bind(new InetSocketAddress(clientPort));
-            Log.d(TAG, "ServerSocketToClient successfully bound to port: " + clientPort);
-            do {
-                if (socketToClientReference.get() != null) {
-                    socketToClientReference.get().close();// Disconnect if connected
-                    socketToClientReference.set(null);
-                }
-                // Set timeout
-                serverSocketToClientReference.get().setSoTimeout(timeout);
-                try {
-                    socketToClientReference.set(serverSocketToClientReference.get().accept());
-                } catch (SocketTimeoutException e) {
-                    return genFailureResult(new TimedOutException(getApplicationContext(), e));
-                }
-                if (socketToClientReference.get() == null) continue;
-                address = socketToClientReference.get().getInetAddress().getAddress();
-                // Ensure the connection is from identical address
-            } while (!Arrays.equals(oriAddress, address));
-            // Connection established
-            serverSocketToClientReference.get().setSoTimeout(0);
-            updateProgress(Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-
-            // Monitor command sending
-            senderServerThread.start();
-
-            // Read ACCEPT or REJECT command
-            // Re-initialize acceptation status
-            isAccepted[0] = SettableFuture.create();
-
-            updateProgress(Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-            // Will block until accepted or rejected
-            if (!isAccepted[0].get()) {
-                Log.d(TAG, "User rejected receiving file");
-                return genRejectedResult(getApplicationContext());
-            }
-            Log.d(TAG, "User accepted receiving file");
-
-            // Check if remote cancelled
-            if (cancelledByReceiver.get()) {
-                Log.d(TAG, "Remote cancelled receiving file");
-                return genReceiverCancelledResult(getApplicationContext());
-            }
+        while (result.get() == null) {
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
-                Log.d(TAG, "User cancelled receiving file");
-                // Send cancel command
-                Log.d(TAG, "Trying to send command \"" + COMMAND_CANCEL + "\" -> " + serverAddress[0].getHostAddress() + ":" + clientPort);
-                stsDataOutputStream.writeUTF(COMMAND_CANCEL + "\n");
+                sender.cancel();
                 return genSenderCancelledResult(getApplicationContext());
             }
-
-            for (Entity entity : entities) {
-                // Start send file
-                updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-                entityInputStream = entity.getInputStream(getApplicationContext());
-                if (entityInputStream == null)
-                    return genFailureResult(new FileIOErrorException(String.format("Failed opening file: %s: Got null InputStream", entity.getFileName())));
-                byte[] buf = new byte[bufferSize];
-                int len;
-                while ((len = entityInputStream.read(buf)) > 0) {
-                    stsOutputStream.write(buf, 0, len);
-                    bytesSent += len;
-                    updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-
-                    // Check if remote cancelled
-                    if (cancelledByReceiver.get())
-                        return genReceiverCancelledResult(getApplicationContext());
-                    // Check if user cancelled
-                    if (getForegroundInfoAsync().isCancelled())
-                        return genSenderCancelledResult(getApplicationContext());
-                }
-                entityInputStream.close();
-                stsOutputStream.flush();
-            }
-
-            // Read SUCCESS or FAILURE command
-            // Re-initialize success status
-            succeeded[0] = SettableFuture.create();
-
-            if (!succeeded[0].get()) {// Will block until accepted or rejected
-                Log.d(TAG, "User failed receiving file");
-                return genFailureResult(new RemoteErrorException(getApplicationContext()));
-            }
-            Log.d(TAG, "User succeeded receiving file");
-
-            updateProgress(Constants.TransmissionStatus.COMPLETED.getNumVal(), totalBytesToSend, bytesSent, fileInfos, receiverInfo);
-            result.set(Result.success(getInputData()));
-            return result.get();
-        } catch (SocketTimeoutException e) {
-            Log.i(TAG, e.getMessage());
-            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new TimedOutException(getApplicationContext(), e));
-        } catch (@NonNull IOException | ExecutionException | InterruptedException e) {
-            Log.i(TAG, e.getMessage());
-            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
-//        } catch (@NonNull UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-//            Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
-//            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-//            return genFailureResult(new UnknownErrorException(getApplicationContext(), e));
-        } finally {
-            if (stsOutputStream != null) {
-                try {
-                    stsOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (stsDataOutputStream != null) {
-                try {
-                    stsDataOutputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (entityInputStream != null) {
-                try {
-                    entityInputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (socketToServer != null) {
-                try {
-                    socketToServer.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (socketToClientReference.get() != null) {
-                try {
-                    socketToClientReference.get().close();
-                    socketToClientReference.set(null);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (serverSocketToClientReference.get() != null) {
-                try {
-                    serverSocketToClientReference.get().close();
-                    serverSocketToClientReference.set(null);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
+        return result.get();
     }
 
     @Override
     public void onStopped() {
         super.onStopped();
         getForegroundInfoAsync().cancel(true);
-        if (serverSocketToClientReference.get() != null) {
-            try {
-                serverSocketToClientReference.get().close();
-                serverSocketToClientReference.set(null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 }

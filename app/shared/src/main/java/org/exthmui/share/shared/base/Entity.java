@@ -23,6 +23,7 @@ import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
 import org.exthmui.share.shared.exceptions.FileNotExistsException;
 import org.exthmui.share.shared.exceptions.UnknownUriSchemeException;
 import org.exthmui.share.shared.misc.FileUtils;
+import org.exthmui.share.shared.misc.SenderUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -193,9 +194,7 @@ public class Entity implements Parcelable {
 
     @Nullable
     public InputStream getInputStream(@NonNull Context context) throws FileNotFoundException {
-        InputStream inputStream;
-        inputStream = context.getContentResolver().openInputStream(uri);
-        return inputStream;
+        return SenderUtils.openFileInputStream(context, uri);
     }
 
     /**

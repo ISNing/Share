@@ -280,7 +280,6 @@ public class DirectMultiSendingWorker extends SendingWorker {
             senderInfo.setProtocolVersion(SHARE_PROTOCOL_VERSION_1);
             senderInfo.setUid(0);//TODO: Get from account sdk
             senderInfo.setAccountServerSign("");//TODO: Get from account sdk
-            senderInfo.setClientPort(clientPort);
 
             socketToServer = SSLUtils.genMutualSocket(getApplicationContext());
             socketToServer.bind(null);

@@ -76,7 +76,7 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
                     OnDiscovererErrorOccurredListener.class,
                     OnSenderErrorOccurredListener.class
             };
-    private static DirectManager instance;
+    private static volatile DirectManager instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;

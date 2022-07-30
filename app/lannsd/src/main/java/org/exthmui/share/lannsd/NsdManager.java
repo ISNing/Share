@@ -70,7 +70,7 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
 
     private static final Gson GSON = new Gson();
 
-    private static NsdManager instance;
+    private static volatile NsdManager instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;

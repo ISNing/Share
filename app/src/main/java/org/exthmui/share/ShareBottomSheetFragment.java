@@ -77,13 +77,7 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
     public ShareBottomSheetFragment() {
     }
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        if (savedInstanceState != null) {
-            mEntities = savedInstanceState.getParcelableArrayList(KEY_ENTITIES_SAVED);
-        }
+    private void initListeners() {
 
         mConnection.registerOnServiceConnectedListener(service -> {
             mService = (DiscoverService) service;
@@ -124,21 +118,48 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
         requireContext()
                 .bindService(new Intent(requireContext(), DiscoverService.class), mConnection,
                         BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null) {
+            mEntities = savedInstanceState.getParcelableArrayList(KEY_ENTITIES_SAVED);
+        }
+
+        initListeners();
 
         mSendingHelper = new SendingHelper(requireContext());
     }
 
     @Override
+    public void onPause() {
+        unbindServices();
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        initListeners();
+    }
+
+    @Override
     public void onDestroy() {
+        unbindServices();
         super.onDestroy();
+    }
+
+    private void unbindServices(){
         if (mService != null) {
             for (BaseEventListener listener : mServiceListeners) {
                 mService.unregisterListener(listener);
             }
             mService.beforeUnbind();
+            requireContext().unbindService(mConnection);
+            mService = null;
         }
-        requireContext().unbindService(mConnection);
-        mService = null;
     }
 
     @Nullable

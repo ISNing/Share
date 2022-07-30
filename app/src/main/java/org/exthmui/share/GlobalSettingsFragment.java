@@ -130,7 +130,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                             mDiscoverService = null;
                         }
                     };
-                    activity.bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
+                    requireContext().bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
                     mReceiveConnection = new ServiceConnection() {
                         @Override
                         public void onServiceConnected(ComponentName name, IBinder service) {
@@ -150,7 +150,6 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                             mReceiveService = null;
                         }
                     };
-                    requireContext().bindService(new Intent(getContext(), DiscoverService.class), mDiscoverConnection, BIND_AUTO_CREATE);
                     requireContext().bindService(new Intent(getContext(), ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
                     for (String code : whatRemoved) {
                         Constants.ConnectionType type = Constants.ConnectionType.parseFromCode(code);
@@ -242,7 +241,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         });
         peerIdPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
-                peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
+                peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, newValue));
             return true;
         });
         if (peerIdPrefs.getValue() == null)
@@ -257,5 +256,15 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
             if (mDestinationDirectoryPrefs != null) mDestinationDirectoryPrefs.setValue(uri == null ? "" : uri.toString());
         });
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
     }
 }

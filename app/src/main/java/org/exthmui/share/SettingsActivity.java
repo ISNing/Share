@@ -44,12 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     LinearLayout mPreferencesContainer;
 
-    @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.settings_activity);
-
-        mPreferencesContainer = findViewById(R.id.preferences_container);
+    private void bindServices() {
         // Bind Service
         mDiscoverConnection.registerOnServiceConnectedListener(service -> mDiscoverService = (DiscoverService) service);
         mDiscoverConnection.registerOnServiceDisconnectedListener(name -> mDiscoverService = null);
@@ -57,6 +52,16 @@ public class SettingsActivity extends AppCompatActivity {
         mReceiveConnection.registerOnServiceConnectedListener(service -> mReceiveService = (ReceiveService) service);
         mReceiveConnection.registerOnServiceDisconnectedListener(name -> mReceiveService = null);
         bindService(new Intent(SettingsActivity.this, ReceiveService.class), mReceiveConnection, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.settings_activity);
+
+        mPreferencesContainer = findViewById(R.id.preferences_container);
+
+        bindServices();
 
         if (savedInstanceState == null) {
             mFragmentList.clear();
@@ -166,18 +171,34 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
+        unbindServices();
         super.onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        unbindServices();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bindServices();
+    }
+
+    private void unbindServices(){
         if (mDiscoverService != null) {
             mDiscoverService.beforeUnbind();
+            unbindService(mDiscoverConnection);
+            mDiscoverService = null;
         }
-        unbindService(mDiscoverConnection);
-        mDiscoverService = null;
         if (mReceiveService != null) {
             mReceiveService.beforeUnbind();
+            unbindService(mReceiveConnection);
+            mReceiveService = null;
         }
-        unbindService(mReceiveConnection);
-        mReceiveService = null;
     }
 
     @Override

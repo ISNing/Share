@@ -42,7 +42,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-public class Sender {
+/**
+ * UDPSender
+ *
+ * initialize -> sendAsync
+ */
+public class UDPSender {
     public static final String TAG = "Sender";
     private static final Gson GSON = new Gson();
 
@@ -88,7 +93,7 @@ public class Sender {
 
     private boolean udpReady;
 
-    public Sender(@NonNull Context context, @NonNull SendingListener listener) {
+    public UDPSender(@NonNull Context context, @NonNull SendingListener listener) {
         this.context = context;
         this.listener = listener;
     }
@@ -186,7 +191,7 @@ public class Sender {
                     org.exthmui.share.shared.misc.Constants.TransmissionStatus.REJECTED.getNumVal(),
                     null);
             return;
-        }
+        } else listener.onAccepted(accepted);
         List<String> acceptedIdsAsList = Arrays.asList(accepted);
         for (FileInfo fileInfo : fileInfos) {
             if (acceptedIdsAsList.contains(fileInfo.getId()))
@@ -353,7 +358,7 @@ public class Sender {
     }
 
     public interface SendingListener {
-        void onAccepted(Set<String> fileIdsAccepted);
+        void onAccepted(String[] fileIdsAccepted);
         void onProgressUpdate(int status, long totalBytesToSend, long bytesSent,
                               long curFileBytesToSend, long curFileBytesSent, String curFileId);
         void onComplete(int status, Map<String, Pair<Integer, String>> resultMap);

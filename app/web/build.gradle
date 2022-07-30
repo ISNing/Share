@@ -2,7 +2,6 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
     }
     dependencies {
         classpath 'io.github.isning.andserver:plugin:3.0.0'

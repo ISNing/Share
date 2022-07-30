@@ -5,12 +5,14 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.net.Uri;
 import android.os.Build;
 import android.text.format.Formatter;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
+import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.WorkManager;
 
@@ -21,6 +23,13 @@ import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 
 public abstract class SenderUtils {
@@ -162,5 +171,16 @@ public abstract class SenderUtils {
         if (bigText != null)
             builder.setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText));
         return builder.build();
+    }
+
+    public static BufferedInputStream openFileInputStream(@NonNull Context context, @Nullable Uri uri) throws FileNotFoundException {
+        if (Utils.useSAF(context)) {
+            InputStream is = context.getContentResolver().openInputStream(uri);
+            if (is == null) return null;
+            return new BufferedInputStream(is);
+        } else {
+            FileInputStream fis = new FileInputStream(new UriPathUtils(context).getPath(uri));
+            return new BufferedInputStream(fis);
+        }
     }
 }

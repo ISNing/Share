@@ -41,8 +41,8 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         if (mService != null) {
             mService.beforeUnbind();
+            unbindService(mConnection);
+            mService = null;
         }
-        unbindService(mConnection);
-        mService = null;
     }
 }

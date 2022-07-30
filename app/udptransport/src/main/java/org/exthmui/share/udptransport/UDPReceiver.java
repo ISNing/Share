@@ -41,7 +41,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class Receiver {
+public class UDPReceiver {
     public static final String TAG = "Receiver";
     private static final Gson GSON = new Gson();
 
@@ -91,8 +91,8 @@ public class Receiver {
     private boolean tcpReady;
     private boolean udpReady;
 
-    public Receiver(@NonNull OutputStreamFactory outputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
-                    int serverPortUdp, boolean lazyInit) throws IOException {
+    public UDPReceiver(@NonNull OutputStreamFactory outputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
+                       int serverPortUdp, boolean lazyInit) throws IOException {
         this.outputStreamFactory = outputStreamFactory;
         this.listener = listener;
         this.serverPortTcp = serverPortTcp;
@@ -109,6 +109,7 @@ public class Receiver {
                             ConnectionHandler handler = new ConnectionHandler((byte) i,
                                     serverSocket.accept());
                             CONN_ID_HANDLER_MAP.put((byte) i, handler);
+                            handler.receiveAsync();
                             listener.onConnectionEstablished((byte) i);
                             break;
                         }
@@ -131,6 +132,14 @@ public class Receiver {
         tcpReady = true;
     }
 
+    public void tcpStop() {
+        if (serverSocket != null) {
+            Utils.silentClose(serverSocket);
+            serverSocket = null;
+        }
+        tcpReady = false;
+    }
+
     public void udpReady() throws SocketException {
         datagramSocket = new DatagramSocket(serverPortUdp);
         datagramSocket.setReuseAddress(true);
@@ -139,9 +148,22 @@ public class Receiver {
         udpReady = true;
     }
 
+    public void udpStop() {
+        if (datagramSocket != null) {
+            Utils.silentClose(datagramSocket);
+            datagramSocket = null;
+        }
+        udpReady = false;
+    }
+
     public void startReceive() throws IOException {
         tcpReady();
         if (!lazyInit && !udpReady) udpReady();
+    }
+
+    public void stopReceive() {
+        tcpStop();
+        udpStop();
     }
 
     public <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
@@ -265,7 +287,7 @@ public class Receiver {
             FileInfo[] fileInfos = readJson(FileInfo[].class);// (3)
             CompletableFuture<Set<String>> idsAccepted = new CompletableFuture<>();
 
-            while (listener == null) {}
+            while (listener == null) {}// Stub while worker is not started
             listener.requestAcceptation(senderInfo, fileInfos, idsAccepted);
             Set<String> acceptedIdsAsSet = idsAccepted.get();
             String[] accepted = acceptedIdsAsSet.toArray(new String[0]);
@@ -508,6 +530,10 @@ public class Receiver {
             if (!this.packetReceived.isDone()) this.packetReceived.complete(packet);
             else packetsBlocked.add(packet);
         }
+    }
+
+    public int getServerPortTcp() {
+        return serverPortTcp;
     }
 
     public interface ConnectionListener {

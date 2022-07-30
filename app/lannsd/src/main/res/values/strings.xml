@@ -4,17 +4,12 @@
     <string name="prefs_header_lannsd">Network Service Discovery(LAN)</string>
 
     <!-- Ports Preference -->
-    <string name="prefs_key_lannsd_server_port" translatable="false">lannsd_server_port</string>
-    <string name="prefs_title_lannsd_server_port">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
-    <string name="prefs_tip_lannsd_server_port_invalid">Invalid value</string>
-    <string name="prefs_key_lannsd_client_port" translatable="false">lannsd_client_port</string>
-    <string name="prefs_title_lannsd_client_port">Client Port (From 5001 to 65535, -1 for dynamically generate)</string>
-    <string name="prefs_tip_lannsd_client_port_invalid">Invalid value</string>
-
-    <!-- BufferSize Preference -->
-    <string name="prefs_key_lannsd_buffer_size" translatable="false">lannsd_buffer_size</string>
-    <string name="prefs_title_lannsd_buffer_size">Buffer size (Must be same with target device)</string><!-- TODO: is this description precise?-->
-    <string name="prefs_tip_lannsd_buffer_size_invalid">Invalid value</string>
+    <string name="prefs_key_lannsd_server_port_tcp" translatable="false">lannsd_server_port</string>
+    <string name="prefs_title_lannsd_server_port_tcp">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
+    <string name="prefs_tip_lannsd_server_port_tcp_invalid">Invalid value</string>
+    <string name="prefs_key_lannsd_server_port_udp" translatable="false">lannsd_server_port</string>
+    <string name="prefs_title_lannsd_server_port_udp">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
+    <string name="prefs_tip_lannsd_server_port_udp_invalid">Invalid value</string>
 
     <!-- Timeout Preference -->
     <string name="prefs_key_lannsd_timeout" translatable="false">lannsd_timeout</string>
@@ -25,4 +20,7 @@
     <string name="error_lannsd_service_discovering_stop_failed" formatted="true">Service discover stop failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
     <string name="error_lannsd_local_service_add_failed" formatted="true">LocalService add failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
     <string name="error_lannsd_local_service_remove_failed" formatted="true">LocalService remove failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
+    <string name="error_lannsd_udp_receiver_initialize_failed" formatted="true">UdpReceiver initialize failed: <xliff:g id="message">%1$s</xliff:g></string>
+    <string name="error_lannsd_udp_receiver_start_failed" formatted="true">UdpReceiver start failed: <xliff:g id="message">%1$s</xliff:g></string>
+    <string name="error_lannsd_udp_receiver_stop_failed" formatted="true">UdpReceiver stop failed: <xliff:g id="message">%1$s</xliff:g></string>
 </resources>

@@ -31,8 +31,8 @@ import java.util.UUID;
 public abstract class Utils {
     public static final String TAG = "Utils";
 
-    public static @NonNull
-    DocumentFile getDestinationDirectory(@NonNull Context context) {
+    @NonNull
+    public static DocumentFile getDestinationDirectory(@NonNull Context context) {
         String destinationDirectoryUri = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
 
         DocumentFile downloadsDirectory = DocumentFile.fromFile(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS));
@@ -67,9 +67,9 @@ public abstract class Utils {
 
     public static String getDeviceNameOnBoard(@NonNull Context context) {
         String deviceName;
-//        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
-//            deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
-//        } else
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
+            deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
+        } else
         deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
         return deviceName;
     }
@@ -77,6 +77,7 @@ public abstract class Utils {
     @NonNull
     public static String getSelfName(@NonNull Context context) {
         String defaultValue = getDeviceNameOnBoard(context);
+        if (defaultValue == null) defaultValue = context.getString(R.string.device_name_default);
         String deviceName = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_device_name), defaultValue);
         if (deviceName == null || TextUtils.isEmpty(deviceName)) {
             Log.e(TAG, String.format("Got invalid device name, returning default value \"%s\".", defaultValue));
@@ -100,6 +101,15 @@ public abstract class Utils {
             Log.e(TAG, String.format("Got invalid device id, regenerated and saved a new value: %s.", peerId));
         }
         return peerId;
+    }
+
+    @NonNull
+    public static boolean useSAF(@NonNull Context context) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
+        String key = context.getString(R.string.prefs_key_global_use_saf);
+        boolean useSAF = sharedPreferences.getBoolean(key, false);
+        Log.w(TAG, "Use SAF enabled, this may cause performance problem");
+        return useSAF;
     }
 
     public static int getSelfDeviceType(@NonNull Context context) {

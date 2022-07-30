@@ -71,7 +71,7 @@ public class DirectReceiver implements Receiver {
 
     private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + CONNECTION_CODE_WIFIDIRECT;
 
-    private static DirectReceiver instance;
+    private static volatile DirectReceiver instance;
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
     private final Context mContext;
@@ -223,7 +223,7 @@ public class DirectReceiver implements Receiver {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.REPLACE, work);
+        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, work);
         return work.getId();
     }
 

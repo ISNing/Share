@@ -2,6 +2,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="content_uri_authority">org.exthmui.share.files</string>
 
+    <string name="device_name_default">Mysterious Device</string>
+
     <string name="connection_status_available">Available</string>
     <string name="connection_status_unavailable">Unavailable</string>
     <string name="connection_status_transmitting">Transmitting</string>
@@ -29,6 +31,10 @@
     <string name="prefs_summary_global_peer_id_hidden" tools:ignore="UnusedResources">Tap here to regenerate your identity</string>
     <string name="prefs_summary_global_peer_id_show" formatted="true" tools:ignore="UnusedResources"><xliff:g id="peer_id" example="109564bb-2af9-4e00-8d5d-4860f548301b">%1$s</xliff:g> (Tap here to regenerate)</string>
     <string name="toast_global_peer_id_regenerated" formatted="true" tools:ignore="UnusedResources">Device ID regenerated</string>
+
+    <string name="prefs_key_global_use_saf" translatable="false">global_use_saf</string>
+    <string name="prefs_title_global_use_saf">Use SAF</string>
+    <string name="prefs_summary_global_use_saf">Whether to use SAF framework(May cause performence problem)</string>
 
     <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>

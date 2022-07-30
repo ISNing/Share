@@ -29,6 +29,7 @@
         <entry key="app/src/main/res/layout/unavailable_placeholder.xml" value="0.1078125" />
         <entry key="app/src/main/res/layout/view_peer_chooser.xml" value="0.35" />
         <entry key="app/src/main/res/layout/view_peer_information.xml" value="0.5" />
+        <entry key="app/src/main/res/xml/root_preferences.xml" value="0.25" />
         <entry key="app/web/src/main/res/layout/code_auth_dialog.xml" value="0.178125" />
         <entry key="app/web/src/main/res/layout/code_view.xml" value="0.178125" />
         <entry key="app/wifidirect/src/main/res/xml/direct_preferences.xml" value="0.3386243386243386" />

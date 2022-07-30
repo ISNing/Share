@@ -100,11 +100,11 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public void onDestroy() {
-        super.onDestroy();
-        unregisterDiscoverersListeners(mInternalListenerList);
+        unregisterDiscoverersListeners(mInternalListenerList);// Avoid memory leaking
         unregisterDiscoverersListeners(mDiscovererListenerList);
         Log.d(TAG, "Service going down(onDestroy), stopping discoverers");
         stopDiscoverers();
+        super.onDestroy();
     }
 
     private void initializeInternalListeners() {
@@ -115,7 +115,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         mInternalListenerList.add((OnDiscovererStoppedListener) event -> {
             updateTileState();
             if (isAllDiscoverersStopped()) {
-                notifyListeners(new DiscovererStoppedEvent(DiscoverService.this));
+                notifyListeners(new DiscovererStoppedEvent(this));
                 stopForeground();
             }
         });

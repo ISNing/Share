@@ -124,9 +124,9 @@ public class DiscoveringTileService extends TileService {
         Log.d(TAG, "Service going down(onDestroy), unbinding DiscoverService");
         if (mService != null) {
             mService.beforeUnbind();
+            unbindService(mConnection);
+            mService = null;
         }
-        unbindService(mConnection);
-        mService = null;
         super.onDestroy();
     }
 }
