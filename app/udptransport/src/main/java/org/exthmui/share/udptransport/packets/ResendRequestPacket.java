@@ -21,7 +21,8 @@ public final class ResendRequestPacket extends AbstractCommandPacket<ResendReque
     }
 
     public ResendRequestPacket() {
-        this(new DatagramPacket(new byte[0], 0));
+        this(new DatagramPacket(new byte[]{Constants.COMMAND_PACKET_RESEND_REQ, 0x0, 0x0},
+                HEADER_LENGTH + MIN_DATA_LENGTH));
         byte[] bytes = new byte[Constants.BUF_LEN_MAX_HI];
         bytes[0] = Constants.COMMAND_PACKET_RESEND_REQ;
         toDatagramPacket().setData(bytes);
