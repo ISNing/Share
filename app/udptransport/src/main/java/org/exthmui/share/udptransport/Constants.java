@@ -72,7 +72,7 @@ public class Constants {
      * The length of data of a packet
      */
     public static final int DATA_LEN_MAX = 1000;
-    public static final int DATA_LEN_MAX_HI = 65500;
+    public static final int DATA_LEN_MAX_HI = 25500;
     public static final int BUF_LEN_MAX_HI = 65507;
 
     public static final String STRING_CHARSET = "UTF-8";

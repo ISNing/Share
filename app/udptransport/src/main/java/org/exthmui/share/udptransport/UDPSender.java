@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -181,7 +180,7 @@ public class UDPSender {
     public Future<Integer> sendAsync(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
                             @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) {
         if (entities.length != fileInfos.length) throw new IllegalArgumentException();
-        return coreThreadPool.submit((Callable<Integer>) () -> {
+        return coreThreadPool.submit(() -> {
             try {
                 send(entities, fileInfos, sender, tcpAddress);
             } catch (Throwable tr) {
@@ -315,7 +314,10 @@ public class UDPSender {
             if (packetIds.length > 0) {
                 FilePacket[] packetsToResend = new FilePacket[packetIds.length];
                 for (int i = 0; i < packetIds.length; i++) {
-                    packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i]]);
+                    if (bufTemp[packetIds[i] - Short.MIN_VALUE] == null) break;
+                    packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i] - Short.MIN_VALUE]);
+                    if (bufTemp[packetIds[i] - Short.MIN_VALUE].length != Constants.DATA_LEN_MAX_HI)
+                        break;
                 }
                 resendPackets(packetsToResend, curGroup);// (13)
             } else packetAllSent = true;
@@ -335,7 +337,13 @@ public class UDPSender {
         if (packetIds.length > 0) {
             FilePacket[] packetsToResend = new FilePacket[packetIds.length];
             for (int i = 0; i < packetIds.length; i++) {
-                packetsToResend[i] = new FilePacket().setPacketId(packetIds[i]);
+                for (FilePacket packet : packets) {
+                    if (packet.getPacketId() == packetIds[i]) {
+                        packetsToResend[i] = packet;
+                        break;
+                    }
+                }
+
             }
             resendPackets(packetsToResend, curGroup);// (13)
         }

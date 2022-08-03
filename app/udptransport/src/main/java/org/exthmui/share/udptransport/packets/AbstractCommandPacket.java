@@ -52,7 +52,9 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
 
     @SuppressWarnings("unchecked")
     public T setData(byte[] buf) {
-        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, buf));
+        byte[] bytes = ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, buf);
+        packet.setData(bytes);
+        packet.setLength(bytes.length);
         return (T) this;
     }
 
@@ -62,7 +64,7 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
 
     @SuppressWarnings("unchecked")
     public T setCommand(byte command) {
-        packet.setData(ArrayUtils.addAll(new byte[]{command, getConnId()}, getData()));
+        packet.setData(ArrayUtils.addAll(new byte[]{command, getConnId()}, getDataAbstract()));
         return (T) this;
     }
 
@@ -72,17 +74,17 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
 
     @SuppressWarnings("unchecked")
     public T setConnId(byte connId) {
-        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), connId}, getData()));
+        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), connId}, getDataAbstract()));
         return (T) this;
     }
 
     private void updateData() {
-        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, getData()));
+        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, getDataAbstract()));
     }
 
     @SuppressWarnings("unchecked")
-    public T setAddress(InetAddress iaddr) {
-        packet.setAddress(iaddr);
+    public T setAddress(InetAddress iAddr) {
+        packet.setAddress(iAddr);
         return (T) this;
     }
 

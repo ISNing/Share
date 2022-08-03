@@ -39,6 +39,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -206,6 +207,14 @@ public class UDPReceiver {
         assert datagramSocket != null;
         packet.setConnId(connId);
         DatagramPacket p = packet.toDatagramPacket();
+        ConnectionHandler handler = getHandler(connId);
+        if (handler == null) {
+            Log.e(TAG, String.format("Packet sending request with connection id %d received, but " +
+                    "no correspond handler found, ignoring", packet.getConnId()));
+            return;
+        }
+        p.setAddress(handler.address);
+        p.setPort(handler.remoteUdpPort);
         datagramSocket.send(p);
     }
 
@@ -216,6 +225,9 @@ public class UDPReceiver {
 
     public class ConnectionHandler implements PacketListener {
         private final byte connId;
+        private final InetAddress address;
+        private final int remoteTcpPort;
+        private int remoteUdpPort;
 
         private boolean canceled;
         private boolean remoteCanceled;
@@ -255,8 +267,10 @@ public class UDPReceiver {
 
         private ConnectionHandler(byte connId, @NonNull Socket socket)
                 throws IOException {
-            this.socket = socket;
             this.connId = connId;
+            this.address = socket.getInetAddress();
+            this.socket = socket;
+            this.remoteTcpPort = socket.getPort();
             in = Utils.getDataInput(socket);
             out = Utils.getDataOutput(socket);
             commandWatcher = () -> {
@@ -410,6 +424,7 @@ public class UDPReceiver {
                 } catch (TimeoutException ignored) {
                     continue;
                 }
+                if (packet == null) continue;
                 if (groupIdExceeded) {
                     if (packet.getCommand() != Constants.COMMAND_IDENTIFIER) continue;
                     IdentifierPacket identifierPacket =
@@ -445,14 +460,19 @@ public class UDPReceiver {
 
                             Set<Short> idsToResendAsSet = new HashSet<>();
                             for (int i = 0; i < bufTemp.length; i++) {
-                                idsToResendAsSet.add((short) (i + Short.MIN_VALUE));
+                                if (bufTemp[i] == null)
+                                    idsToResendAsSet.add((short) (i + Short.MIN_VALUE));
+                                else if (bufTemp[i].length != Constants.DATA_LEN_MAX_HI) break;
                             }
                             short[] idsToResend =
                                     ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
-                            sendPacket(new ResendRequestPacket().setPacketIds(idsToResend));// (11)
+                            ResendRequestPacket p = new ResendRequestPacket();
+                            p.setPacketIds(idsToResend);
+                            sendPacket(p);// (11)
 
                             if (idsToResendAsSet.isEmpty()) {
                                 for (byte[] buf : bufTemp) {
+                                    if (buf == null) break;
                                     outputStream.write(buf);
                                 }
                                 if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
@@ -513,6 +533,7 @@ public class UDPReceiver {
                 this.packetReceived.complete(packetsBlocked.get(0));
                 packetsBlocked.remove(0);
             }
+            if (packet != null) this.remoteUdpPort = packet.getPort();
             return packet;
         }
 
