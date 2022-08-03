@@ -31,6 +31,9 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation "androidx.work:work-runtime:$rootProject.ext.workVersion"
     implementation "com.google.android.material:material:$rootProject.ext.materialComponentsVersion"
+    
     implementation 'androidx.preference:preference:1.2.0'
+
+    implementation 'com.google.code.gson:gson:2.8.6'
     implementation "org.apache.directory.studio:org.apache.commons.codec:1.8"
 }

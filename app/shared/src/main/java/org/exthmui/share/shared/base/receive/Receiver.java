@@ -1,20 +1,15 @@
 package org.exthmui.share.shared.base.receive;
 
-import android.app.Notification;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationManagerCompat;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
-import org.exthmui.share.shared.misc.ReceiverUtils;
 
 import java.lang.reflect.Method;
 import java.util.EventObject;
@@ -63,20 +58,20 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
     @Nullable
     default UUID startWorkWrapped(@NonNull Context context) {
         UUID workId = startWork(context);
-        WorkManager.getInstance(context).getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
-            if (workInfo == null) return;
-            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
-                Notification notification =
-                        ReceiverUtils.buildReceivingSucceededNotification(context, workInfo.getOutputData());
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
-            } else if (workInfo.getState() == WorkInfo.State.FAILED) {
-                Notification notification =
-                        ReceiverUtils.buildReceivingFailedNotification(context, workInfo.getOutputData());
-                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
-            }
-        });
+        //        WorkManager.getInstance(context).getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
+//            if (workInfo == null) return;
+//            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+//                Notification notification =
+//                        ReceiverUtils.buildReceivingSucceededNotification(context, workInfo.getOutputData());
+//                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+//                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+//            } else if (workInfo.getState() == WorkInfo.State.FAILED) {
+//                Notification notification =
+//                        ReceiverUtils.buildReceivingFailedNotification(context, workInfo.getOutputData());
+//                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
+//                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+//            }
+//        });TODO
         return workId;
     }
 

@@ -43,6 +43,10 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
     }
 
     public byte[] getData() {
+        return getDataAbstract();
+    }
+
+    private byte[] getDataAbstract() {
         return ByteUtils.cutBytesByTip(DATA_TIP, packet.getData(), packet.getOffset());
     }
 
@@ -99,7 +103,7 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
     }
 
     final byte[] cutDataByTip(int[] tip, @IntRange(from = 0) int initOffset) {
-        return ByteUtils.cutBytesByTip(tip, AbstractCommandPacket.this.getData(), initOffset);
+        return ByteUtils.cutBytesByTip(tip, AbstractCommandPacket.this.getDataAbstract(), initOffset);
     }
 
     final byte[] cutDataByTip(int[] tip) {

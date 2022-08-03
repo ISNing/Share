@@ -5,6 +5,7 @@ import org.exthmui.share.udptransport.ByteUtils;
 import org.exthmui.share.udptransport.Constants;
 
 import java.net.DatagramPacket;
+import java.util.Arrays;
 
 public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     public static final int MIN_DATA_LENGTH = 3;
@@ -55,6 +56,10 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
         return setPacketId(ByteUtils.shortToBytes(packetId));
     }
 
+    public FilePacket setDataLength(int length) {
+        return setData(Arrays.copyOfRange(getData(), 0, length));
+    }
+
     @Override
     public byte[] getData() {
         return cutDataByTip(DATA_TIP);
@@ -62,7 +67,17 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
 
     @Override
     public FilePacket setData(byte[] data) {
-        super.setData(ArrayUtils.addAll(ArrayUtils.addFirst(getPacketIdBytes(), getGroupId()), data));
+        setData(data, data.length);
+        return this;
+    }
+
+    public FilePacket setData(byte[] data, int length) {
+        setData(data, length, 0);
+        return this;
+    }
+
+    public FilePacket setData(byte[] data, int length, int offset) {
+        super.setData(ArrayUtils.addAll(ArrayUtils.addFirst(getPacketIdBytes(), getGroupId()), Arrays.copyOfRange(data, offset, offset + length)));
         return this;
     }
 }

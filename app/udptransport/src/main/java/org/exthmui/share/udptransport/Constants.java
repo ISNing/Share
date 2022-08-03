@@ -60,7 +60,7 @@ public class Constants {
      */
     public static final byte COMMAND_PACKET_RESEND_REQ = 0x3;
 
-    public static final int IDENTIFIER_TIMEOUT_MILLIS = 5000;
+    public static final int IDENTIFIER_TIMEOUT_MILLIS = 10000;
     public static final int MAX_ACK_TRYOUTS = 5;
     public static final int ACK_TIMEOUT_MILLIS = 500;
 
@@ -72,7 +72,8 @@ public class Constants {
      * The length of data of a packet
      */
     public static final int DATA_LEN_MAX = 1000;
-    public static final int DATA_LEN_MAX_HI = 1400;
+    public static final int DATA_LEN_MAX_HI = 65500;
+    public static final int BUF_LEN_MAX_HI = 65507;
 
     public static final String STRING_CHARSET = "UTF-8";
 
@@ -97,4 +98,6 @@ public class Constants {
 
     public static final byte FILE_END_IDENTIFIER = 0x6;
     public static final byte FILE_END_ACK_IDENTIFIER = 0x7;
+
+    public static final String FILE_INFO_EXTRA_KEY_MD5 = "md5";
 }

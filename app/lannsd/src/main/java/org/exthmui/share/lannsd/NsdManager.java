@@ -40,7 +40,6 @@ import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.Utils;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -191,10 +190,10 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
                     Log.d(TAG, String.format("Illegal json syntax of service name: %s, ignoring...", serviceInfo.getServiceName()));
                     return;
                 }
-                if (serviceNameModel.getPeerId().equals(NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {
-                    Log.d(TAG, String.format("Found self device: %s, ignoring...", serviceNameModel.getPeerId()));
-                    return;
-                }
+//                if (serviceNameModel.getPeerId().equals(NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {
+//                    Log.d(TAG, String.format("Found self device: %s, ignoring...", serviceNameModel.getPeerId()));
+//                    return;TODO
+//                }
 
                 NsdPeer peer = new NsdPeer(serviceInfo, serviceNameModel.getDeviceType(),
                         serviceNameModel.getPeerId(), serviceNameModel.getDisplayName());

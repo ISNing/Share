@@ -54,7 +54,7 @@ public abstract class LocalizedException extends Exception {
         this.localizedMessage = localizedMessage;
     }
 
-    @Nullable
+    @NonNull
     @Override
     public String getMessage() {
         return this.detailMessage != null ? this.detailMessage : this.getDefaultMessage();

@@ -19,8 +19,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
-import android.os.FileUtils;
-import android.provider.DocumentsContract;
 import android.text.format.Formatter;
 import android.util.Log;
 
@@ -28,6 +26,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
+import androidx.core.util.Pair;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.WorkManager;
@@ -39,15 +38,13 @@ import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.receive.SenderInfo;
-import org.exthmui.share.shared.exceptions.trans.NoEnoughSpaceException;
 import org.exthmui.share.shared.ui.AcceptationRequestActivity;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
-import java.nio.file.Paths;
 import java.util.UUID;
 
 public abstract class ReceiverUtils {
@@ -302,14 +299,14 @@ public abstract class ReceiverUtils {
         return builder.build();
     }
 
-    public static BufferedOutputStream openFileOutputStream(@NonNull Context context, @Nullable String fileName) {
+    public static Pair<Uri, BufferedOutputStream> openFileOutputStream(@NonNull Context context, @Nullable String fileName) {
         DocumentFile destinationDirectory = Utils.getDestinationDirectory(context);
         if (fileName == null)
             fileName = Utils.getDefaultFileName(context);
         if (Utils.useSAF(context)) {
             DocumentFile file = destinationDirectory.createFile("", fileName);
             if (file == null) return null;
-            OutputStream os = null;
+            OutputStream os;
             try {
                 os = context.getContentResolver().openOutputStream(file.getUri());
             } catch (FileNotFoundException e) {
@@ -318,19 +315,20 @@ public abstract class ReceiverUtils {
                 return null;
             }
             if (os == null) return null;
-            return new BufferedOutputStream(os);
+            return new Pair<>(file.getUri(), new BufferedOutputStream(os));
         } else {
             String destinationDirectoryPath = new UriPathUtils(context).getPath(destinationDirectory.getUri());
             if (destinationDirectoryPath == null) return null;
-            FileOutputStream fos = null;
+            File file = new File(destinationDirectoryPath + "/" + fileName);
+            FileOutputStream fos;
             try {
-                fos = new FileOutputStream(destinationDirectoryPath + "/" + fileName);
+                fos = new FileOutputStream(file);
             } catch (FileNotFoundException e) {
                 Log.w(TAG, e.getMessage());
                 Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
                 return null;
             }
-            return new BufferedOutputStream(fos);
+            return new Pair<>(Uri.fromFile(file), new BufferedOutputStream(fos));
         }
     }
 }

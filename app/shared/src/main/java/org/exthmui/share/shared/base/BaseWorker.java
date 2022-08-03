@@ -15,13 +15,14 @@ import androidx.work.impl.utils.futures.SettableFuture;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
-import org.exthmui.share.shared.exceptions.trans.RejectedException;
-import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
+import org.exthmui.share.shared.base.results.BasicTransmissionResult;
+import org.exthmui.share.shared.base.results.SilentResult;
+import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class BaseWorker extends Worker {
@@ -30,12 +31,14 @@ public abstract class BaseWorker extends Worker {
     public static final String P_BYTES_TRANSMITTED = "BYTES_TRANSMITTED";
     public static final String F_MESSAGE = "MESSAGE";
     public static final String F_LOCALIZED_MESSAGE = "LOCALIZED_MESSAGE";
+    public static final String F_RESULT_MAP = "LOCALIZED_MESSAGE";
 
     private final AtomicReference<ForegroundInfo> foregroundInfo = new AtomicReference<>();
 
     {
         setForegroundInfo(createForegroundInfo(Constants.TransmissionStatus.INITIALIZING.getNumVal(),
-                0, 0, new FileInfo[]{null,}, null, false));
+                0, 0, new FileInfo[]{null,}, null,
+                null, 0, 0, false));
     }
 
     public BaseWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
@@ -54,15 +57,15 @@ public abstract class BaseWorker extends Worker {
      * @see #genSuccessData()
      * @see #genSuccessResult()
      * ***** Extra values is allowed *****
-     *
+     * <p>
      * Failure:
      * MUST contain:{@link int}: {@link #STATUS_CODE}
      * {@link String}: {@link #F_MESSAGE}
      * {@link String}: {@link #F_LOCALIZED_MESSAGE}
      * & everything in InputData
-     * @see #genFailureData(int, String, String)
-     * @see #genFailureResult(TransmissionException)
-     * @see #genFailureResult(int, String, String)
+     * @see #genFailureData(TransmissionResult, Map)
+     * @see #genFailureResult(TransmissionException, Map)
+     * @see #genFailureResult(TransmissionResult, Map)
      * ***** Extra values is allowed *****
      */
     @Override
@@ -71,24 +74,46 @@ public abstract class BaseWorker extends Worker {
 
     protected abstract int getNotificationId();
 
-    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer) {
+    protected void updateProgress(int statusCode, long totalBytesToSend, long bytesReceived,
+                                  @NonNull FileInfo[] fileInfos,
+                                  @Nullable PeerInfoTransfer peerInfoTransfer,
+                                  @Nullable String curFileId, long curFileBytesToSend,
+                                  long curFileBytesSent) {
         setProgressAsync(genProgressData(statusCode, totalBytesToSend, bytesReceived));
         boolean indeterminate = bytesReceived == 0;
-        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived, fileInfos, peerInfoTransfer, indeterminate));
+        setForegroundInfo(createForegroundInfo(statusCode, totalBytesToSend, bytesReceived,
+                fileInfos, peerInfoTransfer, curFileId, curFileBytesToSend, curFileBytesSent,
+                indeterminate));
     }
 
     @NonNull
-    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate) {
-        Notification notification = buildProgressNotification(statusCode, totalBytesToSend, bytesTransmitted, fileInfos, peerInfoTransfer, indeterminate);
+    private ForegroundInfo createForegroundInfo(int statusCode, long totalBytesToSend,
+                                                long bytesTransmitted,
+                                                @NonNull FileInfo[] fileInfos,
+                                                @Nullable PeerInfoTransfer peerInfoTransfer,
+                                                @Nullable String curFileId,
+                                                long curFileBytesToSend,
+                                                long curFileBytesSent, boolean indeterminate) {
+        Notification notification = buildProgressNotification(statusCode, totalBytesToSend,
+                bytesTransmitted, fileInfos, peerInfoTransfer, curFileId, curFileBytesToSend,
+                curFileBytesSent, indeterminate);
         return new ForegroundInfo(getNotificationId(), notification);
     }
 
     @NonNull
-    protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend, long bytesTransmitted, @NonNull FileInfo[] fileInfos, @Nullable PeerInfoTransfer peerInfoTransfer, boolean indeterminate);
+    protected abstract Notification buildProgressNotification(int statusCode, long totalBytesToSend,
+                                                              long bytesTransmitted,
+                                                              @NonNull FileInfo[] fileInfos,
+                                                              @Nullable PeerInfoTransfer peerInfoTransfer,
+                                                              @Nullable String curFileId,
+                                                              long curFileBytesToSend,
+                                                              long curFileBytesTransmitted,
+                                                              boolean indeterminate);
 
     private void setForegroundInfo(@NonNull ForegroundInfo foregroundInfo) {
         this.foregroundInfo.set(foregroundInfo);
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
+        NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(getApplicationContext());
         notificationManager.notify(getNotificationId(), foregroundInfo.getNotification());
     }
 
@@ -98,28 +123,18 @@ public abstract class BaseWorker extends Worker {
     }
 
     @NonNull
-    protected Result genRejectedResult(@NonNull Context context) {
-        return genFailureResult(new RejectedException(context));
+    protected Result genFailureResult(@NonNull TransmissionException e, @Nullable Map<String, TransmissionResult> resultMap) {
+        return genFailureResult((TransmissionResult) e, resultMap);
     }
 
     @NonNull
-    protected Result genSenderCancelledResult(@NonNull Context context) {
-        return genFailureResult(new SenderCancelledException(context));
+    private Result genFailureResult(@NonNull TransmissionResult result, @Nullable Map<String, TransmissionResult> resultMap) {
+        return Result.failure(genFailureData(result, resultMap));
     }
 
     @NonNull
-    protected Result genReceiverCancelledResult(@NonNull Context context) {
-        return genFailureResult(new ReceiverCancelledException(context));
-    }
-
-    @NonNull
-    protected Result genFailureResult(@NonNull TransmissionException e) {
-        return genFailureResult(e.getStatusCode(), e.getMessage(), e.getLocalizedMessage());
-    }
-
-    @NonNull
-    private Result genFailureResult(int errCode, @Nullable String message, @Nullable String localizedMessage) {
-        return Result.failure(genFailureData(errCode, message, localizedMessage));
+    protected Result genSilentResult() {
+        return Result.failure(genFailureData(new SilentResult(), null));
     }
 
     @NonNull
@@ -149,18 +164,30 @@ public abstract class BaseWorker extends Worker {
                 .build();
     }
 
+    /**
+     * Generate Failure Data Builder
+     *
+     * @param result    General result
+     * @param resultMap Result map
+     * @return Data.Builder
+     */
     @NonNull
-    protected Data.Builder genFailureDataBuilder(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
+    protected Data.Builder genFailureDataBuilder(@NonNull TransmissionResult result,
+                                                 @Nullable Map<String, TransmissionResult> resultMap) {
+
         return new Data.Builder()
                 .putAll(getInputData())
-                .putInt(STATUS_CODE, statusCode)
-                .putString(F_MESSAGE, message)
-                .putString(F_LOCALIZED_MESSAGE, localizedMessage);
+                .putInt(STATUS_CODE, result.getStatusCode())
+                .putString(F_MESSAGE, result.getMessage())
+                .putString(F_LOCALIZED_MESSAGE, result.getLocalizedMessage())
+                .putString(F_RESULT_MAP, resultMap == null ?
+                        null : BasicTransmissionResult.mapToString(resultMap));
     }
 
     @NonNull
-    protected Data genFailureData(int statusCode, @Nullable String message, @Nullable String localizedMessage) {
-        return genFailureDataBuilder(statusCode, message, localizedMessage)
+    protected Data genFailureData(TransmissionResult result,
+                                  @Nullable Map<String, TransmissionResult> resultMap) {
+        return genFailureDataBuilder(result, resultMap)
                 .build();
     }
 

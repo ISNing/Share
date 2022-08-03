@@ -17,9 +17,8 @@ public class NsdSettingsFragment extends PluginPreferenceFragmentCompat {
         setPreferencesFromResource(R.xml.nsd_preferences, rootKey);
 
         IntEditTextPreference timeoutPrefs = findPreference(getString(R.string.prefs_key_lannsd_timeout));
-        IntEditTextPreference serverPortPrefs = findPreference(getString(R.string.prefs_key_lannsd_server_port));
-        IntEditTextPreference clientPortPrefs = findPreference(getString(R.string.prefs_key_lannsd_client_port));
-        IntEditTextPreference bufferSizePrefs = findPreference(getString(R.string.prefs_key_lannsd_buffer_size));
+        IntEditTextPreference serverPortTcpPrefs = findPreference(getString(R.string.prefs_key_lannsd_server_port_tcp));
+        IntEditTextPreference serverPortUdpPrefs = findPreference(getString(R.string.prefs_key_lannsd_server_port_udp));
 
         assert timeoutPrefs != null;
         timeoutPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -33,43 +32,34 @@ public class NsdSettingsFragment extends PluginPreferenceFragmentCompat {
             return true;
         });
         timeoutPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
-        assert serverPortPrefs != null;
-        serverPortPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+        assert serverPortTcpPrefs != null;
+        serverPortTcpPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             String newValStr = (String) newValue;
             int newValInt = Integer.parseInt(newValStr);
             if (!NsdUtils.isServerPortValid(requireContext(), newValInt)) {
-                Toast.makeText(requireContext(), R.string.prefs_tip_lannsd_server_port_invalid, Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), R.string.prefs_tip_lannsd_server_port_tcp_invalid, Toast.LENGTH_SHORT).show();
                 return false;
             }
-            serverPortPrefs.setSummary(newValStr);
+            serverPortTcpPrefs.setSummary(newValStr);
             return true;
         });
-        serverPortPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED));
-        assert clientPortPrefs != null;
-        clientPortPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
+        assert serverPortUdpPrefs != null;
+        serverPortUdpPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             String newValStr = (String) newValue;
             int newValInt = Integer.parseInt(newValStr);
-            if (!NsdUtils.isClientPortValid(requireContext(), newValInt)) {
-                Toast.makeText(requireContext(), R.string.prefs_tip_lannsd_client_port_invalid, Toast.LENGTH_SHORT).show();
+            if (!NsdUtils.isServerPortValid(requireContext(), newValInt)) {
+                Toast.makeText(requireContext(), R.string.prefs_tip_lannsd_server_port_udp_invalid, Toast.LENGTH_SHORT).show();
                 return false;
             }
-            clientPortPrefs.setSummary(newValStr);
+            serverPortUdpPrefs.setSummary(newValStr);
             return true;
         });
-        clientPortPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED));
-        assert bufferSizePrefs != null;
-        bufferSizePrefs.setOnPreferenceChangeListener((preference, newValue) -> {
-            String newValStr = (String) newValue;
-            int newValInt = Integer.parseInt(newValStr);
-            bufferSizePrefs.setSummary(Integer.toString(newValInt));
-            return true;
-        });
-        bufferSizePrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER));
 
+        serverPortTcpPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED));
+        serverPortUdpPrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED));
         timeoutPrefs.setSummary(timeoutPrefs.getText());
-        serverPortPrefs.setSummary(serverPortPrefs.getText());
-        clientPortPrefs.setSummary(clientPortPrefs.getText());
-        bufferSizePrefs.setSummary(bufferSizePrefs.getText());
+        serverPortTcpPrefs.setSummary(serverPortTcpPrefs.getText());
+        serverPortUdpPrefs.setSummary(serverPortUdpPrefs.getText());
     }
 
     @NonNull

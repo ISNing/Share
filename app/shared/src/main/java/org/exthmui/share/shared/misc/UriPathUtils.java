@@ -4,11 +4,10 @@ import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
-
-import android.os.Build;
 import android.provider.OpenableColumns;
 import android.text.TextUtils;
 import android.util.Log;
@@ -17,16 +16,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 
-public class UriPathUtils {
+public final class UriPathUtils {
     private static Uri contentUri = null;
 
     Context context;
 
-    public UriPathUtils( Context context) {
-        this.context=context;
+    public UriPathUtils(Context context) {
+        this.context = context;
     }
 
-    public String getPath( final Uri uri) {
+    public String getPath(final Uri uri) {
         // check here to KITKAT or new version
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
         String selection = null;
@@ -186,9 +185,9 @@ public class UriPathUtils {
                 try {
                     cursor = context.getContentResolver()
                             .query(uri, projection, selection, selectionArgs, null);
-                    int column_index = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
+                    int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                     if (cursor.moveToFirst()) {
-                        return cursor.getString(column_index);
+                        return cursor.getString(columnIndex);
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -244,8 +243,7 @@ public class UriPathUtils {
     }
 
     private String getDriveFilePath(Uri uri) {
-        Uri returnUri = uri;
-        Cursor returnCursor = context.getContentResolver().query(returnUri, null, null, null, null);
+        Cursor returnCursor = context.getContentResolver().query(uri, null, null, null, null);
         /*
          * Get the column indexes of the data in the Cursor,
          *     * move to the first row in the Cursor, get the data,
@@ -261,7 +259,7 @@ public class UriPathUtils {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
             FileOutputStream outputStream = new FileOutputStream(file);
             int read = 0;
-            int maxBufferSize = 1 * 1024 * 1024;
+            int maxBufferSize = 1024 * 1024;
             int bytesAvailable = inputStream.available();
 
             //int bufferSize = 1024;
@@ -289,10 +287,9 @@ public class UriPathUtils {
      * @return
      */
     private String copyFileToInternalStorage(Uri uri,String newDirName) {
-        Uri returnUri = uri;
 
-        Cursor returnCursor = context.getContentResolver().query(returnUri, new String[]{
-                OpenableColumns.DISPLAY_NAME,OpenableColumns.SIZE
+        Cursor returnCursor = context.getContentResolver().query(uri, new String[]{
+                OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE
         }, null, null, null);
 
 

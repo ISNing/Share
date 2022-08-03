@@ -12,6 +12,7 @@ import android.os.Build.VERSION_CODES;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.provider.OpenableColumns;
+import android.util.Base64;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -34,6 +35,7 @@ public class Entity implements Parcelable {
 
     public static final String TAG = "Entity";
 
+    public static final String ENTITIES = "ENTITIES";
     public static final String FILE_URIS = "FILE_URIS";
     public static final String FILE_NAMES = "FILE_NAMES";
     public static final String FILE_PATHS = "FILE_PATHS";
@@ -52,7 +54,36 @@ public class Entity implements Parcelable {
     private String MD5;
     private final boolean initialized;
 
-    private static final Creator<Entity> CREATOR = new Creator<>() {
+    public static Entity[] stringsToEntities(String[] strings) {
+        Entity[] entities = new Entity[strings.length];
+        for (int i = 0; i < strings.length; i++) {
+            if (strings[i] == null)
+                continue;
+            Parcel p = Parcel.obtain();
+            byte[] bytes = Base64.decode(strings[i], Base64.DEFAULT);
+            p.unmarshall(bytes, 0, bytes.length);
+            p.setDataPosition(0);
+            entities[i] = Entity.CREATOR.createFromParcel(p);
+            p.recycle();
+        }
+        return entities;
+    }
+
+    public static String[] entitiesToStrings(Entity[] entities) {
+        String[] strings = new String[entities.length];
+        Parcel p = Parcel.obtain();
+        for (int i = 0; i < entities.length; i++) {
+            if (entities[i] == null)
+                continue;
+            entities[i].writeToParcel(p, 0);
+            byte[] bytes = p.marshall();
+            strings[i] = Base64.encodeToString(bytes, Base64.DEFAULT);
+            p.recycle();
+        }
+        return strings;
+    }
+
+    public static final Creator<Entity> CREATOR = new Creator<>() {
         @NonNull
         @Override
         public Entity createFromParcel(@NonNull Parcel source) {
@@ -162,7 +193,7 @@ public class Entity implements Parcelable {
 
     @Override
     public void writeToParcel(@NonNull Parcel parcel, int i) {
-        parcel.writeParcelable(uri, 0);
+        parcel.writeParcelable(uri, i);
         parcel.writeString(fileName);
         parcel.writeString(filePath);
         parcel.writeInt(fileType);

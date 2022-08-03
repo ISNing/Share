@@ -34,7 +34,7 @@ public class WaveView extends View {
     private final float DEFAULT_LENGTH_PX = TypedValue.applyDimension(COMPLEX_UNIT_DIP, 200f, getResources().getDisplayMetrics());
 
     private ScalingRunnable mScalingRunnable;
-    private final ScheduledExecutorService mScheduledExecuter = new ScheduledThreadPoolExecutor(1, (ThreadFactory) Thread::new);
+    private final ScheduledExecutorService mScheduledExecutor = new ScheduledThreadPoolExecutor(1, (ThreadFactory) Thread::new);
 
     private boolean mWaving;
 
@@ -192,7 +192,7 @@ public class WaveView extends View {
     public void startWave() {
         if (!mWaving) {
             mScalingRunnable = new ScalingRunnable();
-            mScheduledExecuter.schedule(mScalingRunnable, mMillisecondsPerFrame, TimeUnit.MILLISECONDS);
+            mScheduledExecutor.schedule(mScalingRunnable, mMillisecondsPerFrame, TimeUnit.MILLISECONDS);
             mWaving = true;
         }
     }
@@ -206,8 +206,9 @@ public class WaveView extends View {
     }
 
     public void forceStopWave() {
-        mScheduledExecuter.shutdown();
+        mScheduledExecutor.shutdown();
         resetWave();
+        mWaving = false;
     }
 
     public void resetWave() {
@@ -463,7 +464,7 @@ public class WaveView extends View {
             }
 
             invalidate();
-            if (stopRequested && mRadii.size() == 0) mScheduledExecuter.shutdown();
+            if (stopRequested && mRadii.size() == 0) mScheduledExecutor.shutdown();
         }
 
         public void stop() {

@@ -12,7 +12,6 @@ import android.text.format.Formatter;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
 import androidx.work.WorkManager;
 
@@ -24,12 +23,9 @@ import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.Sender;
 
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.UUID;
 
 public abstract class SenderUtils {
@@ -83,7 +79,10 @@ public abstract class SenderUtils {
                                                         long totalBytesToSend, long bytesSent,
                                                         @NonNull FileInfo[] fileInfos,
                                                         @Nullable ReceiverInfo receiverInfo,
-                                                        boolean indeterminate) {
+                                                        @Nullable String curFileId,
+                                                        long curFileBytesToSend,
+                                                        long curFileBytesSent,
+                                                        boolean indeterminate) {//TODO
         createProgressNotificationChannel(context);
 
         String fileNameStr = Utils.genFileInfosStr(context, fileInfos);

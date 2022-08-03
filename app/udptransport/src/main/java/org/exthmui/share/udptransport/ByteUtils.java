@@ -11,7 +11,7 @@ public abstract class ByteUtils {
     public static byte[] cutBytesByTip(@NonNull int[] tip, @NonNull byte[] bytes,
                                        @IntRange(from = 0) int initOffset) {
         return Arrays.copyOfRange(bytes, initOffset + tip[0],
-                initOffset + tip.length == 1 ? bytes.length - 1 : tip[1]);
+                (initOffset + tip.length == 1 ? bytes.length - 1 : tip[1]) + 1);
     }
 
     public static byte[] cutBytesByTip(int[] tip, byte[] bytes) {

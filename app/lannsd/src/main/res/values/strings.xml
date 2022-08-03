@@ -4,17 +4,21 @@
     <string name="prefs_header_lannsd">Network Service Discovery(LAN)</string>
 
     <!-- Ports Preference -->
-    <string name="prefs_key_lannsd_server_port_tcp" translatable="false">lannsd_server_port</string>
-    <string name="prefs_title_lannsd_server_port_tcp">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
+    <string name="prefs_key_lannsd_server_port_tcp" translatable="false">lannsd_server_port_tcp</string>
+    <string name="prefs_title_lannsd_server_port_tcp">Server Port TCP(From 5001 to 65535, -1 for dynamically generate)</string>
     <string name="prefs_tip_lannsd_server_port_tcp_invalid">Invalid value</string>
-    <string name="prefs_key_lannsd_server_port_udp" translatable="false">lannsd_server_port</string>
-    <string name="prefs_title_lannsd_server_port_udp">Server Port (From 5001 to 6535, -1 for dynamically generate)</string>
+    <string name="prefs_key_lannsd_server_port_udp" translatable="false">lannsd_server_port_udp</string>
+    <string name="prefs_title_lannsd_server_port_udp">Server Port UDP(From 5001 to 65535, -1 for dynamically generate)</string>
     <string name="prefs_tip_lannsd_server_port_udp_invalid">Invalid value</string>
 
     <!-- Timeout Preference -->
     <string name="prefs_key_lannsd_timeout" translatable="false">lannsd_timeout</string>
     <string name="prefs_title_lannsd_timeout">Timeout (ms)</string>
     <string name="prefs_tip_lannsd_timeout_invalid">Invalid value</string>
+
+    <!-- Timeout Preference -->
+    <string name="prefs_key_lannsd_md5_validation" translatable="false">lannsd_md5_validation</string>
+    <string name="prefs_title_lannsd_md5_validation">Enable MD5 Validation</string>
 
     <string name="error_lannsd_service_discovering_start_failed" formatted="true">Service discover start failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>
     <string name="error_lannsd_service_discovering_stop_failed" formatted="true">Service discover stop failed: <xliff:g id="error_code" example="2">%1$d</xliff:g></string>

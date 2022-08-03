@@ -1,9 +1,12 @@
 package org.exthmui.share.udptransport.packets;
 
+import android.util.Log;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.Constants;
 
 import java.net.DatagramPacket;
+import java.util.Arrays;
 
 public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPacket> {
     public static final int DATA_LENGTH = 3;
@@ -14,8 +17,10 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
     private IdentifierPacket(DatagramPacket packet) {
         super(packet);
         if (getCommand() != Constants.COMMAND_IDENTIFIER ||
-                packet.getLength() != HEADER_LENGTH + DATA_LENGTH)
+                packet.getLength() != HEADER_LENGTH + DATA_LENGTH) {
+            Log.e(this.toString(), Arrays.toString(packet.getData()));
             throw new IllegalArgumentException();
+        }
     }
 
     public IdentifierPacket() {
@@ -31,7 +36,9 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
     }
 
     public IdentifierPacket setIdentifier(byte identifier) {
-        setData(ArrayUtils.addFirst(getExtra(), identifier));
+        byte[] extra = getExtra();
+        byte[] data = ArrayUtils.addFirst(extra, identifier);
+        setData(data);
         return this;
     }
 
@@ -40,7 +47,10 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
     }
 
     public IdentifierPacket setExtra(byte[] extra) {
-        setData(ArrayUtils.addFirst(getExtra(), getIdentifier()));
+        byte[] e = new byte[(EXTRA_TIP[1] - EXTRA_TIP[0] + 1)];
+        if (extra != null)
+            System.arraycopy(extra, 0, e, 0, Math.min(extra.length, e.length));
+        setData(ArrayUtils.addFirst(e, getIdentifier()));
         return this;
     }
 }

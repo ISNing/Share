@@ -3,11 +3,9 @@ package org.exthmui.share.msnearshare;
 import static org.exthmui.share.msnearshare.Constants.EXCEPTION_MAPPING;
 
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
 import com.microsoft.connecteddevices.AsyncOperationWithProgress;
@@ -22,10 +20,12 @@ import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
-import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.base.send.SendingWorker;
 import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
 import org.exthmui.share.shared.exceptions.trans.PeerDisappearedException;
+import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
+import org.exthmui.share.shared.exceptions.trans.RejectedException;
+import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
@@ -51,30 +51,18 @@ public class NearShareMultiSendingWorker extends SendingWorker {
 
     @NonNull
     @Override
-    public Result doWork() {
-        Data input = getInputData();
-        String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
-        String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
-        long[] fileSizes = input.getLongArray(Entity.FILE_SIZES);
-        if (uriStrings == null || fileNames == null || fileSizes == null ||
-                uriStrings.length != fileNames.length || fileNames.length != fileSizes.length)
-            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-        Uri[] uris = new Uri[uriStrings.length];
-        FileInfo[] fileInfos = new FileInfo[uriStrings.length];
-        for (int i = 0; i < uriStrings.length; i++) {
-            if (uriStrings[i] == null)
-                return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-            uris[i] = Uri.parse(uriStrings[i]);
-            fileInfos[i] = new FileInfo();
-            fileInfos[i].setFileName(fileNames[i]);
-            fileInfos[i].setFileSize(fileSizes[i]);
+    public Result doWork(Entity[] entities, String peerId, String peerName) {
+        FileInfo[] fileInfos = new FileInfo[entities.length];
+        for (int i = 0; i < entities.length; i++) {
+            if (entities[i] == null)
+                return genFailureResult(new InvalidInputDataException(getApplicationContext()), null);
+            fileInfos[i] = new FileInfo(entities[i]);
         }
 
         final NearShareManager manager = NearShareManager.getInstance(getApplicationContext());
-        String peerId = input.getString(Sender.TARGET_PEER_ID);
         IPeer peer = manager.getPeers().get(peerId);
         if (peer == null)
-            return genFailureResult(new PeerDisappearedException(getApplicationContext()));
+            return genFailureResult(new PeerDisappearedException(getApplicationContext()), null);
 
         ReceiverInfo receiverInfo = new ReceiverInfo();
 
@@ -87,11 +75,11 @@ public class NearShareMultiSendingWorker extends SendingWorker {
 
         final AsyncOperationWithProgress<NearShareStatus, NearShareProgress> operation;
 
-        final NearShareFileProvider[] fileProviders = new NearShareFileProvider[uris.length];
+        final NearShareFileProvider[] fileProviders = new NearShareFileProvider[entities.length];
 
-        for (int i = 0; i < uris.length; i++) {
+        for (int i = 0; i < entities.length; i++) {
             NearShareFileProvider fileProvider = NearShareHelper.createNearShareFileFromContentUri(
-                    uris[i], getApplicationContext());
+                    entities[i].getUri(), getApplicationContext());
             fileProviders[i] = fileProvider;
         }
 
@@ -100,7 +88,7 @@ public class NearShareMultiSendingWorker extends SendingWorker {
 
         operation = sender.sendFilesAsync(connectionRequest, fileProviders);
 
-        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileInfos, receiverInfo));
+        operation.progress().subscribe((op, progress) -> updateProgress(Constants.TransmissionStatus.IN_PROGRESS.getNumVal(), progress.totalBytesToSend, progress.bytesSent, fileInfos, receiverInfo, null, 0, 0));
 
         operation.whenComplete((status, tr) -> {
             switch (status) {
@@ -108,19 +96,19 @@ public class NearShareMultiSendingWorker extends SendingWorker {
                     result.set(genSuccessResult());
                     break;
                 case DENIED_BY_REMOTE_SYSTEM:
-                    result.set(genRejectedResult(getApplicationContext()));
+                    result.set(genFailureResult(new RejectedException(getApplicationContext()), null));
                     break;
                 case CANCELLED:
-                    result.set(genReceiverCancelledResult(getApplicationContext()));
+                    result.set(genFailureResult(new ReceiverCancelledException(getApplicationContext()), null));
                     break;
                 default:
                     if (tr != null) {
                         Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
                         Log.i(TAG, StackTraceUtils.getStackTraceString(tr.getStackTrace()));
-                        result.set(genFailureResult(Objects.requireNonNull(EXCEPTION_MAPPING.getOrDefault(status, UnknownErrorException.class)).getConstructor(Context.class, Throwable.class).newInstance(getApplicationContext(), tr)));
+                        result.set(genFailureResult(Objects.requireNonNull(EXCEPTION_MAPPING.getOrDefault(status, UnknownErrorException.class)).getConstructor(Context.class, Throwable.class).newInstance(getApplicationContext(), tr), null));
                     } else {
                         Log.e(TAG, "Failed sending files to " + peer.getDisplayName() + ": " + status);
-                        result.set(genFailureResult(Objects.requireNonNull(EXCEPTION_MAPPING.getOrDefault(status, UnknownErrorException.class)).getConstructor(Context.class).newInstance(getApplicationContext())));
+                        result.set(genFailureResult(Objects.requireNonNull(EXCEPTION_MAPPING.getOrDefault(status, UnknownErrorException.class)).getConstructor(Context.class).newInstance(getApplicationContext()), null));
                     }
                     break;
             }
@@ -131,7 +119,7 @@ public class NearShareMultiSendingWorker extends SendingWorker {
         while (!finished.get()) {
             if (getForegroundInfoAsync().isCancelled()) {
                 operation.cancel(true);
-                return genSenderCancelledResult(getApplicationContext());
+                return genFailureResult(new SenderCancelledException(getApplicationContext()), null);
             }
         }
         return result.get();

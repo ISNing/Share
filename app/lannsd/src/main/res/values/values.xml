@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <integer name="prefs_default_lannsd_server_port">-1</integer>
-    <integer name="prefs_default_lannsd_client_port">-1</integer>
+    <integer name="prefs_default_lannsd_server_port_tcp">-1</integer>
+    <integer name="prefs_default_lannsd_server_port_udp">-1</integer>
     <integer name="prefs_default_lannsd_timeout">10000</integer>
-    <integer name="prefs_default_lannsd_buffer_size">8192</integer>
+    <bool name="prefs_default_lannsd_md5_validation">false</bool>
 </resources>

@@ -1,60 +1,83 @@
 package org.exthmui.share.udptransport;
 
+import android.content.Context;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.RestrictTo;
 
 import com.google.gson.Gson;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.SenderInfo;
+import org.exthmui.share.shared.base.results.SuccessTransmissionResult;
+import org.exthmui.share.shared.base.results.TransmissionResult;
+import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
+import org.exthmui.share.shared.exceptions.trans.RejectedException;
+import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
+import org.exthmui.share.shared.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
+import org.exthmui.share.shared.misc.FileUtils;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
 import org.exthmui.share.udptransport.packets.CommandPacket;
 import org.exthmui.share.udptransport.packets.FilePacket;
 import org.exthmui.share.udptransport.packets.IdentifierPacket;
 import org.exthmui.share.udptransport.packets.ResendRequestPacket;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
+import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class UDPReceiver {
-    public static final String TAG = "Receiver";
+    public static final String TAG = "UDPReceiver";
     private static final Gson GSON = new Gson();
+
+    private final Context context;
 
     private static final Map<Byte, ConnectionHandler> CONN_ID_HANDLER_MAP = new HashMap<>();
 
     @NonNull
     private final OutputStreamFactory outputStreamFactory;
     @NonNull
+    private final InputStreamFactory inputStreamFactory;
+    @NonNull
     private final ConnectionListener listener;
 
     private int serverPortTcp;
     private int serverPortUdp;
     private final boolean lazyInit;
+    private final boolean validateMd5;
 
     @Nullable
     private ServerSocket serverSocket;
@@ -64,47 +87,50 @@ public class UDPReceiver {
     private boolean commandWatcherStopFlag;
     private boolean isRunning;
 
+    private boolean tcpReady;
+    private boolean udpReady;
+
     private final ThreadPoolExecutor coreThreadPool = new ThreadPoolExecutor(1,
             4, 5L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(2),
             r -> new Thread(r, r.toString()));
     private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(0,
-            1, 1L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(8),
+            3, 1L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
     private final Runnable connectionWatcher;
     private final Runnable packetInterceptor = () -> {
-        while (isRunning) {
+        while (udpReady) {
             try {
-                CommandPacket packet = receivePacket(new CommandPacket());
+                CommandPacket packet = receivePacket(new CommandPacket(new DatagramPacket(new byte[Constants.BUF_LEN_MAX_HI], Constants.BUF_LEN_MAX_HI)));
                 ConnectionHandler handler = CONN_ID_HANDLER_MAP.get(packet.getConnId());
                 if (handler != null) {
                     if (!handler.packetReceived.isDone())
                         handler.packetReceived.complete(packet);
                     else handler.packetsBlocked.add(packet);
-                } else Log.e(TAG, "Packet with connection id %d received, but no correspond " +
-                        "handler found");
+                } else Log.e(TAG, String.format("Packet with connection id %d received, but no " +
+                        "correspond handler found", packet.getConnId()));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     };
 
-    private boolean tcpReady;
-    private boolean udpReady;
-
-    public UDPReceiver(@NonNull OutputStreamFactory outputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
-                       int serverPortUdp, boolean lazyInit) throws IOException {
+    public UDPReceiver(@NonNull Context context, @NonNull OutputStreamFactory outputStreamFactory, @NonNull InputStreamFactory inputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
+                       int serverPortUdp, boolean lazyInit, boolean validateMd5) throws IOException {
+        this.context = context;
         this.outputStreamFactory = outputStreamFactory;
+        this.inputStreamFactory = inputStreamFactory;
         this.listener = listener;
         this.serverPortTcp = serverPortTcp;
         this.serverPortUdp = serverPortUdp;
         this.lazyInit = lazyInit;
+        this.validateMd5 = validateMd5;
         if (!lazyInit) initialize();
 
         connectionWatcher = () -> {
             while (isRunning) {
                 try {
-                    for (int i = Byte.MIN_VALUE + 1; i <= Byte.MAX_VALUE; i++)
-                        if (!CONN_ID_HANDLER_MAP.containsKey((byte) i)) {
+                    for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++)
+                        if (i != 0 /* 0 is a invalid connection id*/ && !CONN_ID_HANDLER_MAP.containsKey((byte) i)) {
                             assert serverSocket != null;
                             ConnectionHandler handler = new ConnectionHandler((byte) i,
                                     serverSocket.accept());
@@ -125,14 +151,14 @@ public class UDPReceiver {
         if (!lazyInit && !udpReady) udpReady();
     }
 
-    public void tcpReady() throws IOException {
+    private void tcpReady() throws IOException {
         serverSocket = new ServerSocket(serverPortTcp);
         serverSocket.setReuseAddress(true);
         serverPortTcp = serverSocket.getLocalPort();
         tcpReady = true;
     }
 
-    public void tcpStop() {
+    private void tcpStop() {
         if (serverSocket != null) {
             Utils.silentClose(serverSocket);
             serverSocket = null;
@@ -140,15 +166,15 @@ public class UDPReceiver {
         tcpReady = false;
     }
 
-    public void udpReady() throws SocketException {
+    private void udpReady() throws SocketException {
         datagramSocket = new DatagramSocket(serverPortUdp);
         datagramSocket.setReuseAddress(true);
         serverPortUdp = datagramSocket.getLocalPort();
-        threadPool.execute(packetInterceptor);
         udpReady = true;
+        threadPool.execute(packetInterceptor);
     }
 
-    public void udpStop() {
+    private void udpStop() {
         if (datagramSocket != null) {
             Utils.silentClose(datagramSocket);
             datagramSocket = null;
@@ -157,8 +183,10 @@ public class UDPReceiver {
     }
 
     public void startReceive() throws IOException {
+        isRunning = true;
         tcpReady();
         if (!lazyInit && !udpReady) udpReady();
+        threadPool.execute(connectionWatcher);
     }
 
     public void stopReceive() {
@@ -166,16 +194,19 @@ public class UDPReceiver {
         udpStop();
     }
 
-    public <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
+    private <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
         assert datagramSocket != null;
-        datagramSocket.receive(packet.toDatagramPacket());
+        DatagramPacket p = packet.toDatagramPacket();
+        datagramSocket.receive(p);
+        p.setData(Arrays.copyOfRange(p.getData(), p.getOffset(), p.getOffset() + p.getLength()));
         return packet;
     }
 
-    public <T extends AbstractCommandPacket<T>> void sendPacket(T packet, byte connId) throws IOException {
+    private <T extends AbstractCommandPacket<T>> void sendPacket(T packet, byte connId) throws IOException {
         assert datagramSocket != null;
         packet.setConnId(connId);
-        datagramSocket.send(packet.toDatagramPacket());
+        DatagramPacket p = packet.toDatagramPacket();
+        datagramSocket.send(p);
     }
 
     @Nullable
@@ -188,6 +219,11 @@ public class UDPReceiver {
 
         private boolean canceled;
         private boolean remoteCanceled;
+
+        long totalBytesToSend = 0;
+        long bytesReceived = 0;
+        SenderInfo senderInfo = null;
+        FileInfo[] fileInfos = null;
 
         @NonNull
         private final Socket socket;
@@ -217,7 +253,7 @@ public class UDPReceiver {
             return connId;
         }
 
-        public ConnectionHandler(byte connId, @NonNull Socket socket)
+        private ConnectionHandler(byte connId, @NonNull Socket socket)
                 throws IOException {
             this.socket = socket;
             this.connId = connId;
@@ -229,6 +265,7 @@ public class UDPReceiver {
                     try {
                         cmd = in.readUTF();
                         dealWithCommand(cmd);
+                    } catch (EOFException ignored) {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -236,29 +273,29 @@ public class UDPReceiver {
             };
         }
 
-        public void writeJson(Object object) throws IOException {
+        private void writeJson(Object object) throws IOException {
             String jsonStr = GSON.toJson(object);
             Log.d(TAG, "Trying to send \"" + jsonStr + "\" -> " + socket.getInetAddress());
             out.writeUTF(jsonStr);
         }
 
-        public void writeCommand(String command) throws IOException {
+        private void writeCommand(String command) throws IOException {
             out.writeUTF(command);
         }
 
-        public <T> T readJson(Class<T> classOfT) throws IOException {
+        private <T> T readJson(Class<T> classOfT) throws IOException {
             String s = in.readUTF();
             Log.d(TAG, "String \"" + s + "\" <- " + socket.getInetAddress());
             return GSON.fromJson(s, classOfT);
         }
 
-        public <T> T readJson(Class<T> classOfT, Type typeOfT) throws IOException {
+        private <T> T readJson(Class<T> classOfT, Type typeOfT) throws IOException {
             String s = in.readUTF();
             Log.d(TAG, "String \"" + s + "\" <- " + socket.getInetAddress());
             return GSON.fromJson(s, typeOfT);
         }
 
-        public void dealWithCommand(String cmd) {
+        private void dealWithCommand(String cmd) {
             switch (cmd) {
                 case (Constants.COMMAND_CANCEL):
                     remoteCanceled = true;
@@ -268,79 +305,102 @@ public class UDPReceiver {
             }
         }
 
-        public Future<Pair<Integer, Map<String, Pair<Integer, String>>>> receiveAsync() {
+        public Future<Pair<TransmissionResult, Map<String, TransmissionResult>>> receiveAsync() {
             return coreThreadPool.submit(() -> {
                 try {
                     return receive();
                 } catch (Throwable e) {
-                    if (listener != null) listener.onComplete(
-                            org.exthmui.share.shared.misc.Constants.TransmissionStatus.REJECTED.getNumVal(),
-                            null);
-                    throw e;
+                    if (listener != null)
+                        listener.onComplete(new UnknownErrorException(e.getMessage(), e.getLocalizedMessage(), e),
+                                null);
+                    e.printStackTrace();
+//                    Log.e(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()), e.getMessage());
+//                    Log.e(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+//                            StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                    return new Pair<>(new UnknownErrorException(e.getMessage(), e.getLocalizedMessage(), e), null);
                 }
             });
         }
 
-        public Pair<Integer, Map<String, Pair<Integer, String>>> receive() throws IOException, ExecutionException, InterruptedException {
-            Map<String, Pair<Integer, String>> resultMap = new HashMap<>();
+        public Pair<TransmissionResult, Map<String, TransmissionResult>> receive() throws IOException, ExecutionException, InterruptedException {
+            Map<String, TransmissionResult> resultMap = new HashMap<>();
             SenderInfo senderInfo = readJson(SenderInfo.class);// (2)
+            this.senderInfo = senderInfo;
             FileInfo[] fileInfos = readJson(FileInfo[].class);// (3)
             CompletableFuture<Set<String>> idsAccepted = new CompletableFuture<>();
 
-            while (listener == null) {}// Stub while worker is not started
-            listener.requestAcceptation(senderInfo, fileInfos, idsAccepted);
+            while (listener == null) {
+            }// Stuck while worker is not started
+            listener.requestAcceptationAsync(senderInfo, fileInfos, idsAccepted);
+            listener.onProgressUpdate(
+                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(),
+                    0, 0, senderInfo, fileInfos, null, 0, 0);
             Set<String> acceptedIdsAsSet = idsAccepted.get();
             String[] accepted = acceptedIdsAsSet.toArray(new String[0]);
             writeJson(accepted);// (4)
             if (accepted.length == 0) {
                 Log.d(TAG, "No file were accepted");
                 listener.onComplete(
-                        org.exthmui.share.shared.misc.Constants.TransmissionStatus.REJECTED.getNumVal(),
+                        new RejectedException(context),
                         null);
-                return new Pair<>(org.exthmui.share.shared.misc.Constants.TransmissionStatus.REJECTED.getNumVal(),
+                return new Pair<>(new RejectedException(context),
                         null);
             }
 
             List<FileInfo> fileInfosToReceive = new ArrayList<>();
             for (FileInfo fileInfo : fileInfos) {
-                if (acceptedIdsAsSet.contains(fileInfo.getId()))
+                if (acceptedIdsAsSet.contains(fileInfo.getId())) {
                     fileInfosToReceive.add(fileInfo);
+                    totalBytesToSend += fileInfo.getFileSize();
+                }
             }
+            this.fileInfos = fileInfosToReceive.toArray(new FileInfo[0]);
             threadPool.execute(commandWatcher);// (4-6)
 
             if (!udpReady) udpReady();
-            writeCommand(Constants.COMMAND_UDP_SOCKET_READY);// (6)
+            writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverPortUdp, getConnId()));// (6)
 
             for (FileInfo fileInfo : fileInfosToReceive) {
-                Log.d(TAG, "Start receiving file: " + fileInfo.getFileName());
-                OutputStream stream = outputStreamFactory.produce(fileInfo);
-                resultMap.put(fileInfo.getId(), receiveFile(stream instanceof BufferedOutputStream ?
-                        (BufferedOutputStream) stream : new BufferedOutputStream(stream)));
+                resultMap.put(fileInfo.getId(), receiveFile(fileInfo));
 
-                Pair<Boolean, Pair<Integer, Map<String, Pair<Integer, String>>>> p = checkCanceled(resultMap, accepted);
+                Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> p =
+                        checkCanceled(resultMap, accepted);
                 if (p.first) return p.second;
             }
             commandWatcherStopFlag = true;
             // (16)
 
+            for (TransmissionResult result : resultMap.values()) {
+                if (result.getStatus() != org.exthmui.share.shared.misc.Constants.TransmissionStatus.COMPLETED)
+                    return new Pair<>(new UnknownErrorException(context), resultMap);
+            }
             releaseResources();
-            listener.onComplete(
-                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.COMPLETED.getNumVal(),
+            listener.onComplete(new SuccessTransmissionResult(context),
                     resultMap);
-            return new Pair<>(org.exthmui.share.shared.misc.Constants
-                    .TransmissionStatus.COMPLETED.getNumVal(), resultMap);
+            return new Pair<>(new SuccessTransmissionResult(context), resultMap);
         }
 
-        public Pair<Integer, String> receiveFile(BufferedOutputStream outputStream) throws IOException {
+        private TransmissionResult receiveFile(FileInfo fileInfo) throws IOException {
+            Log.d(TAG, String.format("Start receiving file: %s(%s)", fileInfo.getFileName(), fileInfo.getId()));
+            OutputStream rawOutputStream = outputStreamFactory.produce(fileInfo);
+            BufferedOutputStream outputStream = rawOutputStream instanceof BufferedOutputStream ?
+                    (BufferedOutputStream) rawOutputStream : new BufferedOutputStream(rawOutputStream);
+            assert listener != null;
+            listener.onProgressUpdate(
+                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
+                    totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), 0);
+
+            long curFileBytesReceived = 0;
+
             assert datagramSocket != null;
             byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
             byte curGroup = Byte.MIN_VALUE;
             boolean groupIdExceeded = false;
             boolean fileEnded = false;
             try {
-                receiveIdentifier(Constants.START_IDENTIFIER, Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
+                receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
             } catch (TimeoutException e) {
-                return new Pair<>(org.exthmui.share.shared.misc.Constants.TransmissionStatus.TIMED_OUT.getNumVal(), null);
+                return new TimedOutException(context);
             }
             sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
             AbstractCommandPacket<?> packet;
@@ -364,10 +424,18 @@ public class UDPReceiver {
                     case Constants.COMMAND_FILE_PACKET:// (7), (13)
                         FilePacket filePacket = FilePacket.fromDatagramPacket(packet.toDatagramPacket());
                         if (filePacket.getGroupId() != curGroup) continue;
-                        bufTemp[filePacket.getPacketId()] = filePacket.getData();
+                        bufTemp[filePacket.getPacketId() - Short.MIN_VALUE] = filePacket.getData();
+                        curFileBytesReceived += filePacket.getData().length;
+                        bytesReceived += filePacket.getData().length;
+                        listener.onProgressUpdate(
+                                org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
+                                totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), curFileBytesReceived);
                         break;
                     case Constants.COMMAND_IDENTIFIER:
                         IdentifierPacket identifierPacket = IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
+                        Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                String.format("Identifier \"%d\" received", identifierPacket.getIdentifier()));
+
                         if (identifierPacket.getIdentifier() == Constants.START_IDENTIFIER) {// (7)
                             if (identifierPacket.getExtra()[0] != curGroup) continue;
                             sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
@@ -400,20 +468,36 @@ public class UDPReceiver {
                         }
                         break;
                 }
-                if (isCanceled()) return new Pair<>((isRemoteCanceled() ?
-                        org.exthmui.share.shared.misc.Constants.TransmissionStatus.SENDER_CANCELLED :
-                        org.exthmui.share.shared.misc.Constants.TransmissionStatus.RECEIVER_CANCELLED
-                ).getNumVal(), null);
-            } while (fileEnded);
+                if (isCanceled()) return isRemoteCanceled() ?
+                        new SenderCancelledException(context) :
+                        new ReceiverCancelledException(context);
+            } while (!fileEnded);
             outputStream.flush();
             outputStream.close();
+
+            // Validate md5
+            String md5Expected = fileInfo.getExtra(Constants.FILE_INFO_EXTRA_KEY_MD5);
+            if (validateMd5 && md5Expected != null) {
+                InputStream rawInputStream = inputStreamFactory.produce(fileInfo);
+                BufferedInputStream inputStream = rawInputStream instanceof BufferedInputStream ?
+                        (BufferedInputStream) rawInputStream : new BufferedInputStream(rawInputStream);
+                String md5 = FileUtils.getMD5(inputStream);
+                inputStream.close();
+                if (!StringUtils.equals(md5Expected, md5)) {
+                    Log.e(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                            String.format("Md5 validation failed: %s(%s)",
+                                    fileInfo.getFileName(), fileInfo.getId()));
+                    return new UnknownErrorException("File validation failed");
+                } else
+                    Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                            String.format("Md5 validation passed: %s(%s)",
+                                    fileInfo.getFileName(), fileInfo.getId()));
+            }
             //TODO: Watch file end packet
-            return new Pair<>(
-                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.COMPLETED.getNumVal(),
-                    null);
+            return new SuccessTransmissionResult(context);
         }
 
-        public AbstractCommandPacket<?> receivePacket(int timeout, TimeUnit unit) throws TimeoutException {
+        private AbstractCommandPacket<?> receivePacket(int timeout, TimeUnit unit) throws TimeoutException {
             AbstractCommandPacket<?> packet = null;
             try {
                 if (timeout < 0) {
@@ -432,10 +516,8 @@ public class UDPReceiver {
             return packet;
         }
 
-        public <T extends AbstractCommandPacket<T>> void sendPacket(T packet) throws IOException {
-            assert datagramSocket != null;
-            packet.setConnId(connId);
-            datagramSocket.send(packet.toDatagramPacket());
+        private <T extends AbstractCommandPacket<T>> void sendPacket(T packet) throws IOException {
+            UDPReceiver.this.sendPacket(packet, connId);
         }
 
         /**
@@ -445,7 +527,7 @@ public class UDPReceiver {
          * @param ackIdentifier Ack Identifier (Value {@link null} means not to wait for ack)
          * @return Ack packet
          */
-        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException {
+        private IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException {
             assert datagramSocket != null;
             IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier);
             if (ackIdentifier != null) {
@@ -474,14 +556,14 @@ public class UDPReceiver {
             return null;
         }
 
-        public IdentifierPacket receiveIdentifier(byte identifier, int timeout, TimeUnit unit) throws TimeoutException {
+        private IdentifierPacket receiveIdentifier(byte identifier, int timeout, TimeUnit unit) throws TimeoutException {
             while (true) {
-                    IdentifierPacket recvPacket = IdentifierPacket.fromDatagramPacket(
-                            receivePacket(timeout, unit).toDatagramPacket());
-                    if (recvPacket.getIdentifier() == identifier &&
-                            recvPacket.getConnId() == connId) {
-                        return recvPacket;
-                    }
+                IdentifierPacket recvPacket = IdentifierPacket.fromDatagramPacket(
+                        receivePacket(timeout, unit).toDatagramPacket());
+                if (recvPacket.getIdentifier() == identifier &&
+                        recvPacket.getConnId() == connId) {
+                    return recvPacket;
+                }
             }
         }
 
@@ -502,30 +584,39 @@ public class UDPReceiver {
             return remoteCanceled;
         }
 
-        public Pair<Boolean, Pair<Integer, Map<String, Pair<Integer, String>>>> checkCanceled(Map<String, Pair<Integer, String>> resultMap, String[] idsCanceled) {
+        // TransmissionResults with id already existed in map will not be replaced.
+        public Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> checkCanceled(Map<String, TransmissionResult> resultMap, String[] idsCanceled) {
             if (canceled) {
                 Log.d(TAG, "Sending canceled by sender, releasing resources and notifying listener");
-                resultMap = genCancelResultMap(resultMap, idsCanceled, false);
-                if (listener != null) listener.onComplete(org.exthmui.share.shared.misc.Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(),
+                genCancelResultMap(resultMap, idsCanceled, false);
+                if (listener != null) listener.onComplete(new SenderCancelledException(context),
                         resultMap);
-                return new Pair<>(true, new Pair<>(org.exthmui.share.shared.misc.Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal(), resultMap));
+                return new Pair<>(true, new Pair<>(new SenderCancelledException(context), resultMap));
             } else if (remoteCanceled) {
                 Log.d(TAG, "Sending canceled by receiver, releasing resources and notifying listener");
-                resultMap = genCancelResultMap(resultMap, idsCanceled, true);
-                if (listener != null) listener.onComplete(org.exthmui.share.shared.misc.Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(),
+                genCancelResultMap(resultMap, idsCanceled, true);
+                if (listener != null) listener.onComplete(new ReceiverCancelledException(context),
                         resultMap);
-                return new Pair<>(true, new Pair<>(org.exthmui.share.shared.misc.Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal(), resultMap));
-            }
-            return new Pair<>(false, null);
+                return new Pair<>(true, new Pair<>(new ReceiverCancelledException(context), resultMap));
+            } else return new Pair<>(false, null);
         }
 
-        public Map<String, Pair<Integer, String>> genCancelResultMap(Map<String, Pair<Integer, String>> resultMap, String[] idsCanceled, boolean remoteCanceled) {
+        private Map<String, TransmissionResult> genCancelResultMap(Map<String, TransmissionResult> resultMap, String[] idsCanceled, boolean remoteCanceled) {
             for (String id : idsCanceled)
-                resultMap.put(id, new Pair<>((remoteCanceled ? org.exthmui.share.shared.misc.Constants.TransmissionStatus.SENDER_CANCELLED : org.exthmui.share.shared.misc.Constants.TransmissionStatus.RECEIVER_CANCELLED).getNumVal(), null));
+                resultMap.put(id, remoteCanceled ? new SenderCancelledException(context) : new ReceiverCancelledException(context));
             return resultMap;
         }
 
+        public SenderInfo getSenderInfo() {
+            return senderInfo;
+        }
+
+        public FileInfo[] getFileInfos() {
+            return fileInfos;
+        }
+
         @Override
+        @RestrictTo(RestrictTo.Scope.LIBRARY)
         public void onReceivePacket(AbstractCommandPacket<?> packet) {
             if (!this.packetReceived.isDone()) this.packetReceived.complete(packet);
             else packetsBlocked.add(packet);
@@ -541,19 +632,25 @@ public class UDPReceiver {
     }
 
     public interface ReceivingListener {
-        void requestAcceptation(SenderInfo senderInfo, FileInfo[] fileInfos, CompletableFuture<Set<String>> idsAccepted);
+        void requestAcceptationAsync(SenderInfo senderInfo, FileInfo[] fileInfos, CompletableFuture<Set<String>> idsAccepted);
 
-        void onProgressUpdate(int status, long totalBytesToSend, long bytesSent,
-                              long curFileBytesToSend, long curFileBytesSent, String curFileId);
+        void onProgressUpdate(int status, long totalBytesToSend, long bytesReceived,
+                              @NonNull SenderInfo senderInfo, @NonNull FileInfo[] fileInfos,
+                              String curFileId, long curFileBytesToSend, long curFileBytesReceived);
 
-        void onComplete(int status, Map<String, Pair<Integer, String>> resultMap);
+        void onComplete(TransmissionResult result, Map<String, TransmissionResult> resultMap);
     }
 
     public interface PacketListener {
+        @RestrictTo(RestrictTo.Scope.LIBRARY)
         void onReceivePacket(AbstractCommandPacket<?> packet);
     }
 
     public interface OutputStreamFactory {
         OutputStream produce(FileInfo fileInfo);
+    }
+
+    public interface InputStreamFactory {
+        InputStream produce(FileInfo fileInfo);
     }
 }

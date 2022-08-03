@@ -51,24 +51,8 @@ public interface Sender<T extends IPeer> {
 
     @NonNull
     default Data genSendingInputData(@NonNull IPeer peer, @NonNull List<Entity> entities) {
-        String[] uriStrings = new String[entities.size()];
-        String[] fileNames = new String[entities.size()];
-        String[] filePaths = new String[entities.size()];
-        long[] fileSizes = new long[entities.size()];
-        int[] fileTypes = new int[entities.size()];
-        for (int i = 0; i < entities.size(); i++) {
-            uriStrings[i] = entities.get(i).getUri().toString();
-            fileNames[i] = entities.get(i).getFileName();
-            filePaths[i] = entities.get(i).getFilePath();
-            fileSizes[i] = entities.get(i).getFileSize();
-            fileTypes[i] = entities.get(i).getFileType();
-        }
         return new Data.Builder()
-                .putStringArray(Entity.FILE_URIS, uriStrings)
-                .putStringArray(Entity.FILE_NAMES, fileNames)
-                .putStringArray(Entity.FILE_PATHS, filePaths)
-                .putLongArray(Entity.FILE_SIZES, fileSizes)
-                .putIntArray(Entity.FILE_TYPES, fileTypes)
+                .putStringArray(Entity.ENTITIES, Entity.entitiesToStrings(entities.toArray(new Entity[0])))
                 .putString(TARGET_PEER_ID, peer.getId())
                 .putString(TARGET_PEER_NAME, peer.getDisplayName())
                 .build();

@@ -144,16 +144,17 @@ public abstract class Constants {
         IN_PROGRESS(1<<5, R.string.transmission_status_in_progress, R.string.transmission_status_in_progress_detailed),
         COMPLETED(1<<4, R.string.transmission_status_completed, R.string.transmission_status_completed_detailed),
 
-        ERROR(1<<2, R.string.transmission_status_unknown_error, R.string.transmission_status_unknown_error_detailed),
-        NETWORK_ERROR(1<<11 | ERROR.getNumVal(), R.string.transmission_status_network_error, R.string.transmission_status_network_error_detailed),
+        ERROR(1 << 2, R.string.transmission_status_unknown_error, R.string.transmission_status_unknown_error_detailed),
+        NETWORK_ERROR(1 << 11 | ERROR.getNumVal(), R.string.transmission_status_network_error, R.string.transmission_status_network_error_detailed),
         TIMED_OUT(1 | NETWORK_ERROR.getNumVal(), R.string.transmission_status_timed_out, R.string.transmission_status_timed_out_detailed),
-        CANCELLED(1<<12 | ERROR.getNumVal(), R.string.transmission_status_cancelled, R.string.transmission_status_cancelled_detailed),
+        CANCELLED(1 << 12 | ERROR.getNumVal(), R.string.transmission_status_cancelled, R.string.transmission_status_cancelled_detailed),
         SENDER_CANCELLED(1 | CANCELLED.getNumVal(), R.string.transmission_status_sender_cancelled, R.string.transmission_status_sender_cancelled_detailed),
         RECEIVER_CANCELLED(2 | CANCELLED.getNumVal(), R.string.transmission_status_receiver_cancelled, R.string.transmission_status_receiver_cancelled_detailed),
-        FILE_IO_ERROR(1<<13 | ERROR.getNumVal(), R.string.transmission_status_file_io_error, R.string.transmission_status_file_io_error_detailed),
+        FILE_IO_ERROR(1 << 13 | ERROR.getNumVal(), R.string.transmission_status_file_io_error, R.string.transmission_status_file_io_error_detailed),
         NO_ENOUGH_SPACE(1 | FILE_IO_ERROR.getNumVal(), R.string.transmission_status_no_enough_space, R.string.transmission_status_no_enough_space_detailed),
-        REMOTE_ERROR(1<<14 | ERROR.getNumVal(), R.string.transmission_status_remote_error, R.string.transmission_status_remote_error_detailed),
-        PEER_DISAPPEARED(1<<15 | ERROR.getNumVal(), R.string.transmission_status_peer_disappeared, R.string.transmission_status_peer_disappeared_detailed);
+        REMOTE_ERROR(1 << 14 | ERROR.getNumVal(), R.string.transmission_status_remote_error, R.string.transmission_status_remote_error_detailed),
+        PEER_DISAPPEARED(1 << 15 | ERROR.getNumVal(), R.string.transmission_status_peer_disappeared, R.string.transmission_status_peer_disappeared_detailed),
+        SILENT(1 << 16, 0, 0);
         private final int numVal;
         @StringRes
         private final int strRes;

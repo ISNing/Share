@@ -108,7 +108,7 @@ public abstract class Utils {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String key = context.getString(R.string.prefs_key_global_use_saf);
         boolean useSAF = sharedPreferences.getBoolean(key, false);
-        Log.w(TAG, "Use SAF enabled, this may cause performance problem");
+        if (useSAF) Log.w(TAG, "Use SAF enabled, this may cause performance problem");
         return useSAF;
     }
 

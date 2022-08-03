@@ -73,7 +73,6 @@ public class PeerChooserFragment extends Fragment {
         mRecyclerView = view.findViewById(R.id.fragment_peer_chooser_recycler_view);
 
         mWaveView.setWaveColor(requireContext().getColor(R.color.placeholder_wave_color));
-        mWaveView.startWave();
 
         mEnableButton = mNonScanningPlaceholder.findViewById(R.id.non_scanning_placeholder_enable_button);
         if (mEnableButtonOnClickListener != null) {

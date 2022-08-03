@@ -1,42 +1,27 @@
 package org.exthmui.share.lannsd;
 
-import static org.exthmui.share.lannsd.Constants.COMMAND_ACCEPT;
-import static org.exthmui.share.lannsd.Constants.COMMAND_CANCEL;
-import static org.exthmui.share.lannsd.Constants.COMMAND_FAILURE;
-import static org.exthmui.share.lannsd.Constants.COMMAND_REJECT;
-import static org.exthmui.share.lannsd.Constants.COMMAND_SUCCESS;
-import static org.exthmui.share.lannsd.Constants.FILE_INFO_EXTRA_KEY_MD5;
 import static org.exthmui.share.lannsd.Constants.SHARE_PROTOCOL_VERSION_1;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
-import android.net.Uri;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.work.Data;
 import androidx.work.WorkerParameters;
-import androidx.work.impl.utils.futures.SettableFuture;
-
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.gson.Gson;
 
 import org.exthmui.share.lannsd.exceptions.FailedResolvingPeerException;
-import org.exthmui.share.lannsd.ssl.SSLUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
-import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.base.send.SendingWorker;
-import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
 import org.exthmui.share.shared.exceptions.trans.FileIOErrorException;
 import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
 import org.exthmui.share.shared.exceptions.trans.PeerDisappearedException;
-import org.exthmui.share.shared.exceptions.trans.RemoteErrorException;
-import org.exthmui.share.shared.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
+import org.exthmui.share.shared.exceptions.trans.RejectedException;
+import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
@@ -44,30 +29,16 @@ import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.misc.Utils;
 import org.exthmui.share.udptransport.UDPSender;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.util.Arrays;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class NsdMultiSendingWorker extends SendingWorker {
 
     public static final String TAG = "NsdMultiSendingWorker";
-
-    private static final Gson GSON = new Gson();
 
     public NsdMultiSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
         super(context, workerParams);
@@ -82,47 +53,31 @@ public class NsdMultiSendingWorker extends SendingWorker {
     @SuppressLint("RestrictedApi")
     @NonNull
     @Override
-    public Result doWork() {
-        Data input = getInputData();
-        String[] uriStrings = input.getStringArray(Entity.FILE_URIS);
-        String[] fileNames = input.getStringArray(Entity.FILE_NAMES);
-        long[] fileSizes = input.getLongArray(Entity.FILE_SIZES);
-        if (uriStrings == null || fileNames == null || fileSizes == null ||
-                uriStrings.length != fileNames.length || fileNames.length != fileSizes.length)
-            return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-
-        Uri[] uris = new Uri[uriStrings.length];
-        FileInfo[] fileInfos = new FileInfo[uriStrings.length];
-        Entity[] entities = new Entity[uris.length];
-
-        for (int i = 0; i < uriStrings.length; i++) {
-            if (uriStrings[i] == null)
-                return genFailureResult(new InvalidInputDataException(getApplicationContext()));
-            uris[i] = Uri.parse(uriStrings[i]);
-            try {
-                entities[i] = new Entity(getApplicationContext(), uris[i]);
-            } catch (FailedResolvingUriException e) {
-                return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
-            }
-            fileInfos[i] = new FileInfo();
-            fileInfos[i].setFileName(fileNames[i]);
-            fileInfos[i].setFileSize(fileSizes[i]);
-            try {
-                entities[i].calculateMD5(getApplicationContext());
-            } catch (IOException e) {
-                Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-                return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
-            }
-            fileInfos[i].putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
+    public Result doWork(Entity[] entities, String peerId, String peerName) {
+        FileInfo[] fileInfos = new FileInfo[entities.length];
+        for (int i = 0; i < entities.length; i++) {
+            if (entities[i] == null)
+                return genFailureResult(new InvalidInputDataException(getApplicationContext()), null);
+            fileInfos[i] = new FileInfo(entities[i]);
+            if (NsdUtils.isMd5ValidationEnabled(getApplicationContext()))
+                try {
+                    entities[i].calculateMD5(getApplicationContext());
+                    fileInfos[i].putExtra(org.exthmui.share.udptransport.Constants.FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
+                } catch (IOException e) {
+                    Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                    return genFailureResult(new FileIOErrorException(getApplicationContext(), e), null);
+                }
+            else Log.d(TAG,
+                    String.format("Md5 Validation is disabled, skipping generating md5 for %s(%s)",
+                            entities[i].getFileName(), fileInfos[i].getId()));
         }
 
         // Load Peer
         NsdManager manager = NsdManager.getInstance(getApplicationContext());
 
-        String peerId = input.getString(Sender.TARGET_PEER_ID);
         final NsdPeer[] peer = {(NsdPeer) manager.getPeers().get(peerId)};
         if (peer[0] == null)
-            return genFailureResult(new PeerDisappearedException(getApplicationContext()));
+            return genFailureResult(new PeerDisappearedException(getApplicationContext()), null);
 
         if (!peer[0].isAttributesLoaded()) {
             final boolean[] succeeded = new boolean[1];
@@ -145,9 +100,9 @@ public class NsdMultiSendingWorker extends SendingWorker {
             try {
                 latch.await();
                 if (!succeeded[0])
-                    return genFailureResult(new FailedResolvingPeerException(getApplicationContext()));
+                    return genFailureResult(new FailedResolvingPeerException(getApplicationContext()), null);
             } catch (InterruptedException e) {
-                return genFailureResult(new FailedResolvingPeerException(getApplicationContext(), e));
+                return genFailureResult(new FailedResolvingPeerException(getApplicationContext(), e), null);
             }
         }
         // End Load Peer
@@ -175,34 +130,38 @@ public class NsdMultiSendingWorker extends SendingWorker {
             }
 
             @Override
-            public void onProgressUpdate(int status, long totalBytesToSend, long bytesSent, long curFileBytesToSend, long curFileBytesSent, String curFileId) {
-                updateProgress(status, totalBytesToSend, bytesSent, fileInfos, receiverInfo);//TODO:Improvement required
+            public void onProgressUpdate(int status, long totalBytesToSend, long bytesSent,
+                                         String curFileId, long curFileBytesToSend, long curFileBytesSent) {
+                updateProgress(status, totalBytesToSend, bytesSent, fileInfos, receiverInfo,
+                        curFileId, curFileBytesToSend, curFileBytesSent);
             }
 
             @Override
             public void onComplete(int status, Map<String, Pair<Integer, String>> resultMap) {
                 if ((status & Constants.TransmissionStatus.COMPLETED.getNumVal()) == status)
                     result.set(genSuccessResult());
+                if ((status & Constants.TransmissionStatus.REJECTED.getNumVal()) == status)
+                    result.set(genFailureResult(new RejectedException(getApplicationContext()), null));
                 else if ((status & Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal()) == status)
-                    result.set(genSenderCancelledResult(getApplicationContext()));
+                    result.set(genFailureResult(new SenderCancelledException(getApplicationContext()), null));
                 else if ((status & Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal()) == status)
-                    result.set(genReceiverCancelledResult(getApplicationContext()));
+                    result.set(genFailureResult(new ReceiverCancelledException(getApplicationContext()), null));
                 else if ((status & Constants.TransmissionStatus.ERROR.getNumVal()) == status)
-                    result.set(genFailureResult(new UnknownErrorException(getApplicationContext())));
+                    result.set(genFailureResult(new UnknownErrorException(getApplicationContext()), null));//TODO:Improvement required
             }
         });
         try {
             sender.initialize();
         } catch (SocketException e) {
-            e.printStackTrace();
+            Log.w(TAG, e.getMessage());
+            Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
         }
-        sender.sendAsync(entities, fileInfos, senderInfo, new InetSocketAddress(peer[0].getAddress(), peer[0].getServerPort()));
+        sender.sendAsync(entities, fileInfos, senderInfo, new InetSocketAddress(peer[0].getAddress(), serverPort));
 
         while (result.get() == null) {
             // Check if user cancelled
             if (getForegroundInfoAsync().isCancelled()) {
                 sender.cancel();
-                return genSenderCancelledResult(getApplicationContext());
             }
         }
         return result.get();

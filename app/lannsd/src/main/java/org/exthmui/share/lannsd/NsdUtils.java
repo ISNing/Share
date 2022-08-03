@@ -80,7 +80,7 @@ public abstract class NsdUtils {
     }
 
     public static int getServerPortTcp(@NonNull Context context) {
-        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_tcp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port));
+        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_tcp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port_tcp));
         if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort();
@@ -89,12 +89,18 @@ public abstract class NsdUtils {
     }
 
     public static int getServerPortUdp(@NonNull Context context) {
-        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_udp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port));
+        int port = Utils.getDefaultSharedPreferences(context).getInt(context.getString(R.string.prefs_key_lannsd_server_port_udp), context.getResources().getInteger(R.integer.prefs_default_lannsd_server_port_udp));
         if (!isServerPortValid(context, port) || port == -1) {
             Log.d(TAG, "Got a illegal port or requesting dynamically generation, regenerating port in range of 5001-65565");
             return generatePort();
         }
         return port;
+    }
+
+    public static boolean isMd5ValidationEnabled(@NonNull Context context) {
+        return Utils.getDefaultSharedPreferences(context).getBoolean(
+                context.getString(R.string.prefs_key_lannsd_md5_validation),
+                context.getResources().getBoolean(R.bool.prefs_default_lannsd_md5_validation));
     }
 
     public static boolean isPortValid(int port) {

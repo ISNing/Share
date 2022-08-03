@@ -1,6 +1,8 @@
 package org.exthmui.share.lannsd;
 
 public class Constants {
+    public static final String WORKER_INPUT_KEY_CONN_ID = "CONN_ID";
+
     public static final String COMMAND_CANCEL = "CANCEL";
     public static final String COMMAND_ACCEPT = "ACCEPT";
     public static final String COMMAND_REJECT = "REJECT";
@@ -21,6 +23,4 @@ public class Constants {
     public static final String RECORD_KEY_SERVER_PORT = "sPort";
     public static final String RECORD_KEY_UID = "uid";
     public static final String RECORD_KEY_ACCOUNT_SERVER_SIGN = "servSign";
-
-    public static final String FILE_INFO_EXTRA_KEY_MD5 = "md5";
 }

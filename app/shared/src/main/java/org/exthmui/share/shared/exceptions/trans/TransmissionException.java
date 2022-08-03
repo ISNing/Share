@@ -5,10 +5,11 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.LocalizedException;
 import org.exthmui.share.shared.misc.Constants;
 
-public abstract class TransmissionException extends LocalizedException {
+public abstract class TransmissionException extends LocalizedException implements TransmissionResult {
 
 
     public TransmissionException(@NonNull Context context) {
@@ -44,6 +45,7 @@ public abstract class TransmissionException extends LocalizedException {
     }
 
     @NonNull
+    @Override
     public abstract Constants.TransmissionStatus getStatus();
 
     @Override
@@ -51,6 +53,7 @@ public abstract class TransmissionException extends LocalizedException {
         return getStatus().getStrResDetailed();
     }
 
+    @Override
     public int getStatusCode() {
         return getStatus().getNumVal();
     }

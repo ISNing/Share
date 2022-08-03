@@ -12,24 +12,23 @@
             android:singleLine="true"
             android:title="@string/prefs_title_lannsd_timeout" />
         <org.exthmui.share.shared.preferences.IntEditTextPreference
-            android:defaultValue="@integer/prefs_default_lannsd_server_port"
+            android:defaultValue="@integer/prefs_default_lannsd_server_port_tcp"
             android:enabled="true"
-            android:key="@string/prefs_key_lannsd_server_port"
+            android:key="@string/prefs_key_lannsd_server_port_tcp"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="@string/prefs_title_lannsd_server_port" />
+            android:title="@string/prefs_title_lannsd_server_port_tcp" />
         <org.exthmui.share.shared.preferences.IntEditTextPreference
-            android:defaultValue="@integer/prefs_default_lannsd_client_port"
-            android:key="@string/prefs_key_lannsd_client_port"
+            android:defaultValue="@integer/prefs_default_lannsd_server_port_udp"
+            android:enabled="true"
+            android:key="@string/prefs_key_lannsd_server_port_udp"
             android:selectAllOnFocus="true"
             android:singleLine="true"
-            android:title="@string/prefs_title_lannsd_client_port" />
-        <org.exthmui.share.shared.preferences.IntEditTextPreference
-            android:defaultValue="@integer/prefs_default_lannsd_buffer_size"
-            android:enabled="false"
-            android:key="@string/prefs_key_lannsd_buffer_size"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:title="@string/prefs_title_lannsd_buffer_size" />
+            android:title="@string/prefs_title_lannsd_server_port_udp" />
+        <SwitchPreference
+            android:defaultValue="@bool/prefs_default_lannsd_md5_validation"
+            android:key="@string/prefs_key_lannsd_md5_validation"
+            android:title="@string/prefs_title_lannsd_md5_validation" />
+
     </PreferenceCategory>
 </PreferenceScreen>
