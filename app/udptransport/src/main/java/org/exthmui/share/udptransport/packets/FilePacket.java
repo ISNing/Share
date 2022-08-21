@@ -12,7 +12,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
 
     public static final int[] GROUP_ID_TIP = {0, 0};
     public static final int[] PACKET_ID_TIP = {1, 2};
-    public static final int[] FLAG_TIP = {3};
+    public static final int[] FLAG_TIP = {3, 3};
     public static final int[] DATA_TIP = {4};
 
     private FilePacket(DatagramPacket packet) {
