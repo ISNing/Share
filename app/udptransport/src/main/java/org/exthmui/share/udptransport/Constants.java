@@ -61,8 +61,8 @@ public class Constants {
     public static final byte COMMAND_PACKET_RESEND_REQ = 0x3;
 
     public static final int IDENTIFIER_TIMEOUT_MILLIS = 10000;
-    public static final int MAX_ACK_TRYOUTS = 5;
-    public static final int ACK_TIMEOUT_MILLIS = 500;
+    public static final int MAX_ACK_TRYOUTS = 50;
+    public static final int ACK_TIMEOUT_MILLIS = 5000;
 
     /**
      * The number of packet a group contains
@@ -74,25 +74,35 @@ public class Constants {
     public static final int DATA_LEN_MAX = 1000;
     public static final int DATA_LEN_MAX_HI = 25500;
     public static final int BUF_LEN_MAX_HI = 65507;
+    public static final byte START_GROUP_ID = Byte.MIN_VALUE;
+    public static final byte END_GROUP_ID = Byte.MAX_VALUE;
+    public static final short START_PACKET_ID = Short.MIN_VALUE;
+    public static final short END_PACKET_ID = 30000;
 
     public static final String STRING_CHARSET = "UTF-8";
 
     /**
-     * Group id to start as extra
+     * Group id and packet id to start as extra
      */
+    public static final int[] START_ID_GROUP_ID_TIP = new int[]{0, 0};
+    public static final int[] START_ID_START_PACKET_ID_TIP = new int[]{1, 2};
     public static final byte START_IDENTIFIER = 0x0;
     public static final byte START_ACK_IDENTIFIER = 0x1;
 
     /**
-     * Group id before reset as extra
+     * Group id before and after reset as extra
      * Receiver will reset current group id io {@link Byte#MIN_VALUE}
      */
+    public static final int[] GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP = new int[]{0, 0};
+    public static final int[] GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP = new int[]{1, 1};
     public static final byte GROUP_ID_RESET_IDENTIFIER = 0x2;
     public static final byte GROUP_ID_RESET_ACK_IDENTIFIER = 0x3;
 
     /**
-     * Group id to end as extra
+     * Group id and end packet id to end as extra
      */
+    public static final int[] END_ID_GROUP_ID_TIP = new int[]{0, 0};
+    public static final int[] END_ID_END_PACKET_ID_TIP = new int[]{1, 2};
     public static final byte END_IDENTIFIER = 0x4;
     public static final byte END_ACK_IDENTIFIER = 0x5;
 

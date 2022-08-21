@@ -3,14 +3,6 @@ package org.exthmui.share.lannsd;
 public class Constants {
     public static final String WORKER_INPUT_KEY_CONN_ID = "CONN_ID";
 
-    public static final String COMMAND_CANCEL = "CANCEL";
-    public static final String COMMAND_ACCEPT = "ACCEPT";
-    public static final String COMMAND_REJECT = "REJECT";
-    public static final String COMMAND_SUCCESS = "SUCCESS";
-    public static final String COMMAND_FAILURE = "FAILURE";
-    public static final String COMMAND_TRANSFER = "TRANSFER";
-    public static final String COMMAND_TRANSFER_END = "TRANSFER_END";
-
     public static final String SHARE_PROTOCOL_VERSION_1 = "1.0";
 
     public static final String LOCAL_SERVICE_INSTANCE_NAME = "_share";

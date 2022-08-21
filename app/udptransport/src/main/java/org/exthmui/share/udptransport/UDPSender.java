@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
@@ -19,8 +20,11 @@ import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
 import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
+import org.exthmui.share.shared.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
+import org.exthmui.share.udptransport.packets.CommandPacket;
 import org.exthmui.share.udptransport.packets.FilePacket;
 import org.exthmui.share.udptransport.packets.IdentifierPacket;
 import org.exthmui.share.udptransport.packets.ResendRequestPacket;
@@ -38,16 +42,18 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * UDPSender
@@ -77,16 +83,25 @@ public class UDPSender {
     ReceiverInfo receiverInfo = null;
     FileInfo[] fileInfos = null;
 
+    public final List<AbstractCommandPacket<?>> packetsBlocked = new ArrayList<>();
+    @NonNull
+    public CompletableFuture<AbstractCommandPacket<?>> packetReceived = new CompletableFuture<>();
+
     private int udpPort;
     private byte connId;
 
     private boolean commandWatcherStopFlag;
 
+    private boolean canceled;
+    private boolean remoteCanceled;
+
+    private boolean udpReady;
+
     private final ThreadPoolExecutor coreThreadPool = new ThreadPoolExecutor(1,
-            1, 0L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(1),
+            1, 0L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
     private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(0,
-            1, 1L, TimeUnit.SECONDS, new ArrayBlockingQueue<>(4),
+            2, 1L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
     private final Runnable commandWatcher = () -> {
         String cmd;
@@ -100,11 +115,18 @@ public class UDPSender {
             }
         }
     };
-
-    private boolean canceled;
-    private boolean remoteCanceled;
-
-    private boolean udpReady;
+    private final Runnable packetInterceptor = () -> {
+        while (udpReady) {
+            try {
+                CommandPacket packet = receivePacket(new CommandPacket(new DatagramPacket(new byte[Constants.BUF_LEN_MAX_HI], Constants.BUF_LEN_MAX_HI)));
+                if (!packetReceived.isDone())
+                    packetReceived.complete(packet);
+                else packetsBlocked.add(packet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    };
 
     public UDPSender(@NonNull Context context, @NonNull SendingListener listener) {
         this.context = context;
@@ -134,6 +156,7 @@ public class UDPSender {
     public void connectUdp(SocketAddress udpAddress) throws IOException {
         assert datagramSocket != null;
         datagramSocket.connect(udpAddress);
+        threadPool.execute(packetInterceptor);
     }
 
     public void writeJson(Object object) throws IOException {
@@ -257,82 +280,137 @@ public class UDPSender {
     }
 
     public TransmissionResult sendFile(Entity entity, FileInfo fileInfo) throws IOException {
-        listener.onProgressUpdate(
-                org.exthmui.share.shared.misc.Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(),
-                totalBytesToSend, 0, null, 0, 0);
-        InputStream stream = entity.getInputStream(context);
-        BufferedInputStream inputStream = stream instanceof BufferedInputStream ?
-                (BufferedInputStream) stream : new BufferedInputStream(stream);
-        assert datagramSocket != null;
-        FilePacket sendPacket = new FilePacket();
-        byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
-        byte[] buf = new byte[Constants.DATA_LEN_MAX_HI];
-        byte curGroup = Byte.MIN_VALUE;
-        short curPacket = Short.MIN_VALUE;
-        int len = 0;
-        sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER);// (7), (8)
-        while ((len = (inputStream.read(buf))) > 0) {
-            bufTemp[curPacket - Short.MIN_VALUE] = buf.clone();
-            sendPacket(sendPacket.setPacketId(curPacket).setGroupId(curGroup).setData(buf, len));// (9)
+        try {
+            listener.onProgressUpdate(
+                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(),
+                    totalBytesToSend, 0, null, 0, 0);
+            InputStream stream = entity.getInputStream(context);
+            BufferedInputStream inputStream = stream instanceof BufferedInputStream ?
+                    (BufferedInputStream) stream : new BufferedInputStream(stream);
+            assert datagramSocket != null;
+            FilePacket sendPacket = new FilePacket();
+            final byte startGroup = Constants.START_GROUP_ID;
+            final byte endGroup = Constants.END_GROUP_ID;
+            final short startPacket = Constants.START_PACKET_ID;
+            final short endPacket = Constants.END_PACKET_ID;
+            byte curGroup = startGroup;
+            short curPacket = startPacket;
+            byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
+            byte[] buf = new byte[Constants.DATA_LEN_MAX_HI];
+            int len = 0;
+            sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+            while ((len = (inputStream.read(buf))) > 0) {
+                bufTemp[curPacket - Short.MIN_VALUE] = buf.clone();
+                sendPacket(sendPacket.setPacketId(curPacket).setGroupId(curGroup).setData(buf, len));// (9)
 
-            if (checkCanceled()) return remoteCanceled ? new ReceiverCancelledException(context) :
-                    new SenderCancelledException(context);
+                if (checkCanceled())
+                    return remoteCanceled ? new ReceiverCancelledException(context) :
+                            new SenderCancelledException(context);
 
-            if (curPacket == Short.MAX_VALUE) {
-                boolean packetAllSent = false;
-                while (!packetAllSent) {
-                    sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER);// (10), (11)
+                if (curPacket == endPacket) {
+                    boolean packetAllSent = false;
+                    while (!packetAllSent) {
+                        ResendRequestPacket resendReq = null;
+                        boolean timedout;
+                        int tryouts = 0;
+                        do {
+                            tryouts++;
+                            timedout = false;
+                            sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
 
-                    ResendRequestPacket resendReq = receivePacket(new ResendRequestPacket());// (12)
-                    short[] packetIds = resendReq.getPacketIds();
-                    if (packetIds.length > 0) {
-                        FilePacket[] packetsToResend = new FilePacket[packetIds.length];
-                        for (int i = 0; i < packetIds.length; i++) {
-                            packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i]]);
-                        }
-                        resendPackets(packetsToResend, curGroup);// (13)
-                    } else packetAllSent = true;
-                }
+                            try {
+                                resendReq = receivePacket(new ResendRequestPacket(), Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (12)
+                            } catch (TimeoutException e) {
+                                if (tryouts >= Constants.MAX_ACK_TRYOUTS)
+                                    return new TimedOutException(context, e);
+                                timedout = true;
+                            }
+                        } while (timedout);
+                        short[] packetIds = resendReq.getPacketIds();
+                        if (packetIds.length > 0) {
+                            FilePacket[] packetsToResend = new FilePacket[packetIds.length];
+                            for (int i = 0; i < packetIds.length; i++) {
+                                packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i]]);
+                            }
+                            resendPackets(packetsToResend, curGroup, curPacket);// (13)
+                        } else packetAllSent = true;
+                    }
 
-                if (curGroup + 1 > Byte.MAX_VALUE) {
-                    sendIdentifier(Constants.GROUP_ID_RESET_IDENTIFIER, Constants.GROUP_ID_RESET_ACK_IDENTIFIER, new byte[]{curGroup});
-                    curGroup = Byte.MAX_VALUE;
+                    if (curGroup + 1 > endGroup) {
+                        sendIdentifier(Constants.GROUP_ID_RESET_IDENTIFIER, Constants.GROUP_ID_RESET_ACK_IDENTIFIER, new byte[]{curGroup, startGroup});
+                        curGroup = startGroup;
+                        sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+                    } else {
+                        curGroup++;
+                        sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+                    }
+                    curPacket = startPacket;
                 } else {
-                    sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, new byte[]{curGroup});// (7), (8)
-                    curGroup++;
+                    curPacket++;
                 }
-            } else {
-                curPacket++;
             }
-        }
-        boolean packetAllSent = false;
-        while (!packetAllSent) {
-            sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, new byte[]{curGroup});// (10), (11)
 
-            ResendRequestPacket resendReq = receivePacket(new ResendRequestPacket());// (12)
-            short[] packetIds = resendReq.getPacketIds();
-            if (packetIds.length > 0) {
-                FilePacket[] packetsToResend = new FilePacket[packetIds.length];
-                for (int i = 0; i < packetIds.length; i++) {
-                    if (bufTemp[packetIds[i] - Short.MIN_VALUE] == null) break;
-                    packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i] - Short.MIN_VALUE]);
-                    if (bufTemp[packetIds[i] - Short.MIN_VALUE].length != Constants.DATA_LEN_MAX_HI)
-                        break;
-                }
-                resendPackets(packetsToResend, curGroup);// (13)
-            } else packetAllSent = true;
-        }
+            curPacket--;
+            boolean packetAllSent = false;
+            while (!packetAllSent) {
+                ResendRequestPacket resendReq = null;
+                boolean timedout;
+                int tryouts = 0;
+                do {
+                    tryouts++;
+                    timedout = false;
+                    sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
 
-        sendIdentifier(Constants.FILE_END_IDENTIFIER, Constants.FILE_END_ACK_IDENTIFIER);// (7), (8)
-        return new SuccessTransmissionResult(context);
+                    try {
+                        resendReq = receivePacket(new ResendRequestPacket(), Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (12)
+                    } catch (TimeoutException e) {
+                        if (tryouts >= Constants.MAX_ACK_TRYOUTS)
+                            return new TimedOutException(context, e);
+                        timedout = true;
+                    }
+                } while (timedout);
+
+                short[] packetIds = resendReq.getPacketIds();
+                if (packetIds.length > 0) {
+                    FilePacket[] packetsToResend = new FilePacket[packetIds.length];
+                    for (int i = 0; i < packetIds.length; i++) {
+                        if (bufTemp[packetIds[i] - Short.MIN_VALUE] == null) break;
+                        packetsToResend[i] = new FilePacket().setGroupId(curGroup).setPacketId(packetIds[i]).setData(bufTemp[packetIds[i] - Short.MIN_VALUE]);
+                        if (bufTemp[packetIds[i] - Short.MIN_VALUE].length != Constants.DATA_LEN_MAX_HI)
+                            break;
+                    }
+                    resendPackets(packetsToResend, curGroup, curPacket);// (13)
+                } else packetAllSent = true;
+            }
+
+            sendIdentifier(Constants.FILE_END_IDENTIFIER, Constants.FILE_END_ACK_IDENTIFIER);// (7), (8)
+            return new SuccessTransmissionResult(context);
+        } catch (TransmissionException e) {
+            return e;
+        }
     }
 
-    public void resendPackets(FilePacket[] packets, byte curGroup) throws IOException {
+    public void resendPackets(FilePacket[] packets, byte curGroup, short curGroupEndPacket) throws IOException, TimedOutException {
         sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, new byte[]{curGroup});
         for (FilePacket packet : packets)
             sendPacket(packet);
-        sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, new byte[]{curGroup});
-        ResendRequestPacket resendReq = receivePacket(new ResendRequestPacket());// (12)
+
+        ResendRequestPacket resendReq = null;
+        boolean timedout;
+        int tryouts = 0;
+        do {
+            tryouts++;
+            timedout = false;
+            sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curGroupEndPacket), curGroup));// (10), (11)
+
+            try {
+                resendReq = receivePacket(new ResendRequestPacket(), Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (12)
+            } catch (TimeoutException e) {
+                if (tryouts >= Constants.MAX_ACK_TRYOUTS) throw new TimedOutException(context, e);
+                timedout = true;
+            }
+        } while (timedout);
+
         short[] packetIds = resendReq.getPacketIds();
         if (packetIds.length > 0) {
             FilePacket[] packetsToResend = new FilePacket[packetIds.length];
@@ -345,13 +423,48 @@ public class UDPSender {
                 }
 
             }
-            resendPackets(packetsToResend, curGroup);// (13)
+            resendPackets(packetsToResend, curGroup, curGroupEndPacket);// (13)
         }
     }
 
-    public <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
+    private AbstractCommandPacket<?> receivePacket(int timeout, TimeUnit unit) throws TimeoutException {
+        AbstractCommandPacket<?> packet = null;
+        try {
+            if (timeout < 0) {
+                packet = packetReceived.get();
+            } else packet = packetReceived.get(timeout, unit);
+        } catch (ExecutionException | InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            if (!packetReceived.isDone()) packetReceived.cancel(true);
+            packetReceived = new CompletableFuture<>();
+        }
+        if (!packetsBlocked.isEmpty()) {
+            packetReceived.complete(packetsBlocked.get(0));
+            packetsBlocked.remove(0);
+        }
+        return packet;
+    }
+
+    private <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
         assert datagramSocket != null;
-        datagramSocket.receive(packet.toDatagramPacket());
+        DatagramPacket p = packet.toDatagramPacket();
+        datagramSocket.receive(p);
+        p.setData(Arrays.copyOfRange(p.getData(), p.getOffset(), p.getOffset() + p.getLength()));
+        return packet;
+    }
+
+    private <T extends AbstractCommandPacket<T>> T receivePacket(T packet, int timeout, TimeUnit unit) throws TimeoutException {
+        assert datagramSocket != null;
+        boolean tryAgain = false;
+        do {
+            try {
+                DatagramPacket datagramPacket = receivePacket(timeout, unit).toDatagramPacket();
+                packet.toDatagramPacket().setData(datagramPacket.getData(), datagramPacket.getOffset(), datagramPacket.getLength());
+            } catch (IllegalArgumentException ignored) {
+                tryAgain = true;
+            }
+        } while (tryAgain);
         return packet;
     }
 
@@ -369,33 +482,40 @@ public class UDPSender {
      * @param ackIdentifier Ack Identifier (Value {@link null} means not to wait for ack)
      * @return Ack packet
      */
-    public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException {
+    public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException, TimedOutException {
         return sendIdentifier(identifier, ackIdentifier, null);
     }
 
-    public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier, byte[] extra) throws IOException {
+    public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier, byte[] extra) throws IOException, TimedOutException {
         assert datagramSocket != null;
         IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier).setExtra(extra);
         if (ackIdentifier != null) {
             IdentifierPacket recvPacket = new IdentifierPacket();
-            int initSoTimeout = datagramSocket.getSoTimeout();
-            datagramSocket.setSoTimeout(Constants.ACK_TIMEOUT_MILLIS);
-            for (int i = 0; i <= Constants.MAX_ACK_TRYOUTS; i++) {
+            int tryouts = 0;
+            boolean timedout;
+            do {
                 try {
+                    tryouts++;
+                    timedout = false;
                     sendPacket(sendPacket);
 
                     if (checkCanceled()) return null;
 
-                    recvPacket = receivePacket(recvPacket);
+                    receivePacket(recvPacket, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
+                    Log.d(TAG,
+                            String.format("Ack Identifier \"%d\" received", recvPacket.getIdentifier()));
                     if (recvPacket.getIdentifier() == ackIdentifier &&
                             recvPacket.getConnId() == connId) {
                         return recvPacket;
                     }
-                } catch (SocketTimeoutException ignored) {
+                } catch (TimeoutException e) {
+                    Log.w(TAG, "Ack identifier packet receiving timed out: %s", e);
+                    if (tryouts >= Constants.MAX_ACK_TRYOUTS)
+                        throw new TimedOutException(context, e);
+                    timedout = true;
                 }
-            }
-            datagramSocket.setSoTimeout(initSoTimeout);
+            } while (timedout);
         } else {
             sendPacket(sendPacket);
         }
@@ -404,6 +524,7 @@ public class UDPSender {
 
     public void releaseResources() {
         commandWatcherStopFlag = true;
+        udpReady = false;
         Utils.silentClose(in);
         in = null;
         Utils.silentClose(out);

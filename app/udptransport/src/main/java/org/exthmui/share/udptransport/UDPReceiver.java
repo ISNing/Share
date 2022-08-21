@@ -20,6 +20,7 @@ import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
 import org.exthmui.share.shared.exceptions.trans.RejectedException;
 import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.TimedOutException;
+import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.misc.FileUtils;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
@@ -137,7 +138,7 @@ public class UDPReceiver {
                                     serverSocket.accept());
                             CONN_ID_HANDLER_MAP.put((byte) i, handler);
                             handler.receiveAsync();
-                            listener.onConnectionEstablished((byte) i);
+                            this.listener.onConnectionEstablished((byte) i);
                             break;
                         }
                 } catch (IOException e) {
@@ -395,126 +396,161 @@ public class UDPReceiver {
         }
 
         private TransmissionResult receiveFile(FileInfo fileInfo) throws IOException {
-            Log.d(TAG, String.format("Start receiving file: %s(%s)", fileInfo.getFileName(), fileInfo.getId()));
-            OutputStream rawOutputStream = outputStreamFactory.produce(fileInfo);
-            BufferedOutputStream outputStream = rawOutputStream instanceof BufferedOutputStream ?
-                    (BufferedOutputStream) rawOutputStream : new BufferedOutputStream(rawOutputStream);
-            assert listener != null;
-            listener.onProgressUpdate(
-                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
-                    totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), 0);
-
-            long curFileBytesReceived = 0;
-
-            assert datagramSocket != null;
-            byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
-            byte curGroup = Byte.MIN_VALUE;
-            boolean groupIdExceeded = false;
-            boolean fileEnded = false;
             try {
-                receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
-            } catch (TimeoutException e) {
-                return new TimedOutException(context);
+                Log.d(TAG, String.format("Start receiving file: %s(%s)", fileInfo.getFileName(), fileInfo.getId()));
+                OutputStream rawOutputStream = outputStreamFactory.produce(fileInfo);
+                BufferedOutputStream outputStream = rawOutputStream instanceof BufferedOutputStream ?
+                        (BufferedOutputStream) rawOutputStream : new BufferedOutputStream(rawOutputStream);
+                assert listener != null;
+                listener.onProgressUpdate(
+                        org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
+                        totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), 0);
+
+                long curFileBytesReceived = 0;
+
+                assert datagramSocket != null;
+                byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
+                Byte curGroup = null;
+                short startPacketId = Short.MIN_VALUE;
+                short endPacketId = Short.MAX_VALUE;
+                boolean groupIdExceeded = false;
+                boolean fileEnded = false;
+
+                boolean waitingForResending = false;
+                ResendRequestPacket resendPacket = null;
+
+                try {
+                    IdentifierPacket packet = receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
+                    curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
+                } catch (TimeoutException e) {
+                    return new TimedOutException(context);
+                }
+                sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
+
+                AbstractCommandPacket<?> packet;
+                do {
+                    try {
+                        if (waitingForResending && resendPacket != null)
+                            sendPacket(resendPacket);// (11)
+                        packet = receivePacket(-1, null);
+                    } catch (TimeoutException ignored) {
+                        continue;
+                    }
+                    if (packet == null) continue;
+                    if (groupIdExceeded) {
+                        if (packet.getCommand() != Constants.COMMAND_IDENTIFIER) continue;
+                        IdentifierPacket identifierPacket =
+                                IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
+                        if (identifierPacket.getIdentifier() != Constants.GROUP_ID_RESET_IDENTIFIER ||
+                                ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
+                            continue;
+                        curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
+                        groupIdExceeded = false;
+                        sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
+                    }
+                    switch (packet.getCommand()) {
+                        case Constants.COMMAND_FILE_PACKET:// (7), (13)
+                            FilePacket filePacket = FilePacket.fromDatagramPacket(packet.toDatagramPacket());
+                            if (filePacket.getGroupId() != curGroup) continue;
+                            byte[] data = bufTemp[filePacket.getPacketId() - Short.MIN_VALUE] = filePacket.getData();
+                            curFileBytesReceived += data.length;
+                            bytesReceived += data.length;
+                            listener.onProgressUpdate(
+                                    org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
+                                    totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), curFileBytesReceived);
+                            break;
+                        case Constants.COMMAND_IDENTIFIER:
+                            IdentifierPacket identifierPacket = IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
+                            Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                    String.format("Identifier \"%d\" received", identifierPacket.getIdentifier()));
+
+                            if (identifierPacket.getIdentifier() == Constants.START_IDENTIFIER) {// (7)
+                                if (ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                    continue;
+                                sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
+                                waitingForResending = false;
+                                startPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.START_ID_START_PACKET_ID_TIP, identifierPacket.getExtra()));
+                            } else if (identifierPacket.getIdentifier() == Constants.END_IDENTIFIER) {// (10)
+                                if (ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                    continue;
+                                sendIdentifier(Constants.END_ACK_IDENTIFIER, null);// (11)
+                                endPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.END_ID_END_PACKET_ID_TIP, identifierPacket.getExtra()));
+
+                                Set<Short> idsToResendAsSet = new HashSet<>();
+                                for (int i = startPacketId; i <= endPacketId; i++) {
+                                    if (bufTemp[i - Short.MIN_VALUE] == null)
+                                        idsToResendAsSet.add((short) (i));
+                                }
+                                short[] idsToResend =
+                                        ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
+                                resendPacket = new ResendRequestPacket();
+                                resendPacket.setPacketIds(idsToResend);
+                                sendPacket(resendPacket);// (11)
+
+                                if (idsToResendAsSet.isEmpty()) {
+                                    for (int i = startPacketId; i <= endPacketId; i++) {
+                                        byte[] buf = bufTemp[i - Short.MIN_VALUE];
+                                        if (buf == null) break;
+                                        outputStream.write(buf, 0, buf.length);
+                                    }
+                                    outputStream.flush();
+                                    if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
+                                    else curGroup++;
+                                } else waitingForResending = true;
+                            } else if (identifierPacket.getIdentifier() == Constants.GROUP_ID_RESET_IDENTIFIER) {
+                                if (ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                    continue;
+                                curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
+                                sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
+                            } else if (identifierPacket.getIdentifier() == Constants.FILE_END_IDENTIFIER) {// (14)
+                                fileEnded = true;
+                                sendIdentifier(Constants.FILE_END_ACK_IDENTIFIER, null);// (15)
+                            }
+                            break;
+                    }
+                    if (isCanceled()) return isRemoteCanceled() ?
+                            new SenderCancelledException(context) :
+                            new ReceiverCancelledException(context);
+                } while (!fileEnded);
+                outputStream.close();
+
+                // Validate md5
+                String md5Expected = fileInfo.getExtra(Constants.FILE_INFO_EXTRA_KEY_MD5);
+                if (validateMd5 && md5Expected != null) {
+                    InputStream rawInputStream = inputStreamFactory.produce(fileInfo);
+                    BufferedInputStream inputStream = rawInputStream instanceof BufferedInputStream ?
+                            (BufferedInputStream) rawInputStream : new BufferedInputStream(rawInputStream);
+                    String md5 = FileUtils.getMD5(inputStream);
+                    inputStream.close();
+                    if (!StringUtils.equals(md5Expected, md5)) {
+                        Log.e(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                String.format("Md5 validation failed: %s(%s)",
+                                        fileInfo.getFileName(), fileInfo.getId()));
+                        return new UnknownErrorException("File validation failed");
+                    } else
+                        Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                String.format("Md5 validation passed: %s(%s)",
+                                        fileInfo.getFileName(), fileInfo.getId()));
+                }
+                //TODO: Watch file end packet
+                return new SuccessTransmissionResult(context);
+            } catch (TransmissionException e) {
+                return e;
             }
-            sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
-            AbstractCommandPacket<?> packet;
+        }
+
+        private <T extends AbstractCommandPacket<T>> T receivePacket(T packet, int timeout, TimeUnit unit) throws TimeoutException {
+            assert datagramSocket != null;
+            boolean tryAgain = false;
             do {
                 try {
-                    packet = receivePacket(-1, null);
-                } catch (TimeoutException ignored) {
-                    continue;
+                    DatagramPacket datagramPacket = receivePacket(timeout, unit).toDatagramPacket();
+                    packet.toDatagramPacket().setData(datagramPacket.getData(), datagramPacket.getOffset(), datagramPacket.getLength());
+                } catch (IllegalArgumentException ignored) {
+                    tryAgain = true;
                 }
-                if (packet == null) continue;
-                if (groupIdExceeded) {
-                    if (packet.getCommand() != Constants.COMMAND_IDENTIFIER) continue;
-                    IdentifierPacket identifierPacket =
-                            IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
-                    if (identifierPacket.getIdentifier() != Constants.GROUP_ID_RESET_IDENTIFIER ||
-                            identifierPacket.getExtra()[0] != curGroup) continue;
-                    curGroup = Byte.MIN_VALUE;
-                    groupIdExceeded = false;
-                    sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
-                }
-                switch (packet.getCommand()) {
-                    case Constants.COMMAND_FILE_PACKET:// (7), (13)
-                        FilePacket filePacket = FilePacket.fromDatagramPacket(packet.toDatagramPacket());
-                        if (filePacket.getGroupId() != curGroup) continue;
-                        bufTemp[filePacket.getPacketId() - Short.MIN_VALUE] = filePacket.getData();
-                        curFileBytesReceived += filePacket.getData().length;
-                        bytesReceived += filePacket.getData().length;
-                        listener.onProgressUpdate(
-                                org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
-                                totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), curFileBytesReceived);
-                        break;
-                    case Constants.COMMAND_IDENTIFIER:
-                        IdentifierPacket identifierPacket = IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
-                        Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                                String.format("Identifier \"%d\" received", identifierPacket.getIdentifier()));
-
-                        if (identifierPacket.getIdentifier() == Constants.START_IDENTIFIER) {// (7)
-                            if (identifierPacket.getExtra()[0] != curGroup) continue;
-                            sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
-                        } else if (identifierPacket.getIdentifier() == Constants.END_IDENTIFIER) {// (10)
-                            if (identifierPacket.getExtra()[0] != curGroup) continue;
-                            sendIdentifier(Constants.END_ACK_IDENTIFIER, null);// (11)
-
-                            Set<Short> idsToResendAsSet = new HashSet<>();
-                            for (int i = 0; i < bufTemp.length; i++) {
-                                if (bufTemp[i] == null)
-                                    idsToResendAsSet.add((short) (i + Short.MIN_VALUE));
-                                else if (bufTemp[i].length != Constants.DATA_LEN_MAX_HI) break;
-                            }
-                            short[] idsToResend =
-                                    ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
-                            ResendRequestPacket p = new ResendRequestPacket();
-                            p.setPacketIds(idsToResend);
-                            sendPacket(p);// (11)
-
-                            if (idsToResendAsSet.isEmpty()) {
-                                for (byte[] buf : bufTemp) {
-                                    if (buf == null) break;
-                                    outputStream.write(buf);
-                                }
-                                if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
-                                else curGroup++;
-                            }
-                        } else if (identifierPacket.getIdentifier() == Constants.GROUP_ID_RESET_IDENTIFIER) {
-                            if (identifierPacket.getExtra()[0] != curGroup) continue;
-                            curGroup = Byte.MIN_VALUE;
-                            sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
-                        } else if (identifierPacket.getIdentifier() == Constants.FILE_END_IDENTIFIER) {// (14)
-                            fileEnded = true;
-                            sendIdentifier(Constants.FILE_END_ACK_IDENTIFIER, null);// (15)
-                        }
-                        break;
-                }
-                if (isCanceled()) return isRemoteCanceled() ?
-                        new SenderCancelledException(context) :
-                        new ReceiverCancelledException(context);
-            } while (!fileEnded);
-            outputStream.flush();
-            outputStream.close();
-
-            // Validate md5
-            String md5Expected = fileInfo.getExtra(Constants.FILE_INFO_EXTRA_KEY_MD5);
-            if (validateMd5 && md5Expected != null) {
-                InputStream rawInputStream = inputStreamFactory.produce(fileInfo);
-                BufferedInputStream inputStream = rawInputStream instanceof BufferedInputStream ?
-                        (BufferedInputStream) rawInputStream : new BufferedInputStream(rawInputStream);
-                String md5 = FileUtils.getMD5(inputStream);
-                inputStream.close();
-                if (!StringUtils.equals(md5Expected, md5)) {
-                    Log.e(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                            String.format("Md5 validation failed: %s(%s)",
-                                    fileInfo.getFileName(), fileInfo.getId()));
-                    return new UnknownErrorException("File validation failed");
-                } else
-                    Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                            String.format("Md5 validation passed: %s(%s)",
-                                    fileInfo.getFileName(), fileInfo.getId()));
-            }
-            //TODO: Watch file end packet
-            return new SuccessTransmissionResult(context);
+            } while (tryAgain);
+            return packet;
         }
 
         private AbstractCommandPacket<?> receivePacket(int timeout, TimeUnit unit) throws TimeoutException {
@@ -548,31 +584,42 @@ public class UDPReceiver {
          * @param ackIdentifier Ack Identifier (Value {@link null} means not to wait for ack)
          * @return Ack packet
          */
-        private IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException {
+        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException, TimedOutException {
+            return sendIdentifier(identifier, ackIdentifier, null);
+        }
+
+        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier, byte[] extra) throws IOException, TimedOutException {
             assert datagramSocket != null;
-            IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier);
+            IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier).setExtra(extra);
             if (ackIdentifier != null) {
-                IdentifierPacket recvPacket;
-                int initSoTimeout = datagramSocket.getSoTimeout();
-                datagramSocket.setSoTimeout(Constants.ACK_TIMEOUT_MILLIS);
-                for (int i = 1; i <= Constants.MAX_ACK_TRYOUTS; i++) {
+                IdentifierPacket recvPacket = new IdentifierPacket();
+                int tryouts = 0;
+                boolean timedout;
+                do {
                     try {
+                        tryouts++;
+                        timedout = false;
                         sendPacket(sendPacket);
 
                         if (isCanceled()) return null;
 
-                        recvPacket = receiveIdentifier(ackIdentifier, Constants.ACK_TIMEOUT_MILLIS,
-                                TimeUnit.MILLISECONDS);
+                        receivePacket(recvPacket, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
+                        Log.d(TAG,
+                                String.format("Ack Identifier \"%d\" received", recvPacket.getIdentifier()));
                         if (recvPacket.getIdentifier() == ackIdentifier &&
                                 recvPacket.getConnId() == connId) {
                             return recvPacket;
                         }
                     } catch (TimeoutException e) {
-                        Log.w(TAG, "Ack identifier packet receiving timed out: %d", e);
+                        Log.w(TAG, "Ack identifier packet receiving timed out: %s", e);
+                        if (tryouts >= Constants.MAX_ACK_TRYOUTS)
+                            throw new TimedOutException(context, e);
+                        timedout = true;
                     }
-                }
-                datagramSocket.setSoTimeout(initSoTimeout);
+                } while (timedout);
+            } else {
+                sendPacket(sendPacket);
             }
             return null;
         }

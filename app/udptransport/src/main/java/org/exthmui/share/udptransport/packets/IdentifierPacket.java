@@ -9,10 +9,10 @@ import java.net.DatagramPacket;
 import java.util.Arrays;
 
 public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPacket> {
-    public static final int DATA_LENGTH = 3;
+    public static final int DATA_LENGTH = 4;
 
     public static final int[] IDENTIFIER_TIP = {0, 0};
-    public static final int[] EXTRA_TIP = {1, 2};
+    public static final int[] EXTRA_TIP = {1, 3};
 
     private IdentifierPacket(DatagramPacket packet) {
         super(packet);
@@ -24,7 +24,7 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
     }
 
     public IdentifierPacket() {
-        this(new DatagramPacket(new byte[]{Constants.COMMAND_IDENTIFIER, 0x0, 0x0, 0x0, 0x0}, HEADER_LENGTH + DATA_LENGTH));
+        this(new DatagramPacket(new byte[]{Constants.COMMAND_IDENTIFIER, 0x0, 0x0, 0x0, 0x0, 0x0}, HEADER_LENGTH + DATA_LENGTH));
     }
 
     public static IdentifierPacket fromDatagramPacket(DatagramPacket packet) {

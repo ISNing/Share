@@ -12,7 +12,8 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
 
     public static final int[] GROUP_ID_TIP = {0, 0};
     public static final int[] PACKET_ID_TIP = {1, 2};
-    public static final int[] DATA_TIP = {3};
+    public static final int[] FLAG_TIP = {3};
+    public static final int[] DATA_TIP = {4};
 
     private FilePacket(DatagramPacket packet) {
         super(packet);
@@ -22,7 +23,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket() {
-        this(new DatagramPacket(new byte[]{Constants.COMMAND_FILE_PACKET, 0x0, 0x0, 0x0, 0x0, 0x0},
+        this(new DatagramPacket(new byte[]{Constants.COMMAND_FILE_PACKET, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
                 HEADER_LENGTH + MIN_DATA_LENGTH));
     }
 
@@ -30,12 +31,21 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
         return new FilePacket(packet);
     }
 
+    private byte getFlags() {
+        return cutDataByTip(FLAG_TIP)[0];
+    }
+
+    private FilePacket setFlags(byte flags) {
+        setData(getPacketIdBytes(), getGroupId(), flags, getData());
+        return this;
+    }
+
     public byte getGroupId() {
         return cutDataByTip(GROUP_ID_TIP)[0];
     }
 
     public FilePacket setGroupId(byte groupId) {
-        super.setData(ArrayUtils.addAll(ArrayUtils.addFirst(getPacketIdBytes(), groupId), getData()));
+        setData(getPacketIdBytes(), groupId, getFlags(), getData());
         return this;
     }
 
@@ -48,7 +58,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket setPacketId(byte[] packetId) {
-        super.setData(ArrayUtils.addAll(ArrayUtils.addFirst(packetId, getGroupId()), getData()));
+        setData(packetId, getGroupId(), getFlags(), getData());
         return this;
     }
 
@@ -77,7 +87,22 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket setData(byte[] data, int length, int offset) {
-        super.setData(ArrayUtils.addAll(ArrayUtils.addFirst(getPacketIdBytes(), getGroupId()), Arrays.copyOfRange(data, offset, offset + length)));
+        setData(getPacketIdBytes(), getGroupId(), getFlags(), data, length, offset);
+        return this;
+    }
+
+    public FilePacket setData(byte[] packetIdBytes, byte groupId, byte flags, byte[] data) {
+        setData(packetIdBytes, groupId, flags, data, data.length, 0);
+        return this;
+    }
+
+    public FilePacket setData(byte[] packetIdBytes, byte groupId, byte flags, byte[] data, int length) {
+        setData(packetIdBytes, groupId, flags, data, length, 0);
+        return this;
+    }
+
+    public FilePacket setData(byte[] packetIdBytes, byte groupId, byte flags, byte[] data, int length, int offset) {
+        super.setData(ArrayUtils.addAll(ArrayUtils.add(ArrayUtils.addFirst(packetIdBytes, groupId), flags), Arrays.copyOfRange(data, offset, offset + length)));
         return this;
     }
 }
