@@ -54,15 +54,7 @@ import org.exthmui.share.udptransport.UDPReceiver;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class NsdReceiver implements Receiver {
@@ -83,7 +75,8 @@ public class NsdReceiver implements Receiver {
                     OnReceiverErrorOccurredListener.class
             };
 
-    private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + CONNECTION_CODE_LANNSD;
+    private static final String WORK_UNIQUE_NAME = Constants.WORK_NAME_PREFIX_RECEIVE + CONNECTION_CODE_LANNSD + "CONN%d";
+    private static final String WORK_PROP_CONN_ID = "CONN_ID";
 
     private static final Gson GSON = new Gson();
 
@@ -94,14 +87,14 @@ public class NsdReceiver implements Receiver {
     private boolean mReceiverStarted;
     private boolean mInitialized;
 
+    private List<UUID> mWorkUUIDs;
+
     private UDPReceiver mUdpReceiver;
 
     private NsdManager mNsdManager;
     private NsdManager.RegistrationListener mRegistrationListener;
     @Nullable
     private NsdServiceInfo mServiceInfo;
-
-    private byte mCurrentConnId = 0;
 
     private OnListeningPortListener mOnListeningPortListener;
 
@@ -175,6 +168,7 @@ public class NsdReceiver implements Receiver {
         int serverPortTcp = NsdUtils.getServerPortTcp(mContext);
         int serverPortUdp = NsdUtils.getServerPortUdp(mContext);
         boolean md5ValidationEnabled = NsdUtils.isMd5ValidationEnabled(mContext);
+        mWorkUUIDs = new ArrayList<>();
         try {
             mUdpReceiver = new UDPReceiver(mContext, fileInfo -> {
                 Pair<Uri, BufferedOutputStream> p = ReceiverUtils.openFileOutputStream(mContext, fileInfo.getFileName());
@@ -200,8 +194,7 @@ public class NsdReceiver implements Receiver {
             }, new UDPReceiver.ConnectionListener() {
                 @Override
                 public void onConnectionEstablished(byte connId) {
-                    mCurrentConnId = connId;
-                    startWorkWrapped(mContext);
+                    startWorkWrapped(mContext, Map.of(WORK_PROP_CONN_ID, String.valueOf(connId)));
                 }
             }, serverPortTcp, serverPortUdp, true, md5ValidationEnabled);
         } catch (IOException e) {
@@ -274,19 +267,6 @@ public class NsdReceiver implements Receiver {
             // Peer should be discoverable from now.
         };
 
-        WorkManager.getInstance(mContext).getWorkInfosForUniqueWorkLiveData(WORK_UNIQUE_NAME).observeForever(workInfo -> {
-            boolean isRunning = false;
-            for (WorkInfo info : workInfo) {
-                if (!info.getState().isFinished()) {
-                    isRunning = true;
-                    break;
-                }
-            }
-            if (!isReceiverStarted() && !isRunning) {
-                mUdpReceiver.stopReceive();// Stop UdpReceiver after the last task is finished
-            }
-        });
-
         this.mInitialized = true;
     }
 
@@ -320,23 +300,35 @@ public class NsdReceiver implements Receiver {
 
     @NonNull
     @Override
-    public UUID startWork(@NonNull Context context) {
+    public UUID startWork(@NonNull Context context, Map<String, String> properties) {
+        String connIdStr = properties.get(WORK_PROP_CONN_ID);
+        if (connIdStr == null) {
+            Log.e(TAG, "Got null connection id from properties when to start work, ignoring");
+            throw new IllegalArgumentException(); // TODO
+        }
+        byte connId;
+        try {
+            connId = Byte.parseByte(connIdStr);
+        } catch (NumberFormatException e) {
+            Log.e(TAG, "Got invalid connection id from properties when to start work, ignoring");
+            throw new IllegalArgumentException(); // TODO
+        }
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NsdReceivingWorker.class)
-                .setInputData(new Data.Builder().putByte(WORKER_INPUT_KEY_CONN_ID, mCurrentConnId).build())
+                .setInputData(new Data.Builder().putByte(WORKER_INPUT_KEY_CONN_ID, connId).build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        mCurrentConnId = 0;
-        WorkManager.getInstance(context).enqueueUniqueWork(WORK_UNIQUE_NAME, ExistingWorkPolicy.APPEND_OR_REPLACE, work);
+        WorkManager.getInstance(context).enqueueUniqueWork(String.format(WORK_UNIQUE_NAME, connId), ExistingWorkPolicy.REPLACE, work);
+        mWorkUUIDs.add(work.getId());
         return work.getId();
     }
 
     @Override
     public void stopReceive() {
         try {
-            List<WorkInfo> workInfo = WorkManager.getInstance(mContext).getWorkInfosForUniqueWork(WORK_UNIQUE_NAME).get();
-            if (workInfo == null) return;
             boolean workerRunning = false;
-            for (WorkInfo info : workInfo) {
+            for (UUID workId : mWorkUUIDs) {
+               WorkInfo info = WorkManager.getInstance(mContext).getWorkInfoById(workId).get();
+                if (info == null) return;
                 if (!info.getState().isFinished()) {
                     workerRunning = true;
                     break;

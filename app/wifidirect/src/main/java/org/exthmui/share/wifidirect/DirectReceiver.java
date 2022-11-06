@@ -219,7 +219,7 @@ public class DirectReceiver implements Receiver {
 
     @NonNull
     @Override
-    public UUID startWork(@NonNull Context context) {
+    public UUID startWork(@NonNull Context context, Map<String, String> properties) {
         OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(DirectReceivingWorker.class)
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();

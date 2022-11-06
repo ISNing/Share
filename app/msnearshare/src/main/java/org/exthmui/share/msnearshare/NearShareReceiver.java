@@ -77,7 +77,7 @@ public class NearShareReceiver implements Receiver {
 
     @Nullable
     @Override
-    public UUID startWork(Context context) {
+    public UUID startWork(Context context, Map<String, String> properties) {
         return null;
     }
 

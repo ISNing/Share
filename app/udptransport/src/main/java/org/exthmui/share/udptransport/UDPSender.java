@@ -510,7 +510,7 @@ public class UDPSender {
                         return recvPacket;
                     }
                 } catch (TimeoutException e) {
-                    Log.w(TAG, "Ack identifier packet receiving timed out: %s", e);
+                    Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s", e), e);
                     if (tryouts >= Constants.MAX_ACK_TRYOUTS)
                         throw new TimedOutException(context, e);
                     timedout = true;

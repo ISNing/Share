@@ -12,11 +12,7 @@ import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
 
 import java.lang.reflect.Method;
-import java.util.EventObject;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * IMPORTANT: Should have a static method "getInstance({@link android.content.Context} context)"
@@ -36,8 +32,14 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
     boolean isFeatureAvailable();
     void startReceive();
     void stopReceive();
+
     @Nullable
-    UUID startWork(Context context);
+    default UUID startWork(Context context) {
+        return startWork(context, Collections.EMPTY_MAP);
+    }
+
+    @Nullable
+    UUID startWork(Context context, Map<String, String> properties);
 
     @Nullable
     @Override
@@ -57,7 +59,12 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
 
     @Nullable
     default UUID startWorkWrapped(@NonNull Context context) {
-        UUID workId = startWork(context);
+        return startWorkWrapped(context, Collections.EMPTY_MAP);
+    }
+
+    @Nullable
+    default UUID startWorkWrapped(@NonNull Context context, @NonNull Map<String, String> properties) {
+        UUID workId = startWork(context, properties);
         //        WorkManager.getInstance(context).getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
 //            if (workInfo == null) return;
 //            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
