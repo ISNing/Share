@@ -81,12 +81,6 @@ public class NearShareReceiver implements Receiver {
         return null;
     }
 
-    @Nullable
-    @Override
-    public Map<Class<? extends EventObject>, Method[]> getEventToMethodMap() {
-        return null;
-    }
-
     @Override
     public void onReceiveActionAccept(ReceiveActionAcceptEvent event) {
 

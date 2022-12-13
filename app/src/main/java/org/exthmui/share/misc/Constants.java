@@ -20,7 +20,6 @@ public abstract class Constants {
         private final String friendlyName;
         @NonNull
         private final String code;
-        @NonNull
         private final int priority;
         @NonNull
         private final Class<? extends Sender<? extends IPeer>> senderClass;

@@ -239,10 +239,11 @@ public abstract class FileUtils {
         }
     }
 
-    public static long getSpaceAvailable(@NonNull Context context, @NonNull DocumentFile documentFile) throws ErrnoException, FileNotFoundException {
+    public static long getSpaceAvailable(@NonNull Context context, @NonNull DocumentFile documentFile) throws ErrnoException, IOException {
         ParcelFileDescriptor pfd = context.getApplicationContext().getContentResolver().openFileDescriptor(documentFile.getUri(), "r");
         assert pfd != null;
         StructStatVfs stats = Os.fstatvfs(pfd.getFileDescriptor());
+        pfd.close();
         return stats.f_bavail * stats.f_bsize;
     }
 }

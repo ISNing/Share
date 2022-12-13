@@ -50,5 +50,6 @@
 
     <string name="view_peer_information_peer_device_type_tag_text">Device type:&#160;</string>
     <string name="view_peer_information_peer_plugin_tag_text">From plugin:&#160;</string>
+    <string name="content_description_info_icon">Info icon</string>
 
 </resources>

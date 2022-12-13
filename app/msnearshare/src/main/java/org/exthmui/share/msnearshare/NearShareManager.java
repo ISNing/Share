@@ -84,7 +84,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     private final Collection<BaseEventListener> mListeners = new HashSet<>();
 
-    private static NearShareManager instance;
+    private static volatile NearShareManager instance;
     private final Context mContext;
     private final Map<String, IPeer> mPeers = new HashMap<>();
     private boolean mDiscovererStarted;

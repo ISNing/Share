@@ -35,13 +35,14 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
 
     @Nullable
     default UUID startWork(Context context) {
+        //noinspection unchecked
         return startWork(context, Collections.EMPTY_MAP);
     }
 
     @Nullable
     UUID startWork(Context context, Map<String, String> properties);
 
-    @Nullable
+    @NonNull
     @Override
     default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap(){
         this._getEventToMethodMap();
@@ -59,6 +60,7 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
 
     @Nullable
     default UUID startWorkWrapped(@NonNull Context context) {
+        //noinspection unchecked
         return startWorkWrapped(context, Collections.EMPTY_MAP);
     }
 

@@ -317,7 +317,7 @@ public class NsdReceiver implements Receiver {
                 .setInputData(new Data.Builder().putByte(WORKER_INPUT_KEY_CONN_ID, connId).build())
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(String.format(WORK_UNIQUE_NAME, connId), ExistingWorkPolicy.REPLACE, work);
+        WorkManager.getInstance(context).enqueueUniqueWork(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), ExistingWorkPolicy.REPLACE, work);
         mWorkUUIDs.add(work.getId());
         return work.getId();
     }

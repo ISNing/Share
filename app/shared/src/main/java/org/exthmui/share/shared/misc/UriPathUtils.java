@@ -54,9 +54,7 @@ public final class UriPathUtils {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     final String id;
-                    Cursor cursor = null;
-                    try {
-                        cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null);
+                    try (Cursor cursor = context.getContentResolver().query(uri, new String[]{MediaStore.MediaColumns.DISPLAY_NAME}, null, null, null)) {
                         if (cursor != null && cursor.moveToFirst()) {
                             String fileName = cursor.getString(0);
                             String path = Environment.getExternalStorageDirectory().toString() + "/Download/" + fileName;
@@ -64,10 +62,6 @@ public final class UriPathUtils {
                                 return path;
                             }
                         }
-                    }
-                    finally {
-                        if (cursor != null)
-                            cursor.close();
                     }
                     id = DocumentsContract.getDocumentId(uri);
                     if (!TextUtils.isEmpty(id)) {
@@ -80,7 +74,7 @@ public final class UriPathUtils {
                         };
                         for (String contentUriPrefix : contentUriPrefixesToTry) {
                             try {
-                                final Uri contentUri = ContentUris.withAppendedId(Uri.parse(contentUriPrefix), Long.valueOf(id));
+                                final Uri contentUri = ContentUris.withAppendedId(Uri.parse(contentUriPrefix), Long.parseLong(id));
 
 
                                 return getDataColumn(context, contentUri, null, null);
@@ -101,7 +95,7 @@ public final class UriPathUtils {
                     }
                     try {
                         contentUri = ContentUris.withAppendedId(
-                                Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));
+                                Uri.parse("content://downloads/public_downloads"), Long.parseLong(id));
                     }
                     catch (NumberFormatException e) {
                         e.printStackTrace();
@@ -184,11 +178,13 @@ public final class UriPathUtils {
                 Cursor cursor = null;
                 try {
                     cursor = context.getContentResolver()
-                            .query(uri, projection, selection, selectionArgs, null);
+                            .query(uri, projection, null, null, null);
                     int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
                     if (cursor.moveToFirst()) {
+                        cursor.close();
                         return cursor.getString(columnIndex);
                     }
+                    cursor.close();
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -235,9 +231,7 @@ public final class UriPathUtils {
         }
 
         fullPath = System.getenv("EXTERNAL_STORAGE") + relativePath;
-        if (fileExists(fullPath)) {
-            return fullPath;
-        }
+        fileExists(fullPath);
 
         return fullPath;
     }
@@ -254,6 +248,7 @@ public final class UriPathUtils {
         returnCursor.moveToFirst();
         String name = (returnCursor.getString(nameIndex));
         String size = (Long.toString(returnCursor.getLong(sizeIndex)));
+        returnCursor.close();
         File file = new File(context.getCacheDir(), name);
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
@@ -282,9 +277,9 @@ public final class UriPathUtils {
 
     /***
      * Used for Android Q+
-     * @param uri
-     * @param newDirName if you want to create a directory, you can set this variable
-     * @return
+     * @param uri Uri
+     * @param newDirName Whether you want to create a directory
+     * @return Path of target file
      */
     private String copyFileToInternalStorage(Uri uri,String newDirName) {
 
@@ -303,12 +298,14 @@ public final class UriPathUtils {
         returnCursor.moveToFirst();
         String name = (returnCursor.getString(nameIndex));
         String size = (Long.toString(returnCursor.getLong(sizeIndex)));
+        returnCursor.close();
 
         File output;
         if(!newDirName.equals("")) {
             File dir = new File(context.getFilesDir() + "/" + newDirName);
             if (!dir.exists()) {
-                dir.mkdir();
+                if (!dir.mkdir())
+                    throw new RuntimeException("Failed creating directory");
             }
             output = new File(context.getFilesDir() + "/" + newDirName + "/" + name);
         }
@@ -330,7 +327,6 @@ public final class UriPathUtils {
 
         }
         catch (Exception e) {
-
             Log.e("Exception", e.getMessage());
         }
 

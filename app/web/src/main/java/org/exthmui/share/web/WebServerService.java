@@ -52,9 +52,7 @@ public class WebServerService extends ServiceUtils.MyService {
                                 Future<ListenerEndpoint> endpoint = mServer.listen(new InetSocketAddress(8080), URIScheme.HTTP);
                                 try {
                                     Log.d(TAG, String.format("Listening on %s", endpoint.get().getAddress()));
-                                } catch (ExecutionException e) {
-                                    e.printStackTrace();
-                                } catch (InterruptedException e) {
+                                } catch (ExecutionException | InterruptedException e) {
                                     e.printStackTrace();
                                 }
                             }

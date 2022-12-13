@@ -1,6 +1,5 @@
 package org.exthmui.share.shared.base.receive;
 
-import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.base.IPeer;

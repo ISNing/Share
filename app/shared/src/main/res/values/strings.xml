@@ -34,7 +34,7 @@
 
     <string name="prefs_key_global_use_saf" translatable="false">global_use_saf</string>
     <string name="prefs_title_global_use_saf">Use SAF</string>
-    <string name="prefs_summary_global_use_saf">Whether to use SAF framework(May cause performence problem)</string>
+    <string name="prefs_summary_global_use_saf">Whether to use SAF framework(May cause performance problem)</string>
 
     <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>

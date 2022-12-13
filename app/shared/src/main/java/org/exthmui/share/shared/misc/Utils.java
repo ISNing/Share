@@ -70,7 +70,7 @@ public abstract class Utils {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N_MR1) {// FIXME: 3/24/22
             deviceName = Settings.Global.getString(context.getContentResolver(), Settings.Global.DEVICE_NAME);
         } else
-        deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
+            deviceName = Settings.Secure.getString(context.getContentResolver(), "bluetooth_name");
         return deviceName;
     }
 
@@ -103,7 +103,6 @@ public abstract class Utils {
         return peerId;
     }
 
-    @NonNull
     public static boolean useSAF(@NonNull Context context) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         String key = context.getString(R.string.prefs_key_global_use_saf);

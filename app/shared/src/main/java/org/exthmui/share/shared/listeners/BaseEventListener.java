@@ -21,10 +21,11 @@ public interface BaseEventListener extends EventListener {
             return this.EVENT_TYPES_ALLOWED == null ? new HashMap<>() : EVENT_TYPES_ALLOWED;
      * };</code>
      */
-    @NonNull
-    Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap();
     @Nullable
+    Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap();
+    @NonNull
     default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap(){
-        return this._getEventToMethodMap() == null ? Collections.emptyMap() : this._getEventToMethodMap();
+        Map<Class<? extends EventObject>, Method[]> map = this._getEventToMethodMap();
+        return map == null ? Collections.emptyMap() : map;
     }
 }

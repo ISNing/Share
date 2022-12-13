@@ -344,7 +344,8 @@ public class UDPReceiver {
             FileInfo[] fileInfos = readJson(FileInfo[].class);// (3)
             CompletableFuture<Set<String>> idsAccepted = new CompletableFuture<>();
 
-            while (listener == null) {
+            while (true) {
+                if (listener != null) break;
             }// Stuck while worker is not started
             listener.requestAcceptationAsync(senderInfo, fileInfos, idsAccepted);
             listener.onProgressUpdate(
