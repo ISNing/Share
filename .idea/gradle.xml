@@ -17,6 +17,7 @@
             <option value="$PROJECT_DIR$/app/udptransport" />
             <option value="$PROJECT_DIR$/app/web" />
             <option value="$PROJECT_DIR$/app/wifidirect" />
+            <option value="$PROJECT_DIR$/app/work" />
           </set>
         </option>
       </GradleProjectSettings>
