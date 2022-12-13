@@ -34,7 +34,7 @@ public class SendingHelper {
     public static final String TAG = "SendingHelper";
 
     public SendingHelper(@NonNull Context context) {
-        mContext = context;
+        mContext = context.getApplicationContext();
         mWorkManager = WorkManager.getInstance(mContext);
     }
 
