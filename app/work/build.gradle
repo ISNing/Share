@@ -3,6 +3,8 @@ plugins {
 }
 
 android {
+    namespace 'org.exthmui.share.work'
+
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
 
