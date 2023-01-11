@@ -2,6 +2,9 @@ plugins {
     id 'com.android.application'
 }
 
+Properties properties = new Properties()
+properties.load(project.rootProject.file('secrets.properties').newDataInputStream())
+
 android {
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -12,6 +15,10 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        manifestPlaceholders = [
+            appCenterSecret: properties.getProperty("appCenterSecret")
+        ]
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -39,6 +46,8 @@ android {
 dependencies {
 
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
+    implementation "com.microsoft.appcenter:appcenter-analytics:$rootProject.ext.appCenterSdkVersion"
+    implementation "com.microsoft.appcenter:appcenter-crashes:$rootProject.ext.appCenterSdkVersion"
 
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
