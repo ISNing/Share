@@ -52,6 +52,7 @@ import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
@@ -108,6 +109,12 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     private void notifyListeners(@NonNull EventObject event){
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     public static NearShareManager getInstance(@NonNull Context context){

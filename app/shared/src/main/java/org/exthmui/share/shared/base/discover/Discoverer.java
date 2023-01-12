@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +13,7 @@ import java.util.Set;
  * IMPORTANT: Should have a static method "getInstance({@link android.content.Context} context)"
   */
 public interface Discoverer {
+    @NonNull IConnectionType getConnectionType();
     @NonNull Set<String> getPermissionNotGranted();
     @NonNull Set<String> getPermissionsRequired();
     boolean isDiscovererStarted();

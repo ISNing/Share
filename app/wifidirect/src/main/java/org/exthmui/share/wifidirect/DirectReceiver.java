@@ -42,6 +42,7 @@ import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.Utils;
 
 import java.util.Collection;
@@ -97,6 +98,12 @@ public class DirectReceiver implements Receiver {
 
     private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     @NonNull

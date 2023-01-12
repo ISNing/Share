@@ -40,6 +40,7 @@ import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -94,6 +95,12 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
 
     private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     public android.net.nsd.NsdManager getNsdManager() {

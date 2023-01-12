@@ -46,6 +46,7 @@ import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.shared.misc.Utils;
@@ -114,6 +115,12 @@ public class NsdReceiver implements Receiver {
 
     private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     @Nullable

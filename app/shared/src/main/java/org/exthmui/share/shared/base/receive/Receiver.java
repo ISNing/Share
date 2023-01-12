@@ -10,6 +10,7 @@ import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -22,6 +23,7 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
     String FROM_PEER_ID = "FROM_PEER_ID";
     String FROM_PEER_NAME = "FROM_PEER_NAME";
 
+    @NonNull IConnectionType getConnectionType();
     @NonNull Set<String> getPermissionNotGranted();
     @NonNull Set<String> getPermissionsRequired();
     boolean isReceiverStarted();

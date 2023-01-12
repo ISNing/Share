@@ -9,6 +9,7 @@ import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.exceptions.FailedCastingPeerException;
 import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +22,7 @@ public interface Sender<T extends IPeer> {
     String TARGET_PEER_ID = "TARGET_PEER_ID";
     String TARGET_PEER_NAME = "TARGET_PEER_NAME";
 
+    @NonNull IConnectionType getConnectionType();
     /**
      * Send an entity
      *

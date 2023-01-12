@@ -9,6 +9,7 @@ import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -21,6 +22,12 @@ public class NearShareReceiver implements Receiver {
     @NonNull
     public static NearShareReceiver getInstance(@NonNull Context context) {
         return new NearShareReceiver();
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
     
     @NonNull

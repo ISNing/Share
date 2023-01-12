@@ -49,6 +49,7 @@ import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -104,6 +105,12 @@ public class DirectManager implements Discoverer, Sender<DirectPeer> {
 
     private void notifyListeners(@NonNull EventObject event) {
         BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    @NonNull
+    @Override
+    public IConnectionType getConnectionType() {
+        return new Metadata();
     }
 
     public WifiP2pManager getWifiP2pManager() {
