@@ -25,7 +25,7 @@
         tools:summary="@string/prefs_summary_global_device_name_default" />
 
     <SwitchPreference
-        android:defaultValue="false"
+        android:defaultValue="true"
         android:key="@string/prefs_key_global_use_saf"
         android:title="@string/prefs_title_global_use_saf" />
 
