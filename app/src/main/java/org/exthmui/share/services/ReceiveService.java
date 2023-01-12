@@ -173,9 +173,13 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     @Override
     public void stopReceivers() {
         for (Receiver receiver : mReceiverList) {
+            if (!receiver.isInitialized()) receiver.initialize();
+            if (!receiver.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", receiver.getConnectionType().getCode()));
             if (receiver.isReceiverStarted()) {
-                receiver.stopReceive();
+                Log.e(TAG, String.format("Discoverer %s has already been stopped", receiver.getConnectionType().getCode()));
+                return;
             }
+            receiver.stopReceive();
         }
     }
 
@@ -264,6 +268,12 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     public void startReceiver(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
+        if (!receiver.isInitialized()) receiver.initialize();
+        if (!receiver.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", code));
+        if (receiver.isReceiverStarted()) {
+            Log.e(TAG, String.format("Discoverer %s has already been started", code));
+            return;
+        }
         receiver.startReceive();
     }
 
@@ -271,6 +281,12 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     public void stopReceiver(String code) {
         Receiver receiver = getReceiver(code);
         if (receiver == null) return;
+        if (!receiver.isInitialized()) receiver.initialize();
+        if (!receiver.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", code));
+        if (receiver.isReceiverStarted()) {
+            Log.e(TAG, String.format("Discoverer %s has already been stopped", code));
+            return;
+        }
         receiver.stopReceive();
     }
 
@@ -284,6 +300,11 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
     public void startReceivers() {
         for (Receiver receiver : mReceiverList) {
             if (!receiver.isInitialized()) receiver.initialize();
+            if (!receiver.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", receiver.getConnectionType().getCode()));
+            if (receiver.isReceiverStarted()) {
+                Log.e(TAG, String.format("Discoverer %s has already been started", receiver.getConnectionType().getCode()));
+                return;
+            }
             receiver.startReceive();
         }
     }

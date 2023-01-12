@@ -222,14 +222,6 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     }
 
     @Override
-    public void stopDiscoverers() {
-        for (Discoverer discoverer : mDiscovererList) {
-            if (discoverer.isDiscovererStarted())
-                discoverer.stopDiscover();
-        }
-    }
-
-    @Override
     public void addDiscoverers() {
         Set<String> codes = PreferenceManager.getDefaultSharedPreferences(this).getStringSet(getString(R.string.prefs_key_global_plugins_enabled), Collections.emptySet());
         for (String code : codes) {
@@ -310,19 +302,41 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
         }
     }
 
+    private void startDiscoverer(Discoverer discoverer) {
+        if (discoverer == null) return;
+        if (!discoverer.isInitialized()) discoverer.initialize();
+        if (!discoverer.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", discoverer.getConnectionType().getCode()));
+        if (discoverer.isDiscovererStarted()) {
+            Log.e(TAG, String.format("Discoverer %s has already been started, " +
+                    "ignoring starting request", discoverer.getConnectionType().getCode()));
+            return;
+        }
+        discoverer.startDiscover();
+    }
+
+    private void stopDiscoverer(Discoverer discoverer) {
+        if (discoverer == null) return;
+        if (!discoverer.isInitialized()) discoverer.initialize();
+        if (!discoverer.isInitialized()) Log.e(TAG, String.format("Failed initializing Discoverer %s", discoverer.getConnectionType().getCode()));
+        if (!discoverer.isDiscovererStarted()) {
+            Log.e(TAG, String.format("Discoverer %s has already been stopped, " +
+                    "ignoring stopping request", discoverer.getConnectionType().getCode()));
+            return;
+        }
+        discoverer.startDiscover();
+    }
+
     @Override
     public void startDiscoverer(String code) {
         Discoverer discoverer = getDiscoverer(code);
-        if (discoverer == null) return;
-        discoverer.startDiscover();
+        startDiscoverer(discoverer);
         updateTileState();
     }
 
     @Override
     public void stopDiscoverer(String code) {
         Discoverer discoverer = getDiscoverer(code);
-        if (discoverer == null) return;
-        discoverer.stopDiscover();
+        stopDiscoverer(discoverer);
         updateTileState();
     }
 
@@ -335,8 +349,14 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
     @Override
     public void startDiscoverers() {
         for (Discoverer discoverer : mDiscovererList) {
-            if (!discoverer.isInitialized()) discoverer.initialize();
-            discoverer.startDiscover();
+            startDiscoverer(discoverer);
+        }
+    }
+
+    @Override
+    public void stopDiscoverers() {
+        for (Discoverer discoverer : mDiscovererList) {
+            stopDiscoverer(discoverer);
         }
     }
 
