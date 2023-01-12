@@ -19,7 +19,7 @@ public abstract class Constants {
      * instead if you can transmit it to the target peer
      */
     public static final String PEER_ID_STRING = "%s:%s";
-    public static final int PEER_ID_LENGTH = 6;
+    public static final int PEER_ID_LENGTH = 36;
     public static final int DISPLAY_NAME_LENGTH = 12;
 
     public static final String WORK_NAME_PREFIX_SEND = "WORK_SEND_TO_";
