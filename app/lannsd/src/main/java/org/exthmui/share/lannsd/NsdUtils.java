@@ -17,7 +17,7 @@ public abstract class NsdUtils {
 
     public interface ResolveListener {
         int RESOLVE_FAILURE_FAILED_GETTING_MANAGER = -2;
-        int RESOLVE_FAILURE_IN_CAPABLE_PEER = -1;
+        int RESOLVE_FAILURE_INCAPABLE_PEER = -1;
 
         void onResolveFailed(NsdPeer peer, int errorCode);
 
@@ -50,7 +50,7 @@ public abstract class NsdUtils {
                 boolean succeeded = peer.loadAttributes(rec);
                 peer.setNsdServiceInfo(serviceInfo);
                 if (succeeded) listener.onServiceResolved(peer);
-                else listener.onResolveFailed(peer, ResolveListener.RESOLVE_FAILURE_IN_CAPABLE_PEER);
+                else listener.onResolveFailed(peer, ResolveListener.RESOLVE_FAILURE_INCAPABLE_PEER);
 
             }
         };
