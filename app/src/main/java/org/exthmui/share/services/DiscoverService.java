@@ -137,7 +137,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
                 else if (origPeer.getConnectionType().getPriority() < event.getPeer().getConnectionType().getPriority()) {
                     Log.d(TAG, String.format("Got PeerAddedEvent, the original peer has " +
                                     "connection type \"%s\"(Priority: %d), the newer one has " +
-                                    "connection type \"%s\"(Priority: %d)replacing the older one," +
+                                    "connection type \"%s\"(Priority: %d), replacing the older one," +
                                     "dropping a new PeerUpdatedEvent",
                             origPeer.getConnectionType().getCode(),
                             origPeer.getConnectionType().getPriority(),
@@ -162,7 +162,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
                         event.getPeer().getConnectionType().getPriority()) {
                     Log.d(TAG, String.format("Got PeerUpdatedEvent, the original peer has " +
                             "connection type \"%s\"(Priority: %d), the newer one has " +
-                            "connection type \"%s\"(Priority: %d)replacing the older one.",
+                            "connection type \"%s\"(Priority: %d), replacing the older one.",
                             origPeer.getConnectionType().getCode(),
                             origPeer.getConnectionType().getPriority(),
                             event.getPeer().getConnectionType().getCode(),
