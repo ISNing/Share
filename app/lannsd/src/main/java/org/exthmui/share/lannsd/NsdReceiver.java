@@ -3,6 +3,8 @@ package org.exthmui.share.lannsd;
 import static android.net.nsd.NsdManager.PROTOCOL_DNS_SD;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SERVER_PORT;
+import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DEVICE_TYPE;
+import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DISPLAY_NAME;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_UID;
 import static org.exthmui.share.lannsd.Constants.SHARE_PROTOCOL_VERSION_1;
@@ -252,23 +254,20 @@ public class NsdReceiver implements Receiver {
                 mNsdManager.unregisterService(mRegistrationListener);
             } catch (IllegalArgumentException ignored) {
             }
-            ServiceNameModel serviceName = new ServiceNameModel()
-                    .setDeviceType(Utils.getSelfDeviceType(mContext))
-                    //TODO: Move device name/type to extra to make it possible to make device name
-                    // limit longer, only use id as service name
-                    .setDisplayName(Utils.getSelfName(mContext))
-                    .setPeerId(Utils.getSelfId(mContext));
+            String serviceName = Utils.getSelfId(mContext);
 
             // Service information
             mServiceInfo = new NsdServiceInfo();
 
-            mServiceInfo.setServiceName(GSON.toJson(serviceName));
+            mServiceInfo.setServiceName(serviceName);
             mServiceInfo.setServiceType(org.exthmui.share.lannsd.Constants.LOCAL_SERVICE_SERVICE_TYPE);
             mServiceInfo.setPort(port);
+            mServiceInfo.setAttribute(RECORD_KEY_DEVICE_TYPE, String.valueOf(Utils.getSelfDeviceType(mContext)));
+            mServiceInfo.setAttribute(RECORD_KEY_DISPLAY_NAME, Utils.getSelfName(mContext));
             mServiceInfo.setAttribute(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION_1);
             mServiceInfo.setAttribute(RECORD_KEY_SERVER_PORT, String.valueOf(port));
             mServiceInfo.setAttribute(RECORD_KEY_UID, "0");// TODO: get it from account sdk
-            mServiceInfo.setAttribute(RECORD_KEY_ACCOUNT_SERVER_SIGN, "jj"); // TODO: get it from account sdk
+            mServiceInfo.setAttribute(RECORD_KEY_ACCOUNT_SERVER_SIGN, "~"); // TODO: get it from account sdk
 
             mNsdManager.registerService(mServiceInfo, PROTOCOL_DNS_SD, mRegistrationListener);
             // Peer should be discoverable from now.

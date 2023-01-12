@@ -2,6 +2,8 @@ package org.exthmui.share.lannsd;
 
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SERVER_PORT;
+import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DEVICE_TYPE;
+import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DISPLAY_NAME;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_UID;
 import static org.exthmui.share.lannsd.Constants.SHARE_PROTOCOL_VERSION_1;
@@ -15,6 +17,7 @@ import androidx.annotation.NonNull;
 import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.misc.IConnectionType;
+import org.json.JSONObject;
 
 import java.net.InetAddress;
 import java.util.Map;
@@ -28,7 +31,7 @@ public class NsdPeer extends Peer {
     private NsdServiceInfo nsdServiceInfo;
     private int connectionStatus;
     private int transmissionStatus;
-    private final int deviceType;
+    private int deviceType;
     @IntRange(from = 5001, to = 65535)
     private int serverPort;
     private String protocolVersion;
@@ -42,13 +45,9 @@ public class NsdPeer extends Peer {
 
     private boolean attributesLoaded;
 
-    public NsdPeer(@NonNull NsdServiceInfo nsdServiceInfo, int deviceType,
-                   @NonNull String peerId,
-                   @NonNull String displayName) {
+    public NsdPeer(@NonNull NsdServiceInfo nsdServiceInfo, @NonNull String peerId) {
         this.nsdServiceInfo = nsdServiceInfo;
-        this.deviceType = deviceType;
         this.peerId = peerId;
-        this.displayName = displayName;
     }
 
     @NonNull
@@ -70,6 +69,11 @@ public class NsdPeer extends Peer {
     @Override
     public int getDeviceType() {
         return deviceType;
+    }
+
+
+    public void setDeviceType(int deviceType) {
+        this.deviceType = deviceType;
     }
 
     @NonNull
@@ -184,22 +188,28 @@ public class NsdPeer extends Peer {
             Log.d(TAG, String.format("The key %s for protocol version not found in attributes, ignoring...", RECORD_KEY_SHARE_PROTOCOL_VERSION));
             return false;
         } else if (shareProtocolVersion.equals(SHARE_PROTOCOL_VERSION_1)) {
+            byte[] deviceTypeStrBytes = attributes.get(RECORD_KEY_DEVICE_TYPE);
+            byte[] displayNameStrBytes = attributes.get(RECORD_KEY_DISPLAY_NAME);
             byte[] serverPortStrBytes = attributes.get(RECORD_KEY_SERVER_PORT);
             byte[] uidStrBytes = attributes.get(RECORD_KEY_UID);
             byte[] serverSignBytes = attributes.get(RECORD_KEY_ACCOUNT_SERVER_SIGN);
 
-            if (serverPortStrBytes == null || uidStrBytes == null ||
+            if (deviceTypeStrBytes == null || displayNameStrBytes == null ||
+                    serverPortStrBytes == null || uidStrBytes == null ||
                     serverSignBytes == null) {
                 Log.d(TAG, "Invalid attributes, ignoring...");
                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                 Log.d(TAG, "Attributes: " + attributes);
                 return false;
             }
+            String deviceTypeStr = NsdUtils.bytesToString(deviceTypeStrBytes);
+            String displayNameStr = NsdUtils.bytesToString(displayNameStrBytes);
             String serverPortStr = NsdUtils.bytesToString(serverPortStrBytes);
             String uidStr = NsdUtils.bytesToString(uidStrBytes);
             String serverSign = NsdUtils.bytesToString(serverSignBytes);
 
-            if (serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
+            if (!StringUtils.isNumeric(deviceTypeStr) || displayNameStr == null ||
+                    serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
                     !StringUtils.isNumeric(uidStr)) {
                 Log.d(TAG, "Invalid attributes, ignoring...");
                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
@@ -209,6 +219,8 @@ public class NsdPeer extends Peer {
 
             Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
             Log.d(TAG, "Valid attributes, loading...");
+            this.deviceType = Integer.parseInt(deviceTypeStr);
+            this.displayName = displayNameStr;
             this.protocolVersion = shareProtocolVersion;
             this.serverPort = Integer.parseInt(serverPortStr);
             this.uid = Integer.parseInt(uidStr);

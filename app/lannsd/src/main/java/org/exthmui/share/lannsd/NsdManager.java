@@ -18,8 +18,8 @@ import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
@@ -29,7 +29,6 @@ import org.exthmui.share.shared.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.events.PeerAddedEvent;
 import org.exthmui.share.shared.events.PeerRemovedEvent;
-import org.exthmui.share.shared.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.listeners.OnDiscovererStartedListener;
@@ -41,6 +40,7 @@ import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.misc.Utils;
 
 import java.util.Collection;
 import java.util.EventObject;
@@ -190,62 +190,50 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
             public void onServiceFound(NsdServiceInfo serviceInfo) {
                 Log.d(TAG, "LAN Network Service Discovery discovered service: " + serviceInfo.getServiceName());
 
-                ServiceNameModel serviceNameModel;
-                try {
-                    serviceNameModel = GSON.fromJson(serviceInfo.getServiceName(), ServiceNameModel.class);
-                } catch (JsonSyntaxException ignored) {
-                    Log.d(TAG, String.format("Illegal json syntax of service name: %s, ignoring...", serviceInfo.getServiceName()));
+                String serviceName = null;
+                serviceName = serviceInfo.getServiceName();
+
+                // Ignore self device
+                if (StringUtils.equals(serviceName, NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {
+                    Log.d(TAG, String.format("Found self device: %s, ignoring...", serviceName));
                     return;
                 }
-//                if (serviceNameModel.getPeerId().equals(NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {
-//                    Log.d(TAG, String.format("Found self device: %s, ignoring...", serviceNameModel.getPeerId()));
-//                    return;TODO
-//                }
 
-                NsdPeer peer = new NsdPeer(serviceInfo, serviceNameModel.getDeviceType(),
-                        serviceNameModel.getPeerId(), serviceNameModel.getDisplayName());
+                NsdPeer peer = new NsdPeer(serviceInfo, serviceName);
 
-                mPeers.put(peer.getId(), peer);
-                notifyListeners(new PeerAddedEvent(NsdManager.this, peer));
-                Log.d(TAG, String.format("New peer added: %s(%s)", peer.getDisplayName(), peer.getId()));
+                Log.d(TAG, String.format("New service found, but it will not be added because it hasn't been resolved: %s", peer.getId()));
 
                 // Try to resolve peer, if failed or unsupported, remove it
                 NsdUtils.resolvePeer(mContext, peer, new NsdUtils.ResolveListener() {
                     @Override
                     public void onResolveFailed(NsdPeer peer, int errorCode) {
-                        Log.d(TAG, String.format("Failed resolving peer: %s, code: %d, removing peer", peer.getId(), errorCode));
-
-                        mPeers.remove(peer.getId());
-                        notifyListeners(new PeerRemovedEvent(NsdManager.this, peer));
+                        Log.d(TAG, String.format("Failed resolving peer: %s, code: %d, ignoring peer", peer.getId(), errorCode));
                     }
 
                     @Override
                     public void onServiceResolved(NsdPeer peer) {
-                        Log.d(TAG, String.format("Successfully resolved peer: %s", peer.getId()));
+                        Log.d(TAG, String.format("Successfully resolved peer, adding it:  %s(%s)", peer.getDisplayName(), peer.getId()));
 
                         mPeers.put(peer.getId(), peer);
-                        notifyListeners(new PeerUpdatedEvent(NsdManager.this, peer));
+                        notifyListeners(new PeerAddedEvent(NsdManager.this, peer));
                     }
                 });
             }
 
 
             @Override
-            public void onServiceLost(NsdServiceInfo serviceInfo) {ServiceNameModel serviceNameModel;
-                try {
-                    serviceNameModel = GSON.fromJson(serviceInfo.getServiceName(), ServiceNameModel.class);
-                } catch (JsonSyntaxException ignored) {
-                    Log.d(TAG, String.format("Illegal json syntax of service name: %s, ignoring...", serviceInfo.getServiceName()));
-                    return;
-                }
-                String peerId = serviceNameModel.getPeerId();
-                if (peerId == null) {
-                    Log.d(TAG, "Peer id not found in service name model, ignoring...");
+            public void onServiceLost(NsdServiceInfo serviceInfo) {
+                String serviceName;
+                serviceName = serviceInfo.getServiceName();
+
+                String peerId = serviceName;
+                if (StringUtils.isEmpty(serviceName)) {
+                    Log.d(TAG, "Peer id, as well as service name is empty, ignoring...");
                 }
 
                 IPeer origPeer = mPeers.get(NsdUtils.genNsdId(peerId));
                 if (origPeer == null) {
-                    Log.d(TAG, String.format("Notifying service disappeared, but found no original peer: %s, ingoring...", peerId));
+                    Log.d(TAG, String.format("Notifying service disappeared, but found no original peer: %s, ignoring...", peerId));
                 } else {
                     mPeers.remove(origPeer.getId());
                     notifyListeners(new PeerRemovedEvent(NsdManager.this, origPeer));

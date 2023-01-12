@@ -11,8 +11,10 @@ public class Constants {
     public static final String RECORD_STRING_CHARSET = "UTF-8";
 
     // Key longer than 9 character is not allowed
-    public static final String RECORD_KEY_SHARE_PROTOCOL_VERSION = "protocolV";
-    public static final String RECORD_KEY_SERVER_PORT = "sPort";
+    public static final String RECORD_KEY_DEVICE_TYPE = "devTyp";
+    public static final String RECORD_KEY_DISPLAY_NAME = "disNam";
+    public static final String RECORD_KEY_SHARE_PROTOCOL_VERSION = "proVer";
+    public static final String RECORD_KEY_SERVER_PORT = "port";
     public static final String RECORD_KEY_UID = "uid";
-    public static final String RECORD_KEY_ACCOUNT_SERVER_SIGN = "servSign";
+    public static final String RECORD_KEY_ACCOUNT_SERVER_SIGN = "serSig";
 }
