@@ -134,7 +134,7 @@ public abstract class ReceivingWorker extends BaseWorker {
      * @see BaseWorker#doWork()
      *
      * Also see below:
-     *
+     * <p>
      * Success:
      * MUST contain:{@link String[]}: {@link Entity#ENTITIES} (Parceled, Encoded in Base64),
      * {@link String[]}: {@link Receiver#FROM_PEER_ID}
@@ -143,7 +143,7 @@ public abstract class ReceivingWorker extends BaseWorker {
      * @see #genSuccessResult(SenderInfo, List)
      * @see #genSuccessData(SenderInfo, List)
      * ***** Extra values is not allowed *****
-     *
+     * <p>
      * Failure:
      * MUST contain:{@link String[]}: {@link String[]}: {@link Entity#FILE_NAMES}
      * {@link String[]}: {@link Receiver#FROM_PEER_ID}

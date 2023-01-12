@@ -16,27 +16,27 @@ public class FailedResolvingPeerException extends PeerDisappearedException {
         super(context, cause);
     }
 
-    public FailedResolvingPeerException(@NonNull String message) {
+    public FailedResolvingPeerException(@Nullable String message) {
         super(message);
     }
 
-    public FailedResolvingPeerException(@NonNull String message, @Nullable String localizedMessage) {
+    public FailedResolvingPeerException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public FailedResolvingPeerException(@NonNull String message, Throwable cause) {
+    public FailedResolvingPeerException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public FailedResolvingPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public FailedResolvingPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public FailedResolvingPeerException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedResolvingPeerException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public FailedResolvingPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedResolvingPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

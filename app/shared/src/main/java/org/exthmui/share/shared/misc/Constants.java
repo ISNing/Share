@@ -14,7 +14,7 @@ public abstract class Constants {
      * Customized peer id template.
      * First placeholder: Code of connection type
      * Second placeholder: customized identifier
-     *
+     * <p>
      * You should use value from {@link Utils#getSelfId(Context)}
      * instead if you can transmit it to the target peer
      */

@@ -9,7 +9,7 @@ import java.nio.ByteOrder;
  * Bytes 3+: Data {@link #DATA_LEN_MAX}
  *
  * @see org.exthmui.share.udptransport.packets.AbstractCommandPacket Base Packet Object
- *
+ * <p>
  *
  * +---------------------+                                                       +------------------------------+
  * |                     | ----(1) Connect TCP Socket--------------------------> |                              | \

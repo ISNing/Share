@@ -17,27 +17,27 @@ public class FailedStartSendingException extends LocalizedException {
         super(context, cause);
     }
 
-    public FailedStartSendingException(@NonNull String message) {
+    public FailedStartSendingException(@Nullable String message) {
         super(message);
     }
 
-    public FailedStartSendingException(@NonNull String message, @Nullable String localizedMessage) {
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public FailedStartSendingException(@NonNull String message, Throwable cause) {
+    public FailedStartSendingException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public FailedStartSendingException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public FailedStartSendingException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedStartSendingException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public FailedStartSendingException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedStartSendingException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

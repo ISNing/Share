@@ -42,7 +42,7 @@ public class SettingsActivity extends AppCompatActivity {
     private GlobalSettingsFragment mGlobalSettingsFragment;
     private final List<Fragment> mFragmentList = new ArrayList<>();
 
-    LinearLayout mPreferencesContainer;
+    private LinearLayout mPreferencesContainer;
 
     private void bindServices() {
         // Bind Service

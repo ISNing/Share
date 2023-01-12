@@ -257,14 +257,4 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             if (mDestinationDirectoryPrefs != null) mDestinationDirectoryPrefs.setValue(uri == null ? "" : uri.toString());
         });
     }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-    }
 }

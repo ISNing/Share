@@ -4,6 +4,7 @@ import android.net.wifi.p2p.WifiP2pDevice;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.misc.Constants;
@@ -51,7 +52,7 @@ public class DirectPeer extends Peer {
     @NonNull
     @Override
     public String getDisplayName() {
-        return wifiP2pDevice.deviceName;
+        return getDisplayName(wifiP2pDevice.deviceName);
     }
 
     @Override

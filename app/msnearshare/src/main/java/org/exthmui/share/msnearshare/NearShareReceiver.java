@@ -11,9 +11,7 @@ import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
 import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.misc.IConnectionType;
 
-import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.EventObject;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;

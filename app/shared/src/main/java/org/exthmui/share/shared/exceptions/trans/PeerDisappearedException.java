@@ -16,27 +16,27 @@ public class PeerDisappearedException extends TransmissionException {
         super(context, cause);
     }
 
-    public PeerDisappearedException(@NonNull String message) {
+    public PeerDisappearedException(@Nullable String message) {
         super(message);
     }
 
-    public PeerDisappearedException(@NonNull String message, @Nullable String localizedMessage) {
+    public PeerDisappearedException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public PeerDisappearedException(@NonNull String message, Throwable cause) {
+    public PeerDisappearedException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public PeerDisappearedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public PeerDisappearedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public PeerDisappearedException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public PeerDisappearedException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public PeerDisappearedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public PeerDisappearedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

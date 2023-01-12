@@ -3,10 +3,12 @@ package org.exthmui.share.shared.base;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
+import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.events.PeerUpdatedEvent;
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.misc.Constants;
@@ -39,6 +41,11 @@ public abstract class Peer implements IPeer {
     public LiveData<List<WorkInfo>> getAllWorkInfosLiveData(@NonNull Context ctx) {
         String workName = Constants.WORK_NAME_PREFIX_SEND + getId();
         return WorkManager.getInstance(ctx).getWorkInfosForUniqueWorkLiveData(workName);
+    }
+
+    @NonNull
+    public String getDisplayName(@Nullable String name) {
+        return StringUtils.isBlank(name) ? "Mysterious Device" : name;
     }
 
     @Override

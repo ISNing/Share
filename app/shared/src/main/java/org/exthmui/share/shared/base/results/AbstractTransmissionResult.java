@@ -19,11 +19,11 @@ public abstract class AbstractTransmissionResult implements TransmissionResult {
         localizedMessage = context.getString(getLocalizedMessageStrRes());
     }
 
-    public AbstractTransmissionResult(@NonNull String message) {
+    public AbstractTransmissionResult(@Nullable String message) {
         this(message, (String) null);
     }
 
-    public AbstractTransmissionResult(@NonNull String message, @Nullable String localizedMessage) {
+    public AbstractTransmissionResult(@Nullable String message, @Nullable String localizedMessage) {
         this.detailMessage = message;
         this.localizedMessage = localizedMessage;
     }

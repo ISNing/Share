@@ -41,7 +41,7 @@ public class NearSharePeer extends Peer {
     @NonNull
     @Override
     public String getDisplayName() {
-        return Objects.requireNonNull(remoteSystem.getDisplayName());
+        return getDisplayName(remoteSystem.getDisplayName());
     }
 
     @Nullable

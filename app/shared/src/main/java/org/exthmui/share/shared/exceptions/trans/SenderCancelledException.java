@@ -16,27 +16,27 @@ public class SenderCancelledException extends CancelledException {
         super(context, cause);
     }
 
-    public SenderCancelledException(@NonNull String message) {
+    public SenderCancelledException(@Nullable String message) {
         super(message);
     }
 
-    public SenderCancelledException(@NonNull String message, @Nullable String localizedMessage) {
+    public SenderCancelledException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public SenderCancelledException(@NonNull String message, Throwable cause) {
+    public SenderCancelledException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public SenderCancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public SenderCancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public SenderCancelledException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public SenderCancelledException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public SenderCancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public SenderCancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

@@ -17,27 +17,27 @@ public class InvalidConnectionTypeException extends FailedStartSendingException 
         super(context, cause);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message) {
+    public InvalidConnectionTypeException(@Nullable String message) {
         super(message);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message, @Nullable String localizedMessage) {
+    public InvalidConnectionTypeException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message, Throwable cause) {
+    public InvalidConnectionTypeException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public InvalidConnectionTypeException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidConnectionTypeException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public InvalidConnectionTypeException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidConnectionTypeException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

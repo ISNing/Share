@@ -24,31 +24,31 @@ public abstract class LocalizedException extends Exception {
         localizedMessage = context.getString(getLocalizedMessageStrRes());
     }
 
-    public LocalizedException(@NonNull String message) {
+    public LocalizedException(@Nullable String message) {
         this(message, (String) null);
     }
 
-    public LocalizedException(@NonNull String message, @Nullable String localizedMessage) {
+    public LocalizedException(@Nullable String message, @Nullable String localizedMessage) {
         super(message);
         this.detailMessage = message;
         this.localizedMessage = localizedMessage;
     }
 
-    public LocalizedException(@NonNull String message, Throwable cause) {
+    public LocalizedException(@Nullable String message, Throwable cause) {
         this(message, null, cause);
     }
 
-    public LocalizedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public LocalizedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, cause);
         this.detailMessage = message;
         this.localizedMessage = localizedMessage;
     }
 
-    public LocalizedException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public LocalizedException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         this(message, null, cause, enableSuppression, writableStackTrace);
     }
 
-    public LocalizedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public LocalizedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
         this.detailMessage = message;
         this.localizedMessage = localizedMessage;

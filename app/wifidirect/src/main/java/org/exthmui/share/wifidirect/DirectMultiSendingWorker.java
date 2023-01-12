@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.base.Entity;
@@ -29,7 +28,6 @@ public class DirectMultiSendingWorker extends SendingWorker {
         return new Metadata();
     }
 
-    @Nullable
     final AtomicReference<ServerSocket> serverSocketToClientReference = new AtomicReference<>(null);
 
     @SuppressLint("RestrictedApi")

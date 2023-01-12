@@ -12,11 +12,11 @@ public class SuccessTransmissionResult extends AbstractTransmissionResult {
         super(context);
     }
 
-    public SuccessTransmissionResult(@NonNull String message) {
+    public SuccessTransmissionResult(@Nullable String message) {
         super(message);
     }
 
-    public SuccessTransmissionResult(@NonNull String message, @Nullable String localizedMessage) {
+    public SuccessTransmissionResult(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 

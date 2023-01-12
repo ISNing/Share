@@ -13,11 +13,11 @@ import android.util.Log;
 
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.misc.IConnectionType;
-import org.json.JSONObject;
 
 import java.net.InetAddress;
 import java.util.Map;
@@ -63,7 +63,7 @@ public class NsdPeer extends Peer {
     @NonNull
     @Override
     public String getDisplayName() {
-        return displayName;
+        return getDisplayName(displayName);
     }
 
     @Override

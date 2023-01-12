@@ -17,27 +17,27 @@ public class NetworkErrorException extends TransmissionException {
         super(context, cause);
     }
 
-    public NetworkErrorException(@NonNull String message) {
+    public NetworkErrorException(@Nullable String message) {
         super(message);
     }
 
-    public NetworkErrorException(@NonNull String message, @Nullable String localizedMessage) {
+    public NetworkErrorException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public NetworkErrorException(@NonNull String message, Throwable cause) {
+    public NetworkErrorException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public NetworkErrorException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public NetworkErrorException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public NetworkErrorException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public NetworkErrorException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public NetworkErrorException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public NetworkErrorException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

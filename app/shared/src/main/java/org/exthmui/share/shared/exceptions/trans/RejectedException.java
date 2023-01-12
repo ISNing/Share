@@ -17,27 +17,27 @@ public class RejectedException extends TransmissionException {
         super(context, cause);
     }
 
-    public RejectedException(@NonNull String message) {
+    public RejectedException(@Nullable String message) {
         super(message);
     }
 
-    public RejectedException(@NonNull String message, @Nullable String localizedMessage) {
+    public RejectedException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public RejectedException(@NonNull String message, Throwable cause) {
+    public RejectedException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public RejectedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public RejectedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public RejectedException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public RejectedException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public RejectedException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public RejectedException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

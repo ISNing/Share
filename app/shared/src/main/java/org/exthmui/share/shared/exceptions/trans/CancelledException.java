@@ -17,27 +17,27 @@ public class CancelledException extends TransmissionException {
         super(context, cause);
     }
 
-    public CancelledException(@NonNull String message) {
+    public CancelledException(@Nullable String message) {
         super(message);
     }
 
-    public CancelledException(@NonNull String message, @Nullable String localizedMessage) {
+    public CancelledException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public CancelledException(@NonNull String message, Throwable cause) {
+    public CancelledException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public CancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public CancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public CancelledException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public CancelledException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public CancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public CancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

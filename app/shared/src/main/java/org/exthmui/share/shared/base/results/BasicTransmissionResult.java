@@ -23,13 +23,13 @@ public final class BasicTransmissionResult extends AbstractTransmissionResult {
     }
 
     public BasicTransmissionResult(@NonNull Constants.TransmissionStatus status,
-                                   @NonNull String message) {
+                                   @Nullable String message) {
         super(message);
         this.status = status;
     }
 
     public BasicTransmissionResult(@NonNull Constants.TransmissionStatus status,
-                                   @NonNull String message, @Nullable String localizedMessage) {
+                                   @Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
         this.status = status;
     }

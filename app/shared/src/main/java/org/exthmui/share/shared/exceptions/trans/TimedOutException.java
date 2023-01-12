@@ -17,27 +17,27 @@ public class TimedOutException extends NetworkErrorException {
         super(context, cause);
     }
 
-    public TimedOutException(@NonNull String message) {
+    public TimedOutException(@Nullable String message) {
         super(message);
     }
 
-    public TimedOutException(@NonNull String message, @Nullable String localizedMessage) {
+    public TimedOutException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public TimedOutException(@NonNull String message, Throwable cause) {
+    public TimedOutException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public TimedOutException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public TimedOutException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public TimedOutException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public TimedOutException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public TimedOutException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public TimedOutException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

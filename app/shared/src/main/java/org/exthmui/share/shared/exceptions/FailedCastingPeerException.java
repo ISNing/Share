@@ -16,27 +16,27 @@ public class FailedCastingPeerException extends InvalidPeerException {
         super(context, cause);
     }
 
-    public FailedCastingPeerException(@NonNull String message) {
+    public FailedCastingPeerException(@Nullable String message) {
         super(message);
     }
 
-    public FailedCastingPeerException(@NonNull String message, @Nullable String localizedMessage) {
+    public FailedCastingPeerException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public FailedCastingPeerException(@NonNull String message, Throwable cause) {
+    public FailedCastingPeerException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public FailedCastingPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public FailedCastingPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public FailedCastingPeerException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedCastingPeerException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public FailedCastingPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public FailedCastingPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

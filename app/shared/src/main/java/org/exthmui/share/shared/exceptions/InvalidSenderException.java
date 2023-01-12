@@ -17,27 +17,27 @@ public class InvalidSenderException extends FailedStartSendingException {
         super(context, cause);
     }
 
-    public InvalidSenderException(@NonNull String message) {
+    public InvalidSenderException(@Nullable String message) {
         super(message);
     }
 
-    public InvalidSenderException(@NonNull String message, @Nullable String localizedMessage) {
+    public InvalidSenderException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public InvalidSenderException(@NonNull String message, Throwable cause) {
+    public InvalidSenderException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidSenderException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public InvalidSenderException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public InvalidSenderException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidSenderException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public InvalidSenderException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidSenderException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

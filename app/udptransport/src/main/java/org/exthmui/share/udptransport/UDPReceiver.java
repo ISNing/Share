@@ -325,6 +325,7 @@ public class UDPReceiver {
                 try {
                     return receive();
                 } catch (Throwable e) {
+                    String message = e.getMessage();
                     if (listener != null)
                         listener.onComplete(new UnknownErrorException(e.getMessage(), e.getLocalizedMessage(), e),
                                 null);

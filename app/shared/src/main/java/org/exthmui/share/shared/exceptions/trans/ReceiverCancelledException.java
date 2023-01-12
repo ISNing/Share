@@ -17,27 +17,27 @@ public class ReceiverCancelledException extends CancelledException {
         super(context, cause);
     }
 
-    public ReceiverCancelledException(@NonNull String message) {
+    public ReceiverCancelledException(@Nullable String message) {
         super(message);
     }
 
-    public ReceiverCancelledException(@NonNull String message, @Nullable String localizedMessage) {
+    public ReceiverCancelledException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public ReceiverCancelledException(@NonNull String message, Throwable cause) {
+    public ReceiverCancelledException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public ReceiverCancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public ReceiverCancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public ReceiverCancelledException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ReceiverCancelledException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public ReceiverCancelledException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ReceiverCancelledException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

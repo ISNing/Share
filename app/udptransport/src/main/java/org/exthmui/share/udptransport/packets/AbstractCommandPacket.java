@@ -26,10 +26,6 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
         packet = new DatagramPacket(new byte[]{0x0, 0x0}, 0, 2);
     }
 
-    public static AbstractCommandPacket<?> fromDatagramPacket(DatagramPacket packet) {
-        return null;
-    }
-
     public DatagramPacket toDatagramPacket() {
         return packet;
     }

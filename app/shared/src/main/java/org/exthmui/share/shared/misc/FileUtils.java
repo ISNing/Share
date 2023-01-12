@@ -13,7 +13,6 @@ import androidx.documentfile.provider.DocumentFile;
 import org.apache.commons.codec.binary.Hex;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;

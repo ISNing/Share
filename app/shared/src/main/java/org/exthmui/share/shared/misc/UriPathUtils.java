@@ -19,7 +19,7 @@ import java.io.InputStream;
 public final class UriPathUtils {
     private static Uri contentUri = null;
 
-    Context context;
+    final Context context;
 
     public UriPathUtils(Context context) {
         this.context = context;

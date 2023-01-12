@@ -17,27 +17,27 @@ public class InvalidPeerException extends FailedStartSendingException {
         super(context, cause);
     }
 
-    public InvalidPeerException(@NonNull String message) {
+    public InvalidPeerException(@Nullable String message) {
         super(message);
     }
 
-    public InvalidPeerException(@NonNull String message, @Nullable String localizedMessage) {
+    public InvalidPeerException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public InvalidPeerException(@NonNull String message, Throwable cause) {
+    public InvalidPeerException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public InvalidPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public InvalidPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public InvalidPeerException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidPeerException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public InvalidPeerException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public InvalidPeerException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 

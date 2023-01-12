@@ -101,7 +101,7 @@ public class NsdReceiver implements Receiver {
 
     private OnListeningPortListener mOnListeningPortListener;
 
-    Map<String, Entity> mEntityMap = new HashMap<>();
+    final Map<String, Entity> mEntityMap = new HashMap<>();
 
     private NsdReceiver(@NonNull Context context) {
         this.mContext = context.getApplicationContext();

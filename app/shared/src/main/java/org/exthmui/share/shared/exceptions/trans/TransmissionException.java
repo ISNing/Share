@@ -20,27 +20,27 @@ public abstract class TransmissionException extends LocalizedException implement
         super(context, cause);
     }
 
-    public TransmissionException(@NonNull String message) {
+    public TransmissionException(@Nullable String message) {
         super(message);
     }
 
-    public TransmissionException(@NonNull String message, @Nullable String localizedMessage) {
+    public TransmissionException(@Nullable String message, @Nullable String localizedMessage) {
         super(message, localizedMessage);
     }
 
-    public TransmissionException(@NonNull String message, Throwable cause) {
+    public TransmissionException(@Nullable String message, Throwable cause) {
         super(message, cause);
     }
 
-    public TransmissionException(@NonNull String message, @Nullable String localizedMessage, Throwable cause) {
+    public TransmissionException(@Nullable String message, @Nullable String localizedMessage, Throwable cause) {
         super(message, localizedMessage, cause);
     }
 
-    public TransmissionException(@NonNull String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public TransmissionException(@Nullable String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 
-    public TransmissionException(@NonNull String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public TransmissionException(@Nullable String message, @Nullable String localizedMessage, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, localizedMessage, cause, enableSuppression, writableStackTrace);
     }
 
