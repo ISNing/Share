@@ -20,7 +20,7 @@ public abstract class Constants {
      */
     public static final String PEER_ID_STRING = "%s:%s";
     public static final int PEER_ID_LENGTH = 36;
-    public static final int DISPLAY_NAME_LENGTH = 12;
+    public static final int DISPLAY_NAME_LENGTH = 32;
 
     public static final String WORK_NAME_PREFIX_SEND = "WORK_SEND_TO_";
     public static final String WORK_NAME_PREFIX_RECEIVE = "WORK_RECEIVE_";
