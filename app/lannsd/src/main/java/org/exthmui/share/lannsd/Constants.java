@@ -8,6 +8,9 @@ public class Constants {
     public static final String LOCAL_SERVICE_INSTANCE_NAME = "_share";
     public static final String LOCAL_SERVICE_SERVICE_TYPE = "_share._udp.";
 
+    /** According to {@link android.net.nsd.NsdServiceInfo#setAttribute(java.lang.String, java.lang.String)},
+     * Charset for Dns Txt record must be UTF-8
+      */
     public static final String RECORD_STRING_CHARSET = "UTF-8";
 
     // Key longer than 9 character is not allowed
