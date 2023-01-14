@@ -267,7 +267,7 @@ public class NsdReceiver implements Receiver {
             mServiceInfo.setAttribute(RECORD_KEY_SHARE_PROTOCOL_VERSION, SHARE_PROTOCOL_VERSION_1);
             mServiceInfo.setAttribute(RECORD_KEY_SERVER_PORT, String.valueOf(port));
             mServiceInfo.setAttribute(RECORD_KEY_UID, "0");// TODO: get it from account sdk
-            mServiceInfo.setAttribute(RECORD_KEY_ACCOUNT_SERVER_SIGN, "~"); // TODO: get it from account sdk
+            mServiceInfo.setAttribute(RECORD_KEY_ACCOUNT_SERVER_SIGN, ""); // TODO: get it from account sdk
 
             mNsdManager.registerService(mServiceInfo, PROTOCOL_DNS_SD, mRegistrationListener);
             // Peer should be discoverable from now.

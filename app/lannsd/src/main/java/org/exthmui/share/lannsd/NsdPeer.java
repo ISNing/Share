@@ -41,6 +41,7 @@ public class NsdPeer extends Peer {
     private String displayName;
     @IntRange(from = 0)
     private int uid;
+    @Nullable
     private String accountServerSign;
 
     private boolean attributesLoaded;
@@ -140,13 +141,13 @@ public class NsdPeer extends Peer {
         this.uid = uid;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public String getAccountServerSign() {
         return accountServerSign;
     }
 
-    public void setAccountServerSign(@NonNull String accountServerSign) {
+    public void setAccountServerSign(@Nullable String accountServerSign) {
         this.accountServerSign = accountServerSign;
     }
 
@@ -195,8 +196,7 @@ public class NsdPeer extends Peer {
             byte[] serverSignBytes = attributes.get(RECORD_KEY_ACCOUNT_SERVER_SIGN);
 
             if (deviceTypeStrBytes == null || displayNameStrBytes == null ||
-                    serverPortStrBytes == null || uidStrBytes == null ||
-                    serverSignBytes == null) {
+                    serverPortStrBytes == null || uidStrBytes == null) {
                 Log.d(TAG, "Invalid attributes, ignoring...");
                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                 Log.d(TAG, "Attributes: " + attributes);
@@ -206,11 +206,10 @@ public class NsdPeer extends Peer {
             String displayNameStr = NsdUtils.bytesToString(displayNameStrBytes);
             String serverPortStr = NsdUtils.bytesToString(serverPortStrBytes);
             String uidStr = NsdUtils.bytesToString(uidStrBytes);
-            String serverSign = NsdUtils.bytesToString(serverSignBytes);
+            String serverSign = serverSignBytes == null ? null : NsdUtils.bytesToString(serverSignBytes);
 
             if (!StringUtils.isNumeric(deviceTypeStr) || displayNameStr == null ||
-                    serverSign == null || !StringUtils.isNumeric(serverPortStr) ||
-                    !StringUtils.isNumeric(uidStr)) {
+                    !StringUtils.isNumeric(serverPortStr) || !StringUtils.isNumeric(uidStr)) {
                 Log.d(TAG, "Invalid attributes, ignoring...");
                 Log.d(TAG, "Share protocol version: " + shareProtocolVersion);
                 Log.d(TAG, "Attributes: " + attributes);

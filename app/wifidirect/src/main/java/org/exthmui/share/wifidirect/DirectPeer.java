@@ -24,13 +24,13 @@ public class DirectPeer extends Peer {
     private String peerId;
     @IntRange(from = 0)
     private int uid;
-    @NonNull
+    @Nullable
     private String accountServerSign;
 
     public DirectPeer(@NonNull WifiP2pDevice wifiP2pDevice, @NonNull String protocolVersion,
                       @IntRange(from = 5001, to = 65535) int serverPort,
                       @NonNull String peerId,
-                      @IntRange(from = 0) int uid, @NonNull String accountServerSign) {
+                      @IntRange(from = 0) int uid, @Nullable String accountServerSign) {
         this.wifiP2pDevice = wifiP2pDevice;
         this.serverPort = serverPort;
         this.protocolVersion = protocolVersion;
