@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'org.exthmui.share.work'
+    namespace 'org.exthmui.share.taskMgr'
 
     compileSdkVersion rootProject.ext.compileSdkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
@@ -29,4 +29,7 @@ android {
 
 dependencies {
     implementation "androidx.room:room-runtime:$rootProject.ext.roomVersion"
+    implementation "androidx.lifecycle:lifecycle-livedata-core:$rootProject.ext.livedataVersion"
+
+    implementation project(path: ':app:shared')
 }
