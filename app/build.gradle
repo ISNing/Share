@@ -6,13 +6,12 @@ Properties properties = new Properties()
 properties.load(project.rootProject.file('secrets.properties').newDataInputStream())
 
 android {
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         applicationId "org.exthmui.share"
         minSdk rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        targetSdk rootProject.ext.compileSdkVersion
         versionCode 1
         versionName "1.0"
 

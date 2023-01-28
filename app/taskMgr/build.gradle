@@ -5,12 +5,11 @@ plugins {
 android {
     namespace 'org.exthmui.share.taskMgr'
 
-    compileSdkVersion rootProject.ext.compileSdkVersion
-    buildToolsVersion rootProject.ext.buildToolsVersion
+    compileSdk rootProject.ext.compileSdkVersion
 
     defaultConfig {
         minSdk rootProject.ext.minSdkVersion
-        targetSdkVersion rootProject.ext.targetSdkVersion
+        targetSdk rootProject.ext.compileSdkVersion
 
         consumerProguardFiles "consumer-rules.pro"
     }
