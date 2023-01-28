@@ -2,13 +2,18 @@ package org.exthmui.share.taskMgr;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
-import org.exthmui.share.taskMgr.daos.*;
+import org.exthmui.share.taskMgr.daos.GroupDao;
+import org.exthmui.share.taskMgr.daos.ResultDao;
+import org.exthmui.share.taskMgr.daos.TaskDao;
 import org.exthmui.share.taskMgr.entities.GroupEntity;
 import org.exthmui.share.taskMgr.entities.TaskEntity;
+
+import java.util.concurrent.Callable;
 
 @Database(entities = {TaskEntity.class, GroupEntity.class, Result.class}, version = 1)
 public abstract class TaskDatabase extends RoomDatabase {
@@ -25,5 +30,13 @@ public abstract class TaskDatabase extends RoomDatabase {
                     .build();
         }
         return INSTANCE;
+    }
+
+    public void runInDatabaseThread(@NonNull Runnable body) {
+        new RoomExecutor().getDiskIO().execute(() -> super.runInTransaction(body));
+    }
+
+    public <T> void runInDatabaseThread(@NonNull Callable<T> body) {
+        new RoomExecutor().getDiskIO().execute(() -> super.runInTransaction(body));
     }
 }

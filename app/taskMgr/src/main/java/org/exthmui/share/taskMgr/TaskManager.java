@@ -71,7 +71,7 @@ public class TaskManager {
         groups.put(groupId, group);
         GroupEntity groupEntity = new GroupEntity(group);
 
-        database.runInTransaction(() -> database.groupDao().insert(groupEntity));
+        database.runInDatabaseThread(() -> database.groupDao().insert(groupEntity));
     }
 
     public void enqueueTask(String groupId, Task task) {
@@ -83,9 +83,8 @@ public class TaskManager {
             addGroup(groupId);
         }
         tasks.put(task.getTaskId(), task);
-        database.runInTransaction(() -> database.taskDao().insert(new TaskEntity(task, groupId)));
-        task.getProgressDataLiveData().observeForever(ignored ->
-                database.runInTransaction(() -> updateTaskInDatabase(task)));
+        database.runInDatabaseThread(() -> database.taskDao().insert(new TaskEntity(task, groupId)));
+        task.getProgressDataLiveData().observeForever(ignored -> updateTaskInDatabase(task));
         group.addTask(task, result -> {
             updateTaskInDatabase(task);
             addResult(result);
@@ -108,7 +107,7 @@ public class TaskManager {
             }
         }
         TaskEntity taskEntity = database.taskDao().getTaskEntityById(task.getTaskId());
-        database.runInTransaction(() -> database.taskDao().delete(taskEntity));
+        database.runInDatabaseThread(() -> database.taskDao().delete(taskEntity));
         tasks.remove(task.getTaskId());
         group.removeTask(task);
         // Don't update database for this task because it had already been deleted from database
@@ -128,19 +127,19 @@ public class TaskManager {
         for (String taskId: group.getTaskIds()) removeTask(groupId, getTask(taskId));
 
         GroupEntity groupEntity = database.groupDao().getGroupEntityById(group.getGroupId());
-        database.runInTransaction(() -> database.groupDao().delete(groupEntity));
+        database.runInDatabaseThread(() -> database.groupDao().delete(groupEntity));
     }
 
     private void addResult(Result result) {
-        database.runInTransaction(() -> database.resultDao().insert(result));
+        database.runInDatabaseThread(() -> database.resultDao().insert(result));
     }
 
     private void removeResult(Result result) {
-        database.runInTransaction(() -> database.resultDao().delete(result));
+        database.runInDatabaseThread(() -> database.resultDao().delete(result));
     }
 
     private void updateTaskInDatabase(Task task) {
-        database.runInTransaction(() -> {
+        database.runInDatabaseThread(() -> {
             TaskEntity taskEntity = database.taskDao().getTaskEntityById(task.getTaskId());
             taskEntity.updateTask(task);
             database.taskDao().update(taskEntity);
@@ -148,7 +147,7 @@ public class TaskManager {
     }
 
     private void updateGroupInDatabase(Group group) {
-        database.runInTransaction(() -> {
+        database.runInDatabaseThread(() -> {
             GroupEntity groupEntity = database.groupDao().getGroupEntityById(group.getGroupId());
             groupEntity.updateGroup(group);
             database.groupDao().update(groupEntity);
