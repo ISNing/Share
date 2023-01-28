@@ -36,6 +36,13 @@ public abstract class Task implements Runnable {
         mStatus = TaskStatus.CREATED;
     }
 
+    public Task(@NonNull TaskEntity taskEntity) {
+        this.taskId = taskEntity.getTaskId();
+        this.mInputData = taskEntity.getInputData();
+        this.mStatus = taskEntity.getStatus();
+        // Result will be loaded by TaskManager
+    }
+
     public String getTaskId() {
         return taskId;
     }
