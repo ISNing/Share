@@ -3,6 +3,8 @@ package org.exthmui.share.taskMgr;
 import android.os.Bundle;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 
 import org.exthmui.share.taskMgr.entities.TaskEntity;
@@ -15,17 +17,21 @@ public abstract class Task implements Runnable {
 
     public static final String TAG = "TaskManager/Task";
 
+    @NonNull
     private final String taskId;
     private TaskStatus mStatus;
+    @Nullable
     private final Bundle mInputData;
     private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture();
+    @Nullable
     private Callback mCallback;
     private volatile boolean isCancelled = false;
+    @Nullable
     private volatile Bundle mProgressData;
 
     private final MutableLiveData<Bundle> mProgressDataLive = new MutableLiveData<>(mProgressData);
 
-    public Task(String taskId, Bundle inputData) {
+    public Task(@NonNull String taskId, @Nullable Bundle inputData) {
         this.taskId = taskId;
         this.mInputData = inputData;
         mStatus = TaskStatus.CREATED;
@@ -57,22 +63,26 @@ public abstract class Task implements Runnable {
             mCallback.onResult(result);
         }
     }
-    public final void setCallback(Callback callback) {
+    public final void setCallback(@Nullable Callback callback) {
         mCallback = callback;
     }
 
+    @Nullable
     public Bundle getProgressData() {
         return mProgressData;
     }
 
+    @NonNull
     public MutableLiveData<Bundle> getProgressDataLiveData() {
         return mProgressDataLive;
     }
 
+    @Nullable
     public Bundle getInputData() {
         return mInputData;
     }
 
+    @NonNull
     public Future<Result> getResultFuture() {
         return mResultFuture;
     }
@@ -85,7 +95,7 @@ public abstract class Task implements Runnable {
     public final void run() {
         if (!isCancelled) {
             try {
-                setResult(doWork(mInputData));
+                setResult(doWork());
             } catch (Throwable error) {
                 setResult(new Result.Error(error));
             }
@@ -94,14 +104,14 @@ public abstract class Task implements Runnable {
         }
     }
 
-    public abstract Result doWork(Bundle input);
+    public abstract Result doWork();
 
     public void cancel() {
         isCancelled = true;
         mResultFuture.internalCancel(true);
     }
 
-    public final void updateProgress(Bundle progressData) {
+    protected final void updateProgress(Bundle progressData) {
         mProgressData = progressData;
         mProgressDataLive.postValue(progressData);
     }
