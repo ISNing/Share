@@ -7,8 +7,8 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
-import org.exthmui.share.taskMgr.Result;
 import org.exthmui.share.taskMgr.Task;
+import org.exthmui.share.taskMgr.TaskStatus;
 
 import java.util.concurrent.ExecutionException;
 
@@ -26,7 +26,7 @@ public class TaskEntity {
     private final String taskType;
 
     @ColumnInfo(name = "status")
-    private String status;
+    private TaskStatus status;
 
     @ColumnInfo(name = "input_data")
     private final Bundle inputData;
@@ -37,7 +37,7 @@ public class TaskEntity {
     @ColumnInfo(name = "progress_data")
     private volatile Bundle progressData;
 
-    public TaskEntity(@NonNull String taskId, String groupId, String taskType, String status, Bundle inputData, String resultId, Bundle progressData) {
+    public TaskEntity(@NonNull String taskId, String groupId, String taskType, TaskStatus status, Bundle inputData, String resultId, Bundle progressData) {
         this.taskId = taskId;
         this.groupId = groupId;
         this.taskType = taskType;
@@ -56,7 +56,7 @@ public class TaskEntity {
     }
 
     public void updateTask(Task task) {
-        this.status = task.getStatus().name();
+        this.status = task.getStatus();
         try {
             this.resultId = task.getResultFuture().isDone() ? task.getResultFuture().get().getResultId() : null;
         } catch (ExecutionException | InterruptedException e) {
@@ -77,11 +77,11 @@ public class TaskEntity {
         return taskType;
     }
 
-    public String getStatus() {
+    public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(TaskStatus status) {
         this.status = status;
     }
 
