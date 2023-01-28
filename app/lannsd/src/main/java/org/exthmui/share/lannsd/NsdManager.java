@@ -190,8 +190,7 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
             public void onServiceFound(NsdServiceInfo serviceInfo) {
                 Log.d(TAG, "LAN Network Service Discovery discovered service: " + serviceInfo.getServiceName());
 
-                String serviceName = null;
-                serviceName = serviceInfo.getServiceName();
+                String serviceName = serviceInfo.getServiceName();
 
                 // Ignore self device
                 if (StringUtils.equals(serviceName, NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {

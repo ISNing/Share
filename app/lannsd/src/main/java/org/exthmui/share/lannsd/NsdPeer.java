@@ -38,7 +38,7 @@ public class NsdPeer extends Peer {
     @NonNull
     private String peerId;
     @NonNull
-    private String displayName;
+    private String displayName = "Mysterious Device";
     @IntRange(from = 0)
     private int uid;
     @Nullable
@@ -168,7 +168,7 @@ public class NsdPeer extends Peer {
         if (this == o) return true;
         if (!(o instanceof NsdPeer)) return false;
         NsdPeer nsdPeer = (NsdPeer) o;
-        return getConnectionStatus() == nsdPeer.getConnectionStatus() && getTransmissionStatus() == nsdPeer.getTransmissionStatus() && getDeviceType() == nsdPeer.getDeviceType() && getServerPort() == nsdPeer.getServerPort() && getUid() == nsdPeer.getUid() && getNsdServiceInfo().equals(nsdPeer.getNsdServiceInfo()) && getProtocolVersion().equals(nsdPeer.getProtocolVersion()) && peerId.equals(nsdPeer.peerId) && getAccountServerSign().equals(nsdPeer.getAccountServerSign());
+        return getConnectionStatus() == nsdPeer.getConnectionStatus() && getTransmissionStatus() == nsdPeer.getTransmissionStatus() && getDeviceType() == nsdPeer.getDeviceType() && getServerPort() == nsdPeer.getServerPort() && getUid() == nsdPeer.getUid() && getNsdServiceInfo().equals(nsdPeer.getNsdServiceInfo()) && getProtocolVersion().equals(nsdPeer.getProtocolVersion()) && peerId.equals(nsdPeer.peerId) && Objects.equals(getAccountServerSign(), nsdPeer.getAccountServerSign());
     }
 
     @Override

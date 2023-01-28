@@ -9,26 +9,26 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Group {
-    private String groupId;
-    private int maxConcurrentTasks;
-    private AtomicInteger mCurrentRunningTasks;
-    private List<String> mTaskIds;
-    private Queue<Task> mTaskQueue;
+    private final String groupId;
+    private final int maxConcurrentTasks;
+    private final AtomicInteger currentRunningTasks;
+    private final List<String> taskIds;
+    private final Queue<Task> taskQueue;
 
     public Group(String groupId, int maxConcurrentTasks) {
         this.groupId = groupId;
         this.maxConcurrentTasks = maxConcurrentTasks;
-        this.mTaskIds = new ArrayList<>();
-        mCurrentRunningTasks = new AtomicInteger(0);
-        mTaskQueue = new LinkedList<>();
+        this.taskIds = new ArrayList<>();
+        this.currentRunningTasks = new AtomicInteger(0);
+        this.taskQueue = new LinkedList<>();
     }
 
     public Group(GroupEntity groupEntity) {
         this.groupId = groupEntity.groupId;
         this.maxConcurrentTasks = groupEntity.maxConcurrentTasks;
-        this.mTaskIds = new ArrayList<>(groupEntity.taskIds);
-        mCurrentRunningTasks = new AtomicInteger(0);
-        mTaskQueue = new LinkedList<>();
+        this.taskIds = new ArrayList<>(groupEntity.taskIds);
+        this.currentRunningTasks = new AtomicInteger(0);
+        this.taskQueue = new LinkedList<>();
     }
 
     public String getGroupId() {
@@ -40,15 +40,15 @@ public class Group {
     }
 
     public AtomicInteger getCurrentRunningTasks() {
-        return mCurrentRunningTasks;
+        return currentRunningTasks;
     }
 
     public Queue<Task> getTaskQueue() {
-        return mTaskQueue;
+        return taskQueue;
     }
 
     public List<String> getTaskIds() {
-        return new ArrayList<>(mTaskIds);
+        return new ArrayList<>(taskIds);
     }
 
     public void addTask(Task task) {
@@ -61,8 +61,8 @@ public class Group {
      * @param callback callback for task execution
      */
     public void addTask(Task task, Task.Callback callback) {
-        if (mTaskIds.contains(task.getTaskId())) return;
-        mTaskIds.add(task.getTaskId());
+        if (taskIds.contains(task.getTaskId())) return;
+        taskIds.add(task.getTaskId());
         task.setCallback(callback);
     }
 
@@ -75,27 +75,28 @@ public class Group {
      */
     public void enqueueTask(Task task, Task.Callback callback) {
         addTask(task, callback);
-        if (mCurrentRunningTasks.get() > maxConcurrentTasks) {
+        if (currentRunningTasks.get() > maxConcurrentTasks) {
             // add task to queue and return
-            mTaskQueue.offer(task);
+            taskQueue.offer(task);
             task.setStatus(TaskStatus.QUEUED);
         } else {
             // execute the task
-            mCurrentRunningTasks.getAndIncrement();
+            currentRunningTasks.getAndIncrement();
             TaskManager.getInstance().executeTaskAsync(task.getTaskId());
         }
     }
 
     public void removeTask(Task task) {
-        if (!mTaskIds.contains(task.getTaskId())) return;
-        mTaskIds.remove(task.getTaskId());
+        if (!taskIds.contains(task.getTaskId())) return;
+        taskIds.remove(task.getTaskId());
     }
 
     public void taskFinished() {
-        mCurrentRunningTasks.getAndDecrement();
-        if (mCurrentRunningTasks.get() >= maxConcurrentTasks && mTaskQueue.size() > 0) {
-            Task task = mTaskQueue.poll();
-            TaskManager.getInstance().executeTaskAsync(task.getTaskId());
+        currentRunningTasks.getAndDecrement();
+        if (currentRunningTasks.get() >= maxConcurrentTasks) {
+            Task task = taskQueue.poll();
+            if (task != null)
+                TaskManager.getInstance().executeTaskAsync(task.getTaskId());
         }
     }
 

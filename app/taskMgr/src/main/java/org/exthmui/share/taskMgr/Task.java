@@ -22,7 +22,7 @@ public abstract class Task implements Runnable {
     private TaskStatus mStatus;
     @NonNull
     private final Bundle mInputData;
-    private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture();
+    private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture<>();
     @Nullable
     private Callback mCallback;
     @Nullable
@@ -44,6 +44,7 @@ public abstract class Task implements Runnable {
         // Result will be loaded by TaskManager
     }
 
+    @NonNull
     public String getTaskId() {
         return taskId;
     }

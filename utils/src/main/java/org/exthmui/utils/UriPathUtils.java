@@ -28,8 +28,8 @@ public final class UriPathUtils {
     public String getPath(final Uri uri) {
         // check here to KITKAT or new version
         final boolean isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT;
-        String selection = null;
-        String[] selectionArgs = null;
+        String selection;
+        String[] selectionArgs;
         // DocumentProvider
         if (isKitKat ) {
             // ExternalStorageProvider
@@ -175,7 +175,7 @@ public final class UriPathUtils {
                 String[] projection = {
                         MediaStore.Images.Media.DATA
                 };
-                Cursor cursor = null;
+                Cursor cursor;
                 try {
                     cursor = context.getContentResolver()
                             .query(uri, projection, null, null, null);
@@ -206,7 +206,7 @@ public final class UriPathUtils {
     private String getPathFromExtSD(String[] pathData) {
         final String type = pathData[0];
         final String relativePath = "/" + pathData[1];
-        String fullPath = "";
+        String fullPath;
 
         // on my Sony devices (4.4.4 & 5.1.1), `type` is a dynamic string
         // something like "71F8-2C0A", some kind of unique id per storage
@@ -253,7 +253,7 @@ public final class UriPathUtils {
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
             FileOutputStream outputStream = new FileOutputStream(file);
-            int read = 0;
+            int read;
             int maxBufferSize = 1024 * 1024;
             int bytesAvailable = inputStream.available();
 
@@ -315,7 +315,7 @@ public final class UriPathUtils {
         try {
             InputStream inputStream = context.getContentResolver().openInputStream(uri);
             FileOutputStream outputStream = new FileOutputStream(output);
-            int read = 0;
+            int read;
             int bufferSize = 1024;
             final byte[] buffers = new byte[bufferSize];
             while ((read = inputStream.read(buffers)) != -1) {

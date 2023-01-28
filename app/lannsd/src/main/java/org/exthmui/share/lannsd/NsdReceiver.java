@@ -209,12 +209,7 @@ public class NsdReceiver implements Receiver {
                     Log.e(TAG + "/UDPReceiver.InputStreamFactory", StackTraceUtils.getStackTraceString(e.getStackTrace()));
                     return null;
                 }
-            }, new UDPReceiver.ConnectionListener() {
-                @Override
-                public void onConnectionEstablished(byte connId) {
-                    startWorkWrapped(mContext, Map.of(WORK_PROP_CONN_ID, String.valueOf(connId)));
-                }
-            }, serverPortTcp, serverPortUdp, true, md5ValidationEnabled);
+            }, connId -> startWorkWrapped(mContext, Map.of(WORK_PROP_CONN_ID, String.valueOf(connId))), serverPortTcp, serverPortUdp, true, md5ValidationEnabled);
         } catch (IOException e) {
             String message = String.format(Locale.ENGLISH, "UdpReceiver initialize failed: %s", e.getMessage());
             String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_initialize_failed, e.getLocalizedMessage());

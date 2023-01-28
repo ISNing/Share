@@ -20,15 +20,15 @@ import java.util.concurrent.ThreadFactory;
 
 public class TaskManager {
     private static TaskManager instance;
-    private Map<String, Group> mGroups;
-    private Map<String, Task> mTasks;
-    private Executor mExecutor;
-    private TaskDatabase mDatabase;
+    private final Map<String, Group> groups;
+    private final Map<String, Task> tasks;
+    private final Executor executor;
+    private final TaskDatabase database;
 
     private TaskManager(@NonNull Context context) {
-        mGroups = new HashMap<>();
-        mTasks = new HashMap<>();
-        mExecutor = Executors.newCachedThreadPool(new ThreadFactory() {
+        groups = new HashMap<>();
+        tasks = new HashMap<>();
+        executor = Executors.newCachedThreadPool(new ThreadFactory() {
             int id = 0;
             @Override
             public Thread newThread(Runnable r) {
@@ -40,7 +40,7 @@ public class TaskManager {
                 };
             }
         });
-        mDatabase = TaskDatabase.getInstance(context);
+        database = TaskDatabase.getInstance(context);
     }
 
     public static TaskManager getInstance(Context context) {
@@ -59,21 +59,21 @@ public class TaskManager {
 
     public void addGroup(String groupId, int maxConcurrentTasks) {
         Group group = new Group(groupId, maxConcurrentTasks);
-        mGroups.put(groupId, group);
+        groups.put(groupId, group);
         GroupEntity groupEntity = new GroupEntity(group);
 
-        mDatabase.runInTransaction(() -> mDatabase.groupDao().insert(groupEntity));
+        database.runInTransaction(() -> database.groupDao().insert(groupEntity));
     }
 
     public void enqueueTask(String groupId, Task task) {
-        Group group = mGroups.get(groupId);
+        Group group = groups.get(groupId);
         if (group == null) {
             throw new RuntimeException(String.format("Group %s does not exists", groupId));
         }
-        mTasks.put(task.getTaskId(), task);
-        mDatabase.runInTransaction(() -> mDatabase.taskDao().insert(new TaskEntity(task, groupId)));
+        tasks.put(task.getTaskId(), task);
+        database.runInTransaction(() -> database.taskDao().insert(new TaskEntity(task, groupId)));
         task.getProgressDataLiveData().observeForever(ignored ->
-                mDatabase.runInTransaction(() -> updateTaskInDatabase(task)));
+                database.runInTransaction(() -> updateTaskInDatabase(task)));
         group.addTask(task, result -> {
             updateTaskInDatabase(task);
             addResult(result);
@@ -83,7 +83,7 @@ public class TaskManager {
     }
 
     public void removeTask(String groupId, Task task) {
-        Group group = mGroups.get(groupId);
+        Group group = groups.get(groupId);
         if (group == null) {
             throw new RuntimeException(String.format("Group %s does not exists", groupId));
         }
@@ -95,58 +95,52 @@ public class TaskManager {
                 e.printStackTrace();
             }
         }
-        TaskEntity taskEntity = mDatabase.taskDao().getTaskEntityById(task.getTaskId());
-        mDatabase.runInTransaction(() -> mDatabase.taskDao().delete(taskEntity));
-        mTasks.remove(task.getTaskId());
+        TaskEntity taskEntity = database.taskDao().getTaskEntityById(task.getTaskId());
+        database.runInTransaction(() -> database.taskDao().delete(taskEntity));
+        tasks.remove(task.getTaskId());
         group.removeTask(task);
         // Don't update database for this task because it had already been deleted from database
-        task.setCallback(result -> {
-            group.taskFinished();
-        });
+        task.setCallback(result -> group.taskFinished());
         updateGroupInDatabase(group);
     }
 
     public void removeGroup(String groupId) {
-        Group group = mGroups.get(groupId);
+        Group group = groups.get(groupId);
         if (group == null) {
             throw new RuntimeException(String.format("Group %s does not exists", groupId));
         }
         for (String taskId: group.getTaskIds()) removeTask(groupId, getTask(taskId));
 
-        GroupEntity groupEntity = mDatabase.groupDao().getGroupEntityById(group.getGroupId());
-        mDatabase.runInTransaction(() -> mDatabase.groupDao().delete(groupEntity));
+        GroupEntity groupEntity = database.groupDao().getGroupEntityById(group.getGroupId());
+        database.runInTransaction(() -> database.groupDao().delete(groupEntity));
     }
 
     private void addResult(Result result) {
-        mDatabase.runInTransaction(() -> {
-            mDatabase.resultDao().insert(result);
-        });
+        database.runInTransaction(() -> database.resultDao().insert(result));
     }
 
     private void removeResult(Result result) {
-        mDatabase.runInTransaction(() -> {
-            mDatabase.resultDao().delete(result);
-        });
+        database.runInTransaction(() -> database.resultDao().delete(result));
     }
 
     private void updateTaskInDatabase(Task task) {
-        mDatabase.runInTransaction(() -> {
-            TaskEntity taskEntity = mDatabase.taskDao().getTaskEntityById(task.getTaskId());
+        database.runInTransaction(() -> {
+            TaskEntity taskEntity = database.taskDao().getTaskEntityById(task.getTaskId());
             taskEntity.updateTask(task);
-            mDatabase.taskDao().update(taskEntity);
+            database.taskDao().update(taskEntity);
         });
     }
 
     private void updateGroupInDatabase(Group group) {
-        mDatabase.runInTransaction(() -> {
-            GroupEntity groupEntity = mDatabase.groupDao().getGroupEntityById(group.getGroupId());
+        database.runInTransaction(() -> {
+            GroupEntity groupEntity = database.groupDao().getGroupEntityById(group.getGroupId());
             groupEntity.updateGroup(group);
-            mDatabase.groupDao().update(groupEntity);
+            database.groupDao().update(groupEntity);
         });
     }
 
     public List<Task> getTasksByGroupId(String groupId) {
-        Group group = mGroups.get(groupId);
+        Group group = groups.get(groupId);
         if (group == null) {
             return null;
         }
@@ -154,19 +148,19 @@ public class TaskManager {
     }
 
     public Task getTask(String taskId) {
-        return mTasks.get(taskId);
+        return tasks.get(taskId);
     }
 
     public Group getGroup(String groupId) {
-        return mGroups.get(groupId);
+        return groups.get(groupId);
     }
 
     public void executeTaskAsync(String taskId) {
-        Task task = mTasks.get(taskId);
+        Task task = tasks.get(taskId);
         if (task == null) {
             return;
         }
         task.setStatus(TaskStatus.RUNNING);
-        mExecutor.execute(task);
+        executor.execute(task);
     }
 }

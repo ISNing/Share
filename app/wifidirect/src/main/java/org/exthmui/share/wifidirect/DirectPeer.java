@@ -173,7 +173,7 @@ public class DirectPeer extends Peer {
         this.uid = uid;
     }
 
-    @NonNull
+    @Nullable
     @Override
     public String getAccountServerSign() {
         return accountServerSign;
@@ -188,7 +188,7 @@ public class DirectPeer extends Peer {
         if (this == o) return true;
         if (!(o instanceof DirectPeer)) return false;
         DirectPeer that = (DirectPeer) o;
-        return getServerPort() == that.getServerPort() && getUid() == that.getUid() && getWifiP2pDevice().equals(that.getWifiP2pDevice()) && getProtocolVersion().equals(that.getProtocolVersion()) && peerId.equals(that.peerId) && getAccountServerSign().equals(that.getAccountServerSign());
+        return getServerPort() == that.getServerPort() && getUid() == that.getUid() && getWifiP2pDevice().equals(that.getWifiP2pDevice()) && getProtocolVersion().equals(that.getProtocolVersion()) && peerId.equals(that.peerId) && Objects.equals(getAccountServerSign(), that.getAccountServerSign());
     }
 
     @Override
