@@ -1,6 +1,7 @@
 package org.exthmui.share.taskMgr;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
@@ -19,6 +20,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
 public class TaskManager {
+
+    public static final String TAG = "TaskManager";
+
     private static TaskManager instance;
     private final Map<String, Group> groups;
     private final Map<String, Task> tasks;
@@ -40,7 +44,8 @@ public class TaskManager {
                 };
             }
         });
-        database = TaskDatabase.getInstance(context);
+        database = TaskDatabase.getInstance(context.getApplicationContext());
+        Log.w(TAG, "TaskManager initialized");
     }
 
     public static TaskManager getInstance(Context context) {
@@ -57,6 +62,10 @@ public class TaskManager {
         return instance;
     }
 
+    public void addGroup(String groupId) {
+        addGroup(groupId, Integer.MAX_VALUE);
+    }
+
     public void addGroup(String groupId, int maxConcurrentTasks) {
         Group group = new Group(groupId, maxConcurrentTasks);
         groups.put(groupId, group);
@@ -68,7 +77,10 @@ public class TaskManager {
     public void enqueueTask(String groupId, Task task) {
         Group group = groups.get(groupId);
         if (group == null) {
-            throw new RuntimeException(String.format("Group %s does not exists", groupId));
+            Log.w(TAG, String.format("Requested to enqueue the task %s(Id:%s), with group %s not found, " +
+                            "going to add a new group with default configuration.",
+                    task.getClass().getName(), task.getTaskId(), groupId));
+            addGroup(groupId);
         }
         tasks.put(task.getTaskId(), task);
         database.runInTransaction(() -> database.taskDao().insert(new TaskEntity(task, groupId)));
@@ -100,7 +112,11 @@ public class TaskManager {
         tasks.remove(task.getTaskId());
         group.removeTask(task);
         // Don't update database for this task because it had already been deleted from database
-        task.setCallback(result -> group.taskFinished());
+        task.setCallback(result -> {
+            group.taskFinished();
+            Log.d(TAG, String.format("Task %s(Id:%s) has completed, resulted in %s(result id: %s)",
+                    task.getClass().getName(), task.getTaskId(), result.getStatus(), result.getResultId()));
+        });
         updateGroupInDatabase(group);
     }
 
@@ -162,5 +178,6 @@ public class TaskManager {
         }
         task.setStatus(TaskStatus.RUNNING);
         executor.execute(task);
+        Log.d(TAG, String.format("Task %s(Id:%s) has been started", task.getClass().getName(), task.getTaskId()));
     }
 }

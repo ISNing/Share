@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
 
 public abstract class Task implements Runnable {
 
-    public static final String TAG = "TaskManager/Task";
+    public static final String TAG = "Task";
 
     @NonNull
     private final String taskId;
@@ -136,6 +136,7 @@ public abstract class Task implements Runnable {
             Log.e(TAG, String.format("Failed instancing task %s from database: %s", id, e));
             e.printStackTrace();
         }
+        Log.d(TAG, String.format("Task %s(Id:%s) loaded", task.getClass().getName(), task.getTaskId()));
         return task;
     }
 

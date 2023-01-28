@@ -1,5 +1,7 @@
 package org.exthmui.share.taskMgr;
 
+import android.util.Log;
+
 import org.exthmui.share.taskMgr.entities.GroupEntity;
 
 import java.util.ArrayList;
@@ -9,6 +11,9 @@ import java.util.Queue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class Group {
+
+    public static final String TAG = "Group";
+
     private final String groupId;
     private final int maxConcurrentTasks;
     private final AtomicInteger currentRunningTasks;
@@ -79,10 +84,16 @@ public class Group {
             // add task to queue and return
             taskQueue.offer(task);
             task.setStatus(TaskStatus.QUEUED);
+            Log.d(TAG, String.format("The number of tasks running now in group %s had reach the limit, " +
+                            "the new task %s(Id:%s) has been added to the queue",
+                    getGroupId(), task.getClass().getName(), task.getTaskId()));
         } else {
             // execute the task
             currentRunningTasks.getAndIncrement();
-            TaskManager.getInstance().executeTaskAsync(task.getTaskId());
+            executeTask(task.getTaskId());
+            Log.d(TAG, String.format("The number of tasks running now in group %s hasn't reach the limit, " +
+                            "trying to execute the new taske",
+                    getGroupId(), task.getClass().getName(), task.getTaskId()));
         }
     }
 
@@ -91,12 +102,19 @@ public class Group {
         taskIds.remove(task.getTaskId());
     }
 
+    private void executeTask(String taskId) {
+        TaskManager.getInstance().executeTaskAsync(taskId);
+    }
+
     public void taskFinished() {
         currentRunningTasks.getAndDecrement();
         if (currentRunningTasks.get() >= maxConcurrentTasks) {
             Task task = taskQueue.poll();
-            if (task != null)
-                TaskManager.getInstance().executeTaskAsync(task.getTaskId());
+            if (task != null) {
+                executeTask(task.getTaskId());
+                Log.d(TAG, String.format("A task in group %s has completed, requested to execut new task in queue: %s(Id:%s)",
+                        getGroupId(), task.getClass().getName(), task.getTaskId()));
+            }
         }
     }
 
@@ -104,8 +122,12 @@ public class Group {
         GroupEntity groupEntity = database.groupDao().getGroupEntityById(id);
         Group group = new Group(groupEntity);
         for (String taskId : groupEntity.taskIds) {
-            group.addTask(Task.load(database, taskId));
+            Task task = Task.load(database, taskId);
+            group.addTask(task);
+            Log.d(TAG, String.format("Task %s(Id:%s) has been added to group %s",
+                    task.getClass().getName(), task.getTaskId(), group.getGroupId()));
         }
+        Log.d(TAG, String.format("Group %s loaded", group.getGroupId()));
         return group;
     }
 }
