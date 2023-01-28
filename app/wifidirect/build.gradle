@@ -29,12 +29,12 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation "com.google.android.material:material:$rootProject.ext.materialComponentsVersion"
     implementation "androidx.work:work-runtime:$rootProject.ext.workVersion"
+    implementation "androidx.preference:preference:$rootProject.ext.preferenceVersion"
+    implementation 'androidx.lifecycle:lifecycle-process:2.5.1'
 
-    implementation "org.apache.commons:commons-lang3:3.12.0"
+    implementation "org.apache.commons:commons-lang3:$rootProject.ext.apacheCommonsLang3Version"
 
     implementation project(path: ':app:shared')
     implementation project(path: ':app:udptransport')
-    implementation 'androidx.preference:preference:1.2.0'
-    implementation 'androidx.lifecycle:lifecycle-process:2.4.1'
     implementation project(path: ':utils')
 }

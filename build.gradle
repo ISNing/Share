@@ -6,11 +6,15 @@ ext {
     sourceCompatibility = JavaVersion.VERSION_11
     targetCompatibility = JavaVersion.VERSION_11
 
-    appCompatVersion = '1.4.1'
+    appCompatVersion = '1.6.0'
     workVersion = '2.7.1'
-    roomVersion = '2.4.2'
+    roomVersion = '2.5.0'
+    documentFileVersion = '1.0.1'
     livedataVersion = '2.5.1'
-    materialComponentsVersion = '1.5.0'
+    preferenceVersion = '1.2.0'
+    materialComponentsVersion = '1.8.0'
+    gsonVersion = '2.10.1'
+    apacheCommonsLang3Version = '3.12.0'
     appCenterSdkVersion = '4.4.5'
 }
 

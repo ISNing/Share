@@ -30,10 +30,10 @@ dependencies {
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation "androidx.work:work-runtime:$rootProject.ext.workVersion"
     implementation "com.google.android.material:material:$rootProject.ext.materialComponentsVersion"
-    implementation 'androidx.preference:preference:1.2.0'
+    implementation "androidx.preference:preference:$rootProject.ext.preferenceVersion"
 
-    implementation 'com.google.code.gson:gson:2.8.6'
-    implementation 'org.apache.commons:commons-lang3:3.12.0'
+    implementation "com.google.code.gson:gson:$rootProject.ext.gsonVersion"
+    implementation "org.apache.commons:commons-lang3:$rootProject.ext.apacheCommonsLang3Version"
 
     implementation project(path: ':utils')
 }
