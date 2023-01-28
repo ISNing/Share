@@ -19,7 +19,7 @@ android {
             appCenterSecret: properties.getProperty("appCenterSecret")
         ]
 
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -43,8 +43,6 @@ android {
 }
 
 dependencies {
-
-    implementation project(path: ':utils')
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
     implementation "com.microsoft.appcenter:appcenter-analytics:$rootProject.ext.appCenterSdkVersion"
     implementation "com.microsoft.appcenter:appcenter-crashes:$rootProject.ext.appCenterSdkVersion"
@@ -61,4 +59,5 @@ dependencies {
     implementation project(path: ':app:wifidirect')
     implementation project(path: ':app:web')
     implementation project(path: ':app:lannsd')
+    implementation project(path: ':utils')
 }

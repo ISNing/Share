@@ -29,6 +29,4 @@ android {
 dependencies {
     implementation "androidx.room:room-runtime:$rootProject.ext.roomVersion"
     implementation "androidx.lifecycle:lifecycle-livedata-core:$rootProject.ext.livedataVersion"
-
-    implementation project(path: ':app:shared')
 }
