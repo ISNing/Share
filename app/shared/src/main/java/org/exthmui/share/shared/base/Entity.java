@@ -23,8 +23,8 @@ import org.exthmui.share.shared.exceptions.EmptyPathException;
 import org.exthmui.share.shared.exceptions.FailedResolvingUriException;
 import org.exthmui.share.shared.exceptions.FileNotExistsException;
 import org.exthmui.share.shared.exceptions.UnknownUriSchemeException;
-import org.exthmui.share.shared.misc.FileUtils;
 import org.exthmui.share.shared.misc.SenderUtils;
+import org.exthmui.utils.FileUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;

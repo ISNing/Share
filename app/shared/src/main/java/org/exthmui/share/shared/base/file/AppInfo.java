@@ -7,7 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.util.Log;
 
-import org.exthmui.share.shared.misc.StackTraceUtils;
+import org.exthmui.utils.StackTraceUtils;
 
 public class AppInfo {
 

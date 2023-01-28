@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.exceptions.FailedCastingPeerException;
-import org.exthmui.share.shared.listeners.BaseEventListener;
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.util.List;
 import java.util.UUID;

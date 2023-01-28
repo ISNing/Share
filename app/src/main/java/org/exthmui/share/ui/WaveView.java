@@ -18,7 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.misc.PorterDuffUtils;
+import org.exthmui.utils.PorterDuffUtils;
 
 import java.util.ArrayList;
 import java.util.List;

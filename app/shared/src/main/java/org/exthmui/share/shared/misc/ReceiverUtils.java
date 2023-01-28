@@ -36,9 +36,12 @@ import org.exthmui.share.shared.R;
 import org.exthmui.share.shared.base.BaseWorker;
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.ui.AcceptationRequestActivity;
+import org.exthmui.utils.StackTraceUtils;
+import org.exthmui.utils.UriPathUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

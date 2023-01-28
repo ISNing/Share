@@ -1,4 +1,4 @@
-package org.exthmui.share.shared.misc;
+package org.exthmui.utils;
 
 import androidx.annotation.NonNull;
 

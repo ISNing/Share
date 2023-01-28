@@ -20,7 +20,6 @@ import org.exthmui.share.shared.base.results.SilentResult;
 import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;

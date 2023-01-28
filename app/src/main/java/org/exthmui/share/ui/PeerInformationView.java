@@ -14,9 +14,9 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import org.exthmui.share.R;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 public class PeerInformationView extends ConstraintLayout {
 

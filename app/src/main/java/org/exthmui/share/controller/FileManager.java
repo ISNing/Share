@@ -24,8 +24,8 @@ import org.exthmui.share.shared.base.mediastore.Audio;
 import org.exthmui.share.shared.base.mediastore.Image;
 import org.exthmui.share.shared.base.mediastore.Utils;
 import org.exthmui.share.shared.base.mediastore.Video;
-import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.FileUtils;
+import org.exthmui.utils.FileType;
+import org.exthmui.utils.FileUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -215,7 +215,7 @@ public class FileManager {
         if (files != null) {
             for (java.io.File file : files) {
                 String path = file.getAbsolutePath();
-                if (FileUtils.getFileType(path) == Constants.FileType.IMAGE) {
+                if (FileUtils.getFileType(path) == FileType.IMAGE) {
                     imgPaths.add(path);
                 }
             }

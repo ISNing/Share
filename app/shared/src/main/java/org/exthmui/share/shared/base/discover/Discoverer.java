@@ -2,9 +2,9 @@ package org.exthmui.share.shared.base.discover;
 
 import androidx.annotation.NonNull;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
-import org.exthmui.share.shared.listeners.BaseEventListener;
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.util.Map;
 import java.util.Set;

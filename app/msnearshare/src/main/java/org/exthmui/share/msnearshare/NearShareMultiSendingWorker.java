@@ -18,6 +18,7 @@ import com.microsoft.connecteddevices.remotesystems.commanding.nearshare.NearSha
 
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
 import org.exthmui.share.shared.base.send.SendingWorker;
@@ -28,8 +29,7 @@ import org.exthmui.share.shared.exceptions.trans.RejectedException;
 import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
-import org.exthmui.share.shared.misc.StackTraceUtils;
+import org.exthmui.utils.StackTraceUtils;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -8,8 +8,8 @@ import com.google.gson.annotations.SerializedName;
 import com.yanzhenjie.andserver.framework.body.JsonBody;
 import com.yanzhenjie.andserver.http.HttpRequest;
 
-import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.web.exceptions.AbstractApiException;
+import org.exthmui.utils.StackTraceUtils;
 
 import java.util.Locale;
 

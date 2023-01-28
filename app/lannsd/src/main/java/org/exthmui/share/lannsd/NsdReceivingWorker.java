@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.receive.ReceivingWorker;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.base.results.TransmissionResult;
@@ -22,7 +23,6 @@ import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.udptransport.UDPReceiver;
 

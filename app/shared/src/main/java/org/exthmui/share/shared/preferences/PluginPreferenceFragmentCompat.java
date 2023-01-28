@@ -13,7 +13,7 @@ import androidx.preference.PreferenceScreen;
 import androidx.recyclerview.widget.RecyclerView;
 
 import org.exthmui.share.shared.R;
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.services.IDiscoverService;
 import org.exthmui.share.shared.services.IReceiveService;
 

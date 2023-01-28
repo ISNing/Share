@@ -1,9 +1,9 @@
 package org.exthmui.share.lannsd;
 
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_ACCOUNT_SERVER_SIGN;
-import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SERVER_PORT;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DEVICE_TYPE;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_DISPLAY_NAME;
+import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SERVER_PORT;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_SHARE_PROTOCOL_VERSION;
 import static org.exthmui.share.lannsd.Constants.RECORD_KEY_UID;
 import static org.exthmui.share.lannsd.Constants.SHARE_PROTOCOL_VERSION_1;
@@ -16,8 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.Peer;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.net.InetAddress;
 import java.util.Map;

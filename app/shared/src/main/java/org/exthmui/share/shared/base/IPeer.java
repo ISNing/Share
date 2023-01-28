@@ -9,7 +9,6 @@ import androidx.work.WorkInfo;
 
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.List;
 

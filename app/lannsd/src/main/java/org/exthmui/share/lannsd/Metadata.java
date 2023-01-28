@@ -5,11 +5,11 @@ import static org.exthmui.share.shared.misc.Constants.CONNECTION_PRIORITY_LANNSD
 
 import androidx.annotation.NonNull;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.send.Sender;
-import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 public class Metadata implements IConnectionType {

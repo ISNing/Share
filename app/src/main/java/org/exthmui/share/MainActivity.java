@@ -7,8 +7,8 @@ import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
 
 import org.exthmui.share.shared.IShareBroadcastReceiver;
-import org.exthmui.share.shared.misc.ServiceUtils;
 import org.exthmui.share.web.WebServerService;
+import org.exthmui.utils.ServiceUtils;
 
 public class MainActivity extends AppCompatActivity {
     private final ServiceUtils.MyServiceConnection mConnection = new ServiceUtils.MyServiceConnection();

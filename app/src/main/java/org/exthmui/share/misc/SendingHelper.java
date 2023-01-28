@@ -10,14 +10,14 @@ import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.exceptions.FailedInvokingSendingMethodException;
 import org.exthmui.share.shared.exceptions.FailedStartSendingException;
 import org.exthmui.share.shared.exceptions.InvalidSenderException;
-import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.SenderUtils;
-import org.exthmui.share.shared.misc.StackTraceUtils;
+import org.exthmui.utils.StackTraceUtils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

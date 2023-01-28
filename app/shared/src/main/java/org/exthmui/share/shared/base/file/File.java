@@ -11,7 +11,7 @@ import org.exthmui.share.shared.base.mediastore.Audio;
 import org.exthmui.share.shared.base.mediastore.Image;
 import org.exthmui.share.shared.base.mediastore.Media;
 import org.exthmui.share.shared.base.mediastore.Video;
-import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.utils.FileType;
 
 public class File {
     @Nullable
@@ -30,7 +30,7 @@ public class File {
     private int dateAdded;
     @IntRange(from = 0)
     private int dateModified;
-    private int type = Constants.FileType.UNKNOWN.getNumVal();
+    private int type = FileType.UNKNOWN.getNumVal();
 
     @SuppressWarnings("deprecated")
     public File(@NonNull Media media) {

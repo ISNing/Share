@@ -1,8 +1,7 @@
-package org.exthmui.share.shared.misc;
+package org.exthmui.share.shared.base;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.send.Sender;

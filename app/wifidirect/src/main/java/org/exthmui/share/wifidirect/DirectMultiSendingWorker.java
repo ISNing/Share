@@ -7,8 +7,8 @@ import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
 
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.send.SendingWorker;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.io.IOException;
 import java.net.ServerSocket;

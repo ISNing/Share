@@ -6,9 +6,9 @@ import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Objects;
 

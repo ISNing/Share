@@ -22,12 +22,12 @@ import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.TimedOutException;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
-import org.exthmui.share.shared.misc.FileUtils;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
 import org.exthmui.share.udptransport.packets.CommandPacket;
 import org.exthmui.share.udptransport.packets.FilePacket;
 import org.exthmui.share.udptransport.packets.IdentifierPacket;
 import org.exthmui.share.udptransport.packets.ResendRequestPacket;
+import org.exthmui.utils.FileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -311,12 +311,8 @@ public class UDPReceiver {
         }
 
         private void dealWithCommand(String cmd) {
-            switch (cmd) {
-                case (Constants.COMMAND_CANCEL):
-                    remoteCanceled = true;
-                    break;
-                default:
-                    break;
+            if (cmd.equals(Constants.COMMAND_CANCEL)) {
+                remoteCanceled = true;
             }
         }
 

@@ -4,7 +4,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 

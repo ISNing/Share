@@ -7,10 +7,10 @@ import com.microsoft.connecteddevices.remotesystems.RemoteSystem;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemKinds;
 import com.microsoft.connecteddevices.remotesystems.RemoteSystemStatus;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.Peer;
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 
 import java.util.Objects;
 

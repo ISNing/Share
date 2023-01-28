@@ -6,7 +6,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.preferences.IntEditTextPreference;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 

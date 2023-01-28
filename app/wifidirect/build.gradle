@@ -37,4 +37,5 @@ dependencies {
     implementation project(path: ':app:udptransport')
     implementation 'androidx.preference:preference:1.2.0'
     implementation 'androidx.lifecycle:lifecycle-process:2.4.1'
+    implementation project(path: ':utils')
 }

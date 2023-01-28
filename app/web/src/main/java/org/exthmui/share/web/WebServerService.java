@@ -13,7 +13,7 @@ import com.yanzhenjie.andserver.delegate.IOReactorConfigDelegate;
 import com.yanzhenjie.andserver.delegate.ListenerEndpoint;
 import com.yanzhenjie.andserver.http.URIScheme;
 
-import org.exthmui.share.shared.misc.ServiceUtils;
+import org.exthmui.utils.ServiceUtils;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutionException;

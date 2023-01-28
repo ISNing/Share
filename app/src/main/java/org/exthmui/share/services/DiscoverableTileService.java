@@ -11,7 +11,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.R;
-import org.exthmui.share.shared.misc.ServiceUtils;
+import org.exthmui.utils.ServiceUtils;
 
 public class DiscoverableTileService extends TileService {
     public static final String TAG = "DiscoverableTileService";

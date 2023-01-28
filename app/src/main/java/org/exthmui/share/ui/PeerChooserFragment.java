@@ -22,7 +22,7 @@ import com.google.android.material.transition.MaterialFadeThrough;
 
 import org.exthmui.share.R;
 import org.exthmui.share.shared.base.IPeer;
-import org.exthmui.share.shared.misc.CrossFadeUtils;
+import org.exthmui.utils.CrossFadeUtils;
 
 import java.util.Map;
 

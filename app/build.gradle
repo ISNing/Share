@@ -45,6 +45,7 @@ android {
 
 dependencies {
 
+    implementation project(path: ':utils')
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
     implementation "com.microsoft.appcenter:appcenter-analytics:$rootProject.ext.appCenterSdkVersion"
     implementation "com.microsoft.appcenter:appcenter-crashes:$rootProject.ext.appCenterSdkVersion"

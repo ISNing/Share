@@ -3,15 +3,15 @@ package org.exthmui.share.misc;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.receive.Receiver;
 import org.exthmui.share.shared.base.send.Sender;
-import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
 
 public abstract class Constants {
-    public enum ConnectionType implements org.exthmui.share.shared.misc.IConnectionType {
+    public enum ConnectionType implements IConnectionType {
         MSNEARSHARE(new org.exthmui.share.msnearshare.Metadata()),
         WIFIDIRECT(new org.exthmui.share.wifidirect.Metadata()),
         LANNSD(new org.exthmui.share.lannsd.Metadata());

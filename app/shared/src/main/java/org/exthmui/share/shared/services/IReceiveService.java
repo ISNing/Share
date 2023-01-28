@@ -9,7 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import org.exthmui.share.shared.base.receive.Receiver;
-import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.util.Collection;
 import java.util.EventObject;

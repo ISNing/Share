@@ -5,15 +5,20 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.events.ReceiveActionAcceptEvent;
 import org.exthmui.share.shared.events.ReceiveActionRejectEvent;
-import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
-import org.exthmui.share.shared.misc.IConnectionType;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collections;
+import java.util.EventObject;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 
 /**
  * IMPORTANT: Should have a static method "getInstance({@link android.content.Context} context)"

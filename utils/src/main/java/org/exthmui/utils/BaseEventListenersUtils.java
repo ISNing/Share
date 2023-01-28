@@ -1,8 +1,8 @@
-package org.exthmui.share.shared.misc;
+package org.exthmui.utils;
 
 import androidx.annotation.NonNull;
 
-import org.exthmui.share.shared.listeners.BaseEventListener;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;

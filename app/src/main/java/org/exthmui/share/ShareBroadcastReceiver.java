@@ -12,7 +12,7 @@ import androidx.annotation.Nullable;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.ReceiveService;
 import org.exthmui.share.shared.IShareBroadcastReceiver;
-import org.exthmui.share.shared.misc.ServiceUtils;
+import org.exthmui.utils.ServiceUtils;
 
 public class ShareBroadcastReceiver extends BroadcastReceiver implements IShareBroadcastReceiver {
 

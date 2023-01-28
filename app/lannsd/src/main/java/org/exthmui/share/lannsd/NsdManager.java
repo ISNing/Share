@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 
 import org.apache.commons.lang3.StringUtils;
 import org.exthmui.share.shared.base.Entity;
+import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.share.shared.base.discover.Discoverer;
 import org.exthmui.share.shared.base.send.Sender;
@@ -29,7 +30,6 @@ import org.exthmui.share.shared.events.DiscovererStartedEvent;
 import org.exthmui.share.shared.events.DiscovererStoppedEvent;
 import org.exthmui.share.shared.events.PeerAddedEvent;
 import org.exthmui.share.shared.events.PeerRemovedEvent;
-import org.exthmui.share.shared.listeners.BaseEventListener;
 import org.exthmui.share.shared.listeners.OnDiscovererErrorOccurredListener;
 import org.exthmui.share.shared.listeners.OnDiscovererStartedListener;
 import org.exthmui.share.shared.listeners.OnDiscovererStoppedListener;
@@ -37,10 +37,10 @@ import org.exthmui.share.shared.listeners.OnPeerAddedListener;
 import org.exthmui.share.shared.listeners.OnPeerRemovedListener;
 import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
-import org.exthmui.share.shared.misc.BaseEventListenersUtils;
 import org.exthmui.share.shared.misc.Constants;
-import org.exthmui.share.shared.misc.IConnectionType;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.utils.BaseEventListenersUtils;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.util.Collection;
 import java.util.EventObject;

@@ -44,33 +44,6 @@ public abstract class Constants {
     public static final String NOTIFICATION_SERVICE_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.SERVICES";
     public static final String NOTIFICATION_REQUEST_CHANNEL_GROUP_ID = "org.exthmui.share.notification.channel.group.PROGRESSES";
 
-    public enum FileType {
-        UNKNOWN(-1), APK(0), AUDIO(1), CERTIFICATE(2),
-        CODE(3), COMPRESSED(4), CONTACT(5), EVENTS(6),
-        FONT(7), IMAGE(8), PDF(9), PRESENTATION(10),
-        SPREADSHEETS(11), DOCUMENTS(12), TEXT(13), VIDEO(14),
-        ENCRYPTED(15), GIF(16);
-        private final int numVal;
-
-        FileType(int numVal) {
-            this.numVal = numVal;
-        }
-
-        @Nullable
-        public static FileType parse(int numVal) {
-            for (FileType o : FileType.values()) {
-                if (o.getNumVal() == numVal) {
-                    return o;
-                }
-            }
-            return null;
-        }
-
-        public int getNumVal() {
-            return numVal;
-        }
-    }
-
     public enum DeviceType {
         DESKTOP(1, R.string.device_type_desktop, R.drawable.ic_desktop), LAPTOP(2, R.string.device_type_laptop, R.drawable.ic_laptop),
         PHONE(3, R.string.device_type_phone, R.drawable.ic_phone), TABLET(4, R.string.device_type_tablet, R.drawable.ic_tablet),

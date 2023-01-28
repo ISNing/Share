@@ -22,12 +22,12 @@ import org.exthmui.share.shared.exceptions.trans.ReceiverCancelledException;
 import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.TimedOutException;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
-import org.exthmui.share.shared.misc.StackTraceUtils;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
 import org.exthmui.share.udptransport.packets.CommandPacket;
 import org.exthmui.share.udptransport.packets.FilePacket;
 import org.exthmui.share.udptransport.packets.IdentifierPacket;
 import org.exthmui.share.udptransport.packets.ResendRequestPacket;
+import org.exthmui.utils.StackTraceUtils;
 
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
@@ -183,20 +183,16 @@ public class UDPSender {
     }
 
     public void dealWithCommand(String cmd) {
-        switch (cmd) {
-            case (Constants.COMMAND_CANCEL):
-                remoteCanceled = true;
-                break;
-            default:
-                /*
+        if (cmd.equals(Constants.COMMAND_CANCEL)) {
+            remoteCanceled = true;
+        } else {/*
                 e.g. UDP_READY5000:-128
                  */
-                if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {
-                    udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
-                    connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
-                    udpReady = true;
-                }
-                break;
+            if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {
+                udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
+                udpReady = true;
+            }
         }
     }
 

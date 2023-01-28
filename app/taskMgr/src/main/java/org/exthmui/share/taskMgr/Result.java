@@ -7,7 +7,7 @@ import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
 
-import org.exthmui.share.shared.misc.StackTraceUtils;
+import org.exthmui.utils.StackTraceUtils;
 
 import java.util.UUID;
 
