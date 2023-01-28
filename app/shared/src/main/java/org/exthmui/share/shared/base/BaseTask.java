@@ -32,7 +32,7 @@ public abstract class BaseTask extends Task {
 
     private Context mAppContext;
 
-    public BaseTask(Context context, String taskId, Bundle inputData) {
+    public BaseTask(@NonNull Context context, String taskId, Bundle inputData) {
         super(taskId, inputData);
         mAppContext = context.getApplicationContext();
     }

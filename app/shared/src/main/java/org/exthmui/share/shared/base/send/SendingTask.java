@@ -14,7 +14,7 @@ import org.exthmui.share.taskMgr.entities.TaskEntity;
 
 public abstract class SendingTask extends BaseTask {
 
-    public SendingTask(Context context, String taskId, Bundle inputData) {
+    public SendingTask(@NonNull Context context, String taskId, Bundle inputData) {
         super(context, taskId, inputData);
     }
 

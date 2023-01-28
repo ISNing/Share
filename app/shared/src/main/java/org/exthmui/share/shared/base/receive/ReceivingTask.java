@@ -16,14 +16,19 @@ import org.exthmui.share.shared.base.results.SilentResult;
 import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.taskMgr.Result;
+import org.exthmui.share.taskMgr.entities.TaskEntity;
 
 import java.util.List;
 import java.util.Map;
 
 public abstract class ReceivingTask extends BaseTask {
 
-    public ReceivingTask(Context context, String taskId, Bundle inputData) {
+    public ReceivingTask(@NonNull Context context, String taskId, Bundle inputData) {
         super(context, taskId, inputData);
+    }
+
+    public ReceivingTask(@NonNull TaskEntity taskEntity) {
+        super(taskEntity);
     }
 
     @NonNull
