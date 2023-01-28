@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
 import org.exthmui.share.taskMgr.Group;
+import org.exthmui.share.taskMgr.converters.StringListConvertor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,7 @@ public class GroupEntity {
     @ColumnInfo(name = "max_concurrent_tasks")
     public int maxConcurrentTasks;
     @ColumnInfo(name = "task_ids")
+    @TypeConverters(StringListConvertor.class)
     public final List<String> taskIds = new ArrayList<>();
 
     public GroupEntity(@NonNull String groupId, int maxConcurrentTasks, List<String> taskIds) {

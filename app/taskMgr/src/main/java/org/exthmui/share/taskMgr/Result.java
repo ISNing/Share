@@ -2,11 +2,15 @@ package org.exthmui.share.taskMgr;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.RestrictTo;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.Ignore;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
+import org.exthmui.share.taskMgr.converters.BundleConverter;
 import org.exthmui.utils.StackTraceUtils;
 
 import java.util.UUID;
@@ -14,13 +18,15 @@ import java.util.UUID;
 @Entity(tableName = "result")
 public class Result {
     @PrimaryKey
+    @NonNull
     @ColumnInfo(name = "result_id")
     private final String resultId;
 
     @ColumnInfo(name = "status")
     private final Status status;
 
-    @ColumnInfo(name = "status")
+    @ColumnInfo(name = "data")
+    @TypeConverters(BundleConverter.class)
     private final Bundle data;
 
     @Ignore
@@ -44,7 +50,8 @@ public class Result {
         this(UUID.randomUUID().toString(), status, data, error);
     }
 
-    private Result(String resultId, Status status, Bundle data) {
+    @RestrictTo(RestrictTo.Scope.LIBRARY)
+    public Result(@NonNull String resultId, Status status, Bundle data) {
         this.resultId = resultId;
         this.status = status;
         this.data = data;

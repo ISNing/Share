@@ -6,9 +6,11 @@ import androidx.annotation.NonNull;
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import androidx.room.TypeConverters;
 
 import org.exthmui.share.taskMgr.Task;
 import org.exthmui.share.taskMgr.TaskStatus;
+import org.exthmui.share.taskMgr.converters.BundleConverter;
 
 import java.util.concurrent.ExecutionException;
 
@@ -29,12 +31,14 @@ public class TaskEntity {
     private TaskStatus status;
 
     @ColumnInfo(name = "input_data")
+    @TypeConverters(BundleConverter.class)
     private final Bundle inputData;
 
     @ColumnInfo(name = "result_id")
     private String resultId;
 
     @ColumnInfo(name = "progress_data")
+    @TypeConverters(BundleConverter.class)
     private volatile Bundle progressData;
 
     public TaskEntity(@NonNull String taskId, String groupId, String taskType, TaskStatus status, Bundle inputData, String resultId, Bundle progressData) {
