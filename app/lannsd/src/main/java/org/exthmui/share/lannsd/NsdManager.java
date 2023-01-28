@@ -192,8 +192,8 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
 
                 String serviceName = serviceInfo.getServiceName();
 
-                // Ignore self device
-                if (StringUtils.equals(serviceName, NsdUtils.genNsdId(Utils.getSelfId(mContext)))) {
+                // Ignore self device, except for debug build
+                if (StringUtils.equals(serviceName, NsdUtils.genNsdId(Utils.getSelfId(mContext))) && !BuildConfig.DEBUG) {
                     Log.d(TAG, String.format("Found self device: %s, ignoring...", serviceName));
                     return;
                 }
