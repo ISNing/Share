@@ -20,7 +20,7 @@ public abstract class Task implements Runnable {
     @NonNull
     private final String taskId;
     private TaskStatus mStatus;
-    @Nullable
+    @NonNull
     private final Bundle mInputData;
     private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture();
     @Nullable
@@ -32,13 +32,14 @@ public abstract class Task implements Runnable {
 
     public Task(@NonNull String taskId, @Nullable Bundle inputData) {
         this.taskId = taskId;
-        this.mInputData = inputData;
+        this.mInputData = inputData == null ? Bundle.EMPTY : inputData;
         mStatus = TaskStatus.CREATED;
     }
 
     public Task(@NonNull TaskEntity taskEntity) {
         this.taskId = taskEntity.getTaskId();
-        this.mInputData = taskEntity.getInputData();
+        Bundle input = taskEntity.getInputData();
+        this.mInputData = input == null ? Bundle.EMPTY : input;
         this.mStatus = taskEntity.getStatus();
         // Result will be loaded by TaskManager
     }
@@ -83,7 +84,7 @@ public abstract class Task implements Runnable {
         return mProgressDataLive;
     }
 
-    @Nullable
+    @NonNull
     public Bundle getInputData() {
         return mInputData;
     }
