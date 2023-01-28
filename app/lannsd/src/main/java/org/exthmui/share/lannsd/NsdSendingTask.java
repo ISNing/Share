@@ -4,11 +4,11 @@ import static org.exthmui.share.lannsd.Constants.SHARE_PROTOCOL_VERSION_1;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.NonNull;
-import androidx.work.WorkerParameters;
 
 import org.exthmui.share.lannsd.exceptions.FailedResolvingPeerException;
 import org.exthmui.share.shared.base.Entity;
@@ -16,7 +16,7 @@ import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.IConnectionType;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.base.send.ReceiverInfo;
-import org.exthmui.share.shared.base.send.SendingWorker;
+import org.exthmui.share.shared.base.send.SendingTask;
 import org.exthmui.share.shared.exceptions.trans.FileIOErrorException;
 import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
 import org.exthmui.share.shared.exceptions.trans.PeerDisappearedException;
@@ -26,6 +26,8 @@ import org.exthmui.share.shared.exceptions.trans.SenderCancelledException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.taskMgr.Result;
+import org.exthmui.share.taskMgr.entities.TaskEntity;
 import org.exthmui.share.udptransport.UDPSender;
 import org.exthmui.utils.StackTraceUtils;
 
@@ -36,12 +38,16 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class NsdMultiSendingWorker extends SendingWorker {
+public class NsdSendingTask extends SendingTask {
 
-    public static final String TAG = "NsdMultiSendingWorker";
+    public static final String TAG = "NsdSendingTask";
 
-    public NsdMultiSendingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
+    public NsdSendingTask(@NonNull Context context, Bundle inputData) {
+        super(context, inputData);
+    }
+
+    public NsdSendingTask(@NonNull TaskEntity taskEntity) {
+        super(taskEntity);
     }
 
     @NonNull
@@ -133,7 +139,7 @@ public class NsdMultiSendingWorker extends SendingWorker {
             public void onProgressUpdate(int status, long totalBytesToSend, long bytesSent,
                                          String curFileId, long curFileBytesToSend, long curFileBytesSent) {
                 updateProgress(status, totalBytesToSend, bytesSent, fileInfos, receiverInfo,
-                        curFileId, curFileBytesToSend, curFileBytesSent);
+                        curFileId, curFileBytesToSend, curFileBytesSent, totalBytesToSend == 0);
             }
 
             @Override
@@ -160,16 +166,10 @@ public class NsdMultiSendingWorker extends SendingWorker {
 
         while (result.get() == null) {
             // Check if user cancelled
-            if (getForegroundInfoAsync().isCancelled()) {
+            if (isCancelled()) {
                 sender.cancel();
             }
         }
         return result.get();
-    }
-
-    @Override
-    public void onStopped() {
-        super.onStopped();
-        getForegroundInfoAsync().cancel(true);
     }
 }

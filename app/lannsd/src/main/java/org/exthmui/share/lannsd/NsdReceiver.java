@@ -17,18 +17,13 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.util.Pair;
-import androidx.work.Data;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
-import androidx.work.WorkInfo;
-import androidx.work.WorkManager;
 
 import com.google.gson.Gson;
 
@@ -49,6 +44,9 @@ import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.taskMgr.Task;
+import org.exthmui.share.taskMgr.TaskManager;
+import org.exthmui.share.taskMgr.TaskStatus;
 import org.exthmui.share.udptransport.UDPReceiver;
 import org.exthmui.utils.BaseEventListenersUtils;
 import org.exthmui.utils.StackTraceUtils;
@@ -67,7 +65,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 public class NsdReceiver implements Receiver {
 
@@ -99,7 +96,7 @@ public class NsdReceiver implements Receiver {
     private boolean mReceiverStarted;
     private boolean mInitialized;
 
-    private List<UUID> mWorkUUIDs;
+    private List<String> mTaskIds;
 
     private UDPReceiver mUdpReceiver;
 
@@ -186,7 +183,7 @@ public class NsdReceiver implements Receiver {
         int serverPortTcp = NsdUtils.getServerPortTcp(mContext);
         int serverPortUdp = NsdUtils.getServerPortUdp(mContext);
         boolean md5ValidationEnabled = NsdUtils.isMd5ValidationEnabled(mContext);
-        mWorkUUIDs = new ArrayList<>();
+        mTaskIds = new ArrayList<>();
         try {
             mUdpReceiver = new UDPReceiver(mContext, fileInfo -> {
                 Pair<Uri, BufferedOutputStream> p = ReceiverUtils.openFileOutputStream(mContext, fileInfo.getFileName());
@@ -323,32 +320,27 @@ public class NsdReceiver implements Receiver {
             Log.e(TAG, "Got invalid connection id from properties when to start work, ignoring");
             throw new IllegalArgumentException(); // TODO
         }
-        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NsdReceivingWorker.class)
-                .setInputData(new Data.Builder().putByte(WORKER_INPUT_KEY_CONN_ID, connId).build())
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .build();
-        WorkManager.getInstance(context).enqueueUniqueWork(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), ExistingWorkPolicy.REPLACE, work);
-        mWorkUUIDs.add(work.getId());
-        return work.getId();
+        Bundle input = new Bundle();
+        input.putByte(WORKER_INPUT_KEY_CONN_ID, connId);
+        NsdReceivingTask task = new NsdReceivingTask(mContext, input);
+        TaskManager.getInstance(mContext).enqueueTask(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), task);
+        mTaskIds.add(task.getTaskId());
+        return UUID.fromString(task.getTaskId());
     }
 
     @Override
     public void stopReceive() {
-        try {
-            boolean workerRunning = false;
-            for (UUID workId : mWorkUUIDs) {
-               WorkInfo info = WorkManager.getInstance(mContext).getWorkInfoById(workId).get();
-                if (info == null) return;
-                if (!info.getState().isFinished()) {
-                    workerRunning = true;
-                    break;
-                }
+        boolean workerRunning = false;
+        for (String taskId : mTaskIds) {
+            Task task = TaskManager.getInstance(mContext).getTask(taskId);
+            if (task == null) return;
+            if (task.getStatus() == TaskStatus.RUNNING) {
+                workerRunning = true;
+                break;
             }
-            if (!workerRunning && mUdpReceiver != null) mUdpReceiver.stopReceive();
-            notifyListeners(new ReceiverStoppedEvent(this));
-        } catch (@NonNull ExecutionException | InterruptedException e) {
-            e.printStackTrace();
         }
+        if (!workerRunning && mUdpReceiver != null) mUdpReceiver.stopReceive();
+        notifyListeners(new ReceiverStoppedEvent(this));
 
         if (mServiceInfo == null) return;
         try {

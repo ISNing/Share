@@ -28,7 +28,6 @@ dependencies {
 
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation "com.google.android.material:material:$rootProject.ext.materialComponentsVersion"
-    implementation "androidx.work:work-runtime:$rootProject.ext.workVersion"
 
     implementation "androidx.preference:preference:$rootProject.ext.preferenceVersion"
 
@@ -38,4 +37,5 @@ dependencies {
     implementation project(path: ':app:shared')
     implementation project(path: ':app:udptransport')
     implementation project(path: ':utils')
+    implementation project(path: ':app:taskMgr')
 }

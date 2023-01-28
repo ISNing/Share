@@ -12,10 +12,6 @@ import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
-import androidx.work.ExistingWorkPolicy;
-import androidx.work.OneTimeWorkRequest;
-import androidx.work.OutOfQuotaPolicy;
-import androidx.work.WorkManager;
 
 import com.google.gson.Gson;
 
@@ -39,6 +35,7 @@ import org.exthmui.share.shared.listeners.OnPeerUpdatedListener;
 import org.exthmui.share.shared.listeners.OnSenderErrorOccurredListener;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.taskMgr.TaskManager;
 import org.exthmui.utils.BaseEventListenersUtils;
 import org.exthmui.utils.listeners.BaseEventListener;
 
@@ -133,12 +130,9 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
     @NonNull
     @Override
     public UUID send(@NonNull NsdPeer peer, @NonNull List<Entity> entities) {
-        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(NsdMultiSendingWorker.class)
-                .setInputData(genSendingInputData(peer, entities))
-                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-                .build();
-        WorkManager.getInstance(mContext).enqueueUniqueWork(Constants.WORK_NAME_PREFIX_SEND + peer.getId() + work.hashCode(), ExistingWorkPolicy.KEEP, work);
-        return work.getId();
+        NsdSendingTask task = new NsdSendingTask(mContext, genSendingInputDataBundle(peer, entities));
+        TaskManager.getInstance(mContext).enqueueTask(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), task);
+        return UUID.fromString(task.getTaskId());
     }
 
     @Override

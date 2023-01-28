@@ -1,21 +1,16 @@
 package org.exthmui.share.lannsd;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
+import android.os.Bundle;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.work.Data;
-import androidx.work.WorkerParameters;
-import androidx.work.impl.utils.futures.SettableFuture;
-
-import com.google.gson.Gson;
 
 import org.exthmui.share.shared.base.Entity;
 import org.exthmui.share.shared.base.FileInfo;
 import org.exthmui.share.shared.base.IConnectionType;
-import org.exthmui.share.shared.base.receive.ReceivingWorker;
+import org.exthmui.share.shared.base.receive.ReceivingTask;
 import org.exthmui.share.shared.base.receive.SenderInfo;
 import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.InvalidInputDataException;
@@ -24,6 +19,7 @@ import org.exthmui.share.shared.listeners.OnReceiveActionAcceptListener;
 import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.ReceiverUtils;
+import org.exthmui.share.taskMgr.Result;
 import org.exthmui.share.udptransport.UDPReceiver;
 
 import java.net.ServerSocket;
@@ -36,14 +32,12 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class NsdReceivingWorker extends ReceivingWorker {
+public class NsdReceivingTask extends ReceivingTask {
 
-    public static final String TAG = "NsdReceivingWorker";
+    public static final String TAG = "NsdReceivingTask";
 
-    private static final Gson GSON = new Gson();
-
-    public NsdReceivingWorker(@NonNull Context context, @NonNull WorkerParameters workerParams) {
-        super(context, workerParams);
+    public NsdReceivingTask(Context context, Bundle inputData) {
+        super(context, inputData);
     }
 
     @NonNull
@@ -64,9 +58,8 @@ public class NsdReceivingWorker extends ReceivingWorker {
         final AtomicReference<Boolean> completed = new AtomicReference<>(false);
         final AtomicReference<TransmissionResult> generalResult = new AtomicReference<>(null);
         final AtomicReference<Map<String, TransmissionResult>> resultMap = new AtomicReference<>(null);
-        @SuppressLint("RestrictedApi") final SettableFuture<Boolean> isAccepted = SettableFuture.create();
 
-        Data input = getInputData();
+        Bundle input = getInputData();
         byte connId = input.getByte(org.exthmui.share.lannsd.Constants.WORKER_INPUT_KEY_CONN_ID, (byte) 0);
         if (connId == 0)
             return genFailureResult(new InvalidInputDataException(getApplicationContext()), null);
@@ -95,8 +88,8 @@ public class NsdReceivingWorker extends ReceivingWorker {
                     idsAccepted.complete(Collections.emptySet());
                 });
                 ReceiverUtils.requestAcceptation(getApplicationContext(),
-                        Constants.CONNECTION_CODE_LANNSD, getId().toString(), senderInfo,
-                        fileInfos, getId().hashCode());
+                        Constants.CONNECTION_CODE_LANNSD, getTaskId(), senderInfo,
+                        fileInfos, getTaskId().hashCode());
             }
 
             @Override
@@ -105,7 +98,7 @@ public class NsdReceivingWorker extends ReceivingWorker {
                                          @NonNull FileInfo[] fileInfos, String curFileId,
                                          long curFileBytesToSend, long curFileBytesReceived) {
                 updateProgress(status, totalBytesToSend, bytesReceived, fileInfos, senderInfo,
-                        curFileId, curFileBytesToSend, curFileBytesReceived);
+                        curFileId, curFileBytesToSend, curFileBytesReceived, totalBytesToSend == 0);
             }
 
             @Override
@@ -118,7 +111,7 @@ public class NsdReceivingWorker extends ReceivingWorker {
 
         while (!completed.get()) {
             // Check if user cancelled
-            if (getForegroundInfoAsync().isCancelled()) {
+            if (isCancelled()) {
                 Log.d(TAG, "User cancelled receiving file");
                 handler.cancel();
             }
@@ -136,11 +129,5 @@ public class NsdReceivingWorker extends ReceivingWorker {
             entities.add(nsdReceiver.getEntity(fileInfo.getId()));
         }
         return genSuccessResult(handler.getSenderInfo(), entities);
-    }
-
-    @Override
-    public void onStopped() {
-        super.onStopped();
-        getForegroundInfoAsync().cancel(true);//TODO
     }
 }
