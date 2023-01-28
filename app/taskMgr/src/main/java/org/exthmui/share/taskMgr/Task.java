@@ -97,10 +97,10 @@ public abstract class Task implements Runnable {
             try {
                 setResult(doWork());
             } catch (Throwable error) {
-                setResult(new Result.Error(error));
+                setResult(Result.failure(error));
             }
         } else {
-            setResult(new Result.Cancelled());
+            setResult(Result.cancelled());
         }
     }
 

@@ -73,37 +73,31 @@ public class Result {
         return data;
     }
 
-    public static class Success extends Result {
-        public Success(Bundle data) {
-            super(Status.SUCCESS, data);
-        }
+    public static Result success(Bundle data) {
+        return new Result(Status.SUCCESS, data);
     }
 
-    public static class Error extends Result {
-        public Error() {
-            super(Status.ERROR, null);
-        }
-
-        public Error(Throwable error) {
-            super(Status.ERROR, null, error);
-        }
-
-        public Error(Bundle data) {
-            super(Status.ERROR, data);
-        }
-
-        public Error(Bundle data, Throwable error) {
-            super(Status.ERROR, data, error);
-        }
+    public static Result failure() {
+        return new Result(Status.ERROR, null);
     }
 
-    public static class Cancelled extends Result {
-        public Cancelled() {
-            super(Status.CANCELLED, null);
-        }
-        public Cancelled(Bundle data) {
-            super(Status.CANCELLED, data);
-        }
+    public static Result failure(Throwable error) {
+        return new Result(Status.ERROR, null, error);
+    }
+
+    public static Result failure(Bundle data) {
+        return new Result(Status.ERROR, data);
+    }
+
+    public static Result failure(Bundle data, Throwable error) {
+        return new Result(Status.ERROR, data, error);
+    }
+
+    public static Result cancelled() {
+        return new Result(Status.CANCELLED, null);
+    }
+    public static Result cancelled(Bundle data) {
+        return new Result(Status.CANCELLED, data);
     }
 
     public static Result load(TaskDatabase database, String id) {
