@@ -1,6 +1,7 @@
 package org.exthmui.share.shared.base.send;
 
 import android.content.Context;
+import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.work.Data;
@@ -58,5 +59,14 @@ public interface Sender<T extends IPeer> {
                 .putString(TARGET_PEER_ID, peer.getId())
                 .putString(TARGET_PEER_NAME, peer.getDisplayName())
                 .build();
+    }
+
+    @NonNull
+    default Bundle genSendingInputDataBundle(@NonNull IPeer peer, @NonNull List<Entity> entities) {
+        Bundle bundle = new Bundle();
+        bundle.putStringArray(Entity.ENTITIES, Entity.entitiesToStrings(entities.toArray(new Entity[0])));
+        bundle.putString(TARGET_PEER_ID, peer.getId());
+        bundle.putString(TARGET_PEER_NAME, peer.getDisplayName());
+        return bundle;
     }
 }
