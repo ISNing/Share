@@ -25,7 +25,6 @@ public abstract class Task implements Runnable {
     private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture();
     @Nullable
     private Callback mCallback;
-    private volatile boolean isCancelled = false;
     @Nullable
     private volatile Bundle mProgressData;
 
@@ -88,12 +87,12 @@ public abstract class Task implements Runnable {
     }
 
     public final boolean isCancelled() {
-        return isCancelled;
+        return mStatus == TaskStatus.CANCELLED;
     }
 
     @Override
     public final void run() {
-        if (!isCancelled) {
+        if (!isCancelled()) {
             try {
                 setResult(doWork());
             } catch (Throwable error) {
@@ -107,7 +106,7 @@ public abstract class Task implements Runnable {
     public abstract Result doWork();
 
     public void cancel() {
-        isCancelled = true;
+        mStatus = TaskStatus.CANCELLED;
         mResultFuture.internalCancel(true);
     }
 
