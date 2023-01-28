@@ -15,6 +15,7 @@ import org.exthmui.share.taskMgr.Task;
 import org.exthmui.share.taskMgr.entities.TaskEntity;
 
 import java.util.Map;
+import java.util.UUID;
 
 public abstract class BaseTask extends Task {
     public static final String STATUS_CODE = "STATUS_CODE";
@@ -32,8 +33,8 @@ public abstract class BaseTask extends Task {
 
     private Context mAppContext;
 
-    public BaseTask(@NonNull Context context, String taskId, Bundle inputData) {
-        super(taskId, inputData);
+    public BaseTask(@NonNull Context context, Bundle inputData) {
+        super(UUID.randomUUID().toString(), inputData);
         mAppContext = context.getApplicationContext();
     }
 

@@ -23,8 +23,8 @@ import java.util.Map;
 
 public abstract class ReceivingTask extends BaseTask {
 
-    public ReceivingTask(@NonNull Context context, String taskId, Bundle inputData) {
-        super(context, taskId, inputData);
+    public ReceivingTask(@NonNull Context context, Bundle inputData) {
+        super(context, inputData);
     }
 
     public ReceivingTask(@NonNull TaskEntity taskEntity) {
