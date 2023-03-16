@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 
 import org.exthmui.share.taskMgr.entities.GroupEntity;
 import org.exthmui.share.taskMgr.entities.TaskEntity;
+import org.exthmui.share.taskMgr.listeners.OnProgressUpdatedListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -122,7 +123,7 @@ public class TaskManager {
             } catch (InterruptedException ignored) {
             }
         }
-        task.getProgressDataLiveData().observeForever(ignored -> updateTaskInDatabase(task));
+        task.registerListener((OnProgressUpdatedListener) event -> updateTaskInDatabase(task));
         Log.d(TAG, String.format("Adding task %s to group %s", task.getTaskId(), groupId));
         group.enqueueTask(task, result -> {
             updateTaskInDatabase(task);
