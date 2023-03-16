@@ -8,14 +8,27 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.MutableLiveData;
 
 import org.exthmui.share.taskMgr.entities.TaskEntity;
+import org.exthmui.share.taskMgr.events.ProgressUpdatedEvent;
+import org.exthmui.share.taskMgr.listeners.OnProgressUpdatedListener;
+import org.exthmui.utils.BaseEventListenersUtils;
+import org.exthmui.utils.listeners.BaseEventListener;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.Collection;
+import java.util.EventObject;
+import java.util.HashSet;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public abstract class Task implements Runnable {
 
     public static final String TAG = "Task";
+
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
+            {
+                    OnProgressUpdatedListener.class
+            };
 
     @NonNull
     private final String taskId;
@@ -29,6 +42,22 @@ public abstract class Task implements Runnable {
     private volatile Bundle mProgressData;
 
     private final MutableLiveData<Bundle> mProgressDataLive = new MutableLiveData<>(mProgressData);
+
+    private final Collection<BaseEventListener> mListeners = new HashSet<>();
+
+    private void notifyListeners(@NonNull EventObject event) {
+        BaseEventListenersUtils.notifyListeners(event, mListeners);
+    }
+
+    public void registerListener(@NonNull BaseEventListener listener) {
+        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+            mListeners.add(listener);
+    }
+
+    public void unregisterListener(BaseEventListener listener) {
+        mListeners.remove(listener);
+    }
+
 
     public Task(@NonNull String taskId, @Nullable Bundle inputData) {
         this.taskId = taskId;
@@ -122,6 +151,7 @@ public abstract class Task implements Runnable {
     protected final void updateProgress(Bundle progressData) {
         mProgressData = progressData;
         mProgressDataLive.postValue(progressData);
+        notifyListeners(new ProgressUpdatedEvent(this, progressData));
     }
 
     public static Task load(TaskDatabase database, String id) {
