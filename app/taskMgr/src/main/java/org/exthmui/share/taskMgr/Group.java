@@ -118,8 +118,7 @@ public class Group {
         }
     }
 
-    public static Group load(TaskDatabase database, String id) {
-        GroupEntity groupEntity = database.groupDao().getGroupEntityById(id);
+    public static Group load(TaskDatabase database, GroupEntity groupEntity) {
         Group group = new Group(groupEntity);
         for (String taskId : groupEntity.taskIds) {
             Task task = Task.load(database, taskId);
@@ -129,5 +128,10 @@ public class Group {
         }
         Log.d(TAG, String.format("Group %s loaded", group.getGroupId()));
         return group;
+    }
+
+    public static Group load(TaskDatabase database, String id) {
+        GroupEntity groupEntity = database.groupDao().getGroupEntityById(id);
+        return load(database, groupEntity);
     }
 }
