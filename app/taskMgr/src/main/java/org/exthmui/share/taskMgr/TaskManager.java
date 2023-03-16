@@ -87,15 +87,40 @@ public class TaskManager {
     }
 
     public void enqueueTask(String groupId, Task task) {
-        Group group = groups.get(groupId);
-        if (group == null) {
+        Group g;
+        synchronized (groupsLoaded) {
+            try {
+                if (!groupsLoaded) groupsLoaded.wait();
+            } catch (InterruptedException ignored) {
+            }
+        }
+        g = groups.get(groupId);
+        if (g == null) {
             Log.w(TAG, String.format("Requested to enqueue the task %s(Id:%s), with group %s not found, " +
                             "going to add a new group with default configuration.",
                     task.getClass().getName(), task.getTaskId(), groupId));
             addGroup(groupId);
+            g = groups.get(groupId);
+            if (g == null) {
+                Log.e(TAG, String.format("Failed to add group %s", groupId));
+                return;
+            }
         }
+        final Group group = g;
         tasks.put(task.getTaskId(), task);
-        database.runInDatabaseThread(() -> database.taskDao().insert(new TaskEntity(task, groupId)));
+        Object lock = new Object();
+        database.runInDatabaseThread(() -> {
+            synchronized (lock) {
+                database.taskDao().insert(new TaskEntity(task, groupId));
+                lock.notify();
+            }
+        });
+        synchronized (lock) {
+            try {
+                lock.wait();
+            } catch (InterruptedException ignored) {
+            }
+        }
         task.getProgressDataLiveData().observeForever(ignored -> updateTaskInDatabase(task));
         group.addTask(task, result -> {
             updateTaskInDatabase(task);
