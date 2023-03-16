@@ -82,6 +82,7 @@ public class TaskManager {
         Group group = new Group(groupId, maxConcurrentTasks);
         groups.put(groupId, group);
         GroupEntity groupEntity = new GroupEntity(group);
+        Log.d(TAG, String.format("Adding group %s", groupId));
 
         database.runInDatabaseThread(() -> database.groupDao().insert(groupEntity));
     }
@@ -122,9 +123,11 @@ public class TaskManager {
             }
         }
         task.getProgressDataLiveData().observeForever(ignored -> updateTaskInDatabase(task));
+        Log.d(TAG, String.format("Adding task %s to group %s", task.getTaskId(), groupId));
         group.addTask(task, result -> {
             updateTaskInDatabase(task);
             addResult(result);
+            Log.d(TAG, String.format("Task %s of group %s finished", task.getTaskId(), groupId));
             group.taskFinished();
         });
         updateGroupInDatabase(group);
