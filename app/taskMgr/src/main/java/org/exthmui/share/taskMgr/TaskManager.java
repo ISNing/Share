@@ -29,6 +29,8 @@ public class TaskManager {
     private final Executor executor;
     private final TaskDatabase database;
 
+    public Boolean groupsLoaded = false;
+
     private TaskManager(@NonNull Context context) {
         groups = new HashMap<>();
         tasks = new HashMap<>();
@@ -45,6 +47,16 @@ public class TaskManager {
             }
         });
         database = TaskDatabase.getInstance(context.getApplicationContext());
+        database.runInDatabaseThread(() -> {
+            List<GroupEntity> groupEntities = database.groupDao().getAllGroupEntities();
+            for (GroupEntity groupEntity : groupEntities)
+                groups.put(groupEntity.groupId, Group.load(database, groupEntity));
+            Log.w(TAG, "Groups loaded");
+            synchronized (groupsLoaded) {
+                groupsLoaded.notifyAll();
+            }
+            groupsLoaded = true;
+        });
         Log.w(TAG, "TaskManager initialized");
     }
 
