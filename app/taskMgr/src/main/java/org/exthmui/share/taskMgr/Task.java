@@ -157,12 +157,12 @@ public abstract class Task implements Runnable {
             task = (Task) Class.forName(taskEntity.getTaskType()).getConstructor(TaskEntity.class).newInstance(taskEntity);
             Result result = Result.load(database, taskEntity.getResultId());
             if (result != null) task.mResultFuture.complete(result);
+            Log.d(TAG, String.format("Task %s(Id:%s) loaded", task.getClass().getName(), task.getTaskId()));
         } catch (IllegalAccessException | InstantiationException | InvocationTargetException |
                  NoSuchMethodException | ClassNotFoundException e) {
             Log.e(TAG, String.format("Failed instancing task %s from database: %s", id, e));
             e.printStackTrace();
         }
-        Log.d(TAG, String.format("Task %s(Id:%s) loaded", task.getClass().getName(), task.getTaskId()));
         return task;
     }
 
