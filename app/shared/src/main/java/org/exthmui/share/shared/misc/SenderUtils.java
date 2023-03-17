@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.format.Formatter;
 
 import androidx.annotation.NonNull;
@@ -143,8 +144,67 @@ public abstract class SenderUtils {
         return builder.build();
     }
 
+
+    @NonNull
+    public static Notification buildSendingSucceededNotification(@NonNull Context context, @NonNull Bundle output) {
+        createProgressNotificationChannel(context);
+
+        String receiverName = output.getString(Sender.TARGET_PEER_NAME);
+        String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
+        long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
+
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
+
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_succeeded, fileNames == null ? 1 : fileNames.length, receiverName);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_succeeded, fileNames == null ? 1 : fileNames.length, fileNameStr, fileNames == null ? 1 : fileNames.length);
+        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_sending_succeeded, fileNames == null ? 1 : fileNames.length, fileNameStr);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setAutoCancel(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
+                .setSmallIcon(R.drawable.ic_notification_success);
+
+        if (bigText != null)
+            builder.setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText));
+        return builder.build();
+    }
+
     @NonNull
     public static Notification buildSendingFailedNotification(@NonNull Context context, @NonNull Data output) {
+        createProgressNotificationChannel(context);
+
+        int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.ERROR.getNumVal());
+        String message = output.getString(BaseWorker.F_MESSAGE);
+        String localizedMessage = output.getString(BaseWorker.F_LOCALIZED_MESSAGE);
+
+        String receiverName = output.getString(Sender.TARGET_PEER_NAME);
+        String[] fileNames = output.getStringArray(Entity.FILE_NAMES);
+        long[] fileSizes = output.getLongArray(Entity.FILE_SIZES);
+
+        String fileNameStr = Utils.genFileInfosStr(context, fileNames, fileSizes);
+
+        String title = context.getResources().getQuantityString(R.plurals.notification_title_sending_failed, fileNames == null ? 1 : fileNames.length, receiverName);
+        String text = context.getResources().getQuantityString(R.plurals.notification_text_sending_failed, fileNames == null ? 1 : fileNames.length, localizedMessage);
+        String bigText = context.getResources().getQuantityString(R.plurals.notification_text_expanded_sending_failed, fileNames == null ? 1 : fileNames.length, localizedMessage, fileNameStr);
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, SEND_PROGRESS_CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(text)
+                .setAutoCancel(true)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setOnlyAlertOnce(true)
+                .setSmallIcon(R.drawable.ic_notification_failed);
+
+        if (bigText != null)
+            builder.setStyle(new NotificationCompat.BigTextStyle().setSummaryText(text).bigText(bigText));
+        return builder.build();
+    }
+
+    @NonNull
+    public static Notification buildSendingFailedNotification(@NonNull Context context, @NonNull Bundle output) {
         createProgressNotificationChannel(context);
 
         int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.ERROR.getNumVal());

@@ -17,6 +17,9 @@ import org.exthmui.share.shared.exceptions.FailedInvokingSendingMethodException;
 import org.exthmui.share.shared.exceptions.FailedStartSendingException;
 import org.exthmui.share.shared.exceptions.InvalidSenderException;
 import org.exthmui.share.shared.misc.SenderUtils;
+import org.exthmui.share.taskMgr.Result;
+import org.exthmui.share.taskMgr.TaskManager;
+import org.exthmui.share.taskMgr.listeners.OnResultListener;
 import org.exthmui.utils.StackTraceUtils;
 
 import java.lang.reflect.InvocationTargetException;
@@ -29,12 +32,15 @@ public class SendingHelper {
     @NonNull
     private final Context mContext;
     @NonNull
+    private final TaskManager mTaskManager;
+    @NonNull
     private final WorkManager mWorkManager;
 
     public static final String TAG = "SendingHelper";
 
     public SendingHelper(@NonNull Context context) {
         mContext = context.getApplicationContext();
+        mTaskManager = TaskManager.getInstance(mContext);
         mWorkManager = WorkManager.getInstance(mContext);
     }
 
@@ -49,6 +55,20 @@ public class SendingHelper {
                 throw new InvalidSenderException(mContext);
             }
             UUID workId = sender.sendToPeerInfo(mContext, target, entities);
+            mTaskManager.getTask(workId.toString()).registerListener((OnResultListener) event -> {
+                Result result = event.getResult();
+                if (result.getStatus() == Result.Status.SUCCESS) {
+                    Notification notification =
+                            SenderUtils.buildSendingSucceededNotification(mContext, result.getData());
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
+                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                } else if (result.getStatus() == Result.Status.ERROR) {
+                    Notification notification =
+                            SenderUtils.buildSendingFailedNotification(mContext, result.getData());
+                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
+                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                }
+            });
             mWorkManager.getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
                 if (workInfo == null) return;
                 if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
