@@ -19,7 +19,6 @@ android {
             appCenterSecret: properties.getProperty("appCenterSecret")
         ]
 
-        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
