@@ -8,6 +8,7 @@ import androidx.annotation.NonNull;
 import org.exthmui.share.taskMgr.entities.GroupEntity;
 import org.exthmui.share.taskMgr.entities.TaskEntity;
 import org.exthmui.share.taskMgr.listeners.OnProgressUpdatedListener;
+import org.exthmui.share.taskMgr.listeners.OnResultListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,9 +126,10 @@ public class TaskManager {
         }
         task.registerListener((OnProgressUpdatedListener) event -> updateTaskInDatabase(task));
         Log.d(TAG, String.format("Adding task %s to group %s", task.getTaskId(), groupId));
-        group.enqueueTask(task, result -> {
+        group.enqueueTask(task);
+        task.registerListener((OnResultListener)  event -> {
             updateTaskInDatabase(task);
-            addResult(result);
+            addResult(event.getResult());
             Log.d(TAG, String.format("Task %s of group %s finished", task.getTaskId(), groupId));
             group.taskFinished();
         });
@@ -152,10 +154,10 @@ public class TaskManager {
         tasks.remove(task.getTaskId());
         group.removeTask(task);
         // Don't update database for this task because it had already been deleted from database
-        task.setCallback(result -> {
+        task.registerListener((OnResultListener) event -> {
             group.taskFinished();
             Log.d(TAG, String.format("Task %s(Id:%s) has completed, resulted in %s(result id: %s)",
-                    task.getClass().getName(), task.getTaskId(), result.getStatus(), result.getResultId()));
+                    task.getClass().getName(), task.getTaskId(), event.getResult().getStatus(), event.getResult().getResultId()));
         });
         updateGroupInDatabase(group);
     }

@@ -56,19 +56,13 @@ public class Group {
         return new ArrayList<>(taskIds);
     }
 
-    public void addTask(Task task) {
-        addTask(task, null);
-    }
-
     /**
      * Just add task to the list, but not to execute it
      * @param task Task object to be added
-     * @param callback callback for task execution
      */
-    public void addTask(Task task, Task.Callback callback) {
+    public void addTask(Task task) {
         if (taskIds.contains(task.getTaskId())) return;
         taskIds.add(task.getTaskId());
-        task.setCallback(callback);
     }
 
     /**
@@ -76,10 +70,9 @@ public class Group {
      * @param task Task object to be enqueued
      *             ATTENTION: NEVER enqueue the task that had been added or enqueued before, it will
      *             be ignored, you should reconstruct a new Task object with different id
-     * @param callback callback for task execution
      */
-    public void enqueueTask(Task task, Task.Callback callback) {
-        addTask(task, callback);
+    public void enqueueTask(Task task) {
+        addTask(task);
         if (currentRunningTasks.get() > maxConcurrentTasks) {
             // add task to queue and return
             taskQueue.offer(task);

@@ -9,7 +9,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import org.exthmui.share.taskMgr.entities.TaskEntity;
 import org.exthmui.share.taskMgr.events.ProgressUpdatedEvent;
+import org.exthmui.share.taskMgr.events.ResultEvent;
 import org.exthmui.share.taskMgr.listeners.OnProgressUpdatedListener;
+import org.exthmui.share.taskMgr.listeners.OnResultListener;
 import org.exthmui.utils.BaseEventListenersUtils;
 import org.exthmui.utils.listeners.BaseEventListener;
 
@@ -27,7 +29,8 @@ public abstract class Task implements Runnable {
     @SuppressWarnings("unchecked")
     private static final Class<? extends BaseEventListener>[] LISTENER_TYPES_ALLOWED = (Class<? extends BaseEventListener>[]) new Class<?>[]
             {
-                    OnProgressUpdatedListener.class
+                    OnProgressUpdatedListener.class,
+                    OnResultListener.class
             };
 
     @NonNull
@@ -36,8 +39,6 @@ public abstract class Task implements Runnable {
     @NonNull
     private final Bundle mInputData;
     private final InternalCancelCompletableFuture<Result> mResultFuture = new InternalCancelCompletableFuture<>();
-    @Nullable
-    private Callback mCallback;
     @Nullable
     private volatile Bundle mProgressData;
 
@@ -96,12 +97,7 @@ public abstract class Task implements Runnable {
                 setStatus(TaskStatus.CANCELLED);
                 break;
         }
-        if (mCallback != null) {
-            mCallback.onResult(result);
-        }
-    }
-    public final void setCallback(@Nullable Callback callback) {
-        mCallback = callback;
+        notifyListeners(new ResultEvent(this, result));
     }
 
     @Nullable
@@ -180,9 +176,5 @@ public abstract class Task implements Runnable {
         private void internalCancel(boolean mayInterruptIfRunning) {
             super.cancel(mayInterruptIfRunning);
         }
-    }
-
-    public interface Callback {
-        void onResult(Result data);
     }
 }
