@@ -254,20 +254,20 @@ public class DirectReceivingWorker extends ReceivingWorker {
 //            socketToClient.close();
 //            socketToClient = null;
 //        } catch (SocketTimeoutException e) {
-//            Log.i(TAG, e.getMessage());
+//            Log.i(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
 //            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
 //            return genFailureResult(new TimedOutException(getApplicationContext(), e), senderInfo, fileInfos);
 //        } catch (@NonNull ErrnoException | FileNotFoundException e) {
-//            Log.i(TAG, e.getMessage());
+//            Log.i(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
 //            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
 //            return genFailureResult(new FileIOErrorException(getApplicationContext(), e), senderInfo, fileInfos);
 //        } catch (@NonNull IOException | ExecutionException | InterruptedException | ClassNotFoundException e) {
-//            Log.i(TAG, e.getMessage());
+//            Log.i(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
 //            Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
 //            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileInfos);
 //        } catch (@NonNull UnrecoverableKeyException | CertificateException | KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
 //            Log.e(TAG, "To Developer: Check your SSL configuration!!!!!!");
-//            Log.e(TAG, e.getMessage());
+//            Log.i(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
 //            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
 //            return genFailureResult(new UnknownErrorException(getApplicationContext(), e), senderInfo, fileInfos);
 //        } finally {

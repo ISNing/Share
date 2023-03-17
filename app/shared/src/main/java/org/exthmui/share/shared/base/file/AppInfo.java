@@ -208,7 +208,7 @@ public class AppInfo {
                 sizes[i] = file.length();
             } catch (Exception e) {
                 Log.e(TAG, String.format("Failed loading sourceDir: %s", sourceDirs[i]));
-                Log.e(TAG, e.getMessage());
+                Log.e(TAG, String.format("Error occurred while loading sourceDir: %s(message: %s)", e, e.getMessage()));
                 Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             }
         }

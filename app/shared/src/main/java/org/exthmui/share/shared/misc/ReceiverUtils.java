@@ -313,7 +313,7 @@ public abstract class ReceiverUtils {
             try {
                 os = context.getContentResolver().openOutputStream(file.getUri());
             } catch (FileNotFoundException e) {
-                Log.w(TAG, e.getMessage());
+                Log.e(TAG, String.format("Error occurred while opening FileOutputStream: %s(message: %s)", e, e.getMessage()));
                 Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
                 return null;
             }
@@ -327,7 +327,7 @@ public abstract class ReceiverUtils {
             try {
                 fos = new FileOutputStream(file);
             } catch (FileNotFoundException e) {
-                Log.w(TAG, e.getMessage());
+                Log.e(TAG, String.format("Error occurred while FileOutputStream: %s(message: %s)", e, e.getMessage()));
                 Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
                 return null;
             }

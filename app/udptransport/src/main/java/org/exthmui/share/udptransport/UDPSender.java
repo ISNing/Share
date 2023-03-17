@@ -211,7 +211,7 @@ public class UDPSender {
             try {
                 send(entities, fileInfos, sender, tcpAddress);
             } catch (Throwable tr) {
-                Log.e(TAG, tr.getMessage());
+                Log.e(TAG, String.format("Error occured while sending: %s(message: %s)", tr, tr.getMessage()));
                 Log.e(TAG, StackTraceUtils.getStackTraceString(tr.getStackTrace()));
                 listener.onComplete(
                         org.exthmui.share.shared.misc.Constants.TransmissionStatus.ERROR.getNumVal(),

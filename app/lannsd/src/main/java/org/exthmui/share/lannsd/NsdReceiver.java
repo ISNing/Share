@@ -212,7 +212,7 @@ public class NsdReceiver implements Receiver {
             String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_initialize_failed, e.getLocalizedMessage());
             notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
             Log.e(TAG, message);
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return;
         }
@@ -298,7 +298,7 @@ public class NsdReceiver implements Receiver {
             String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_start_failed, e.getLocalizedMessage());
             notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
             Log.e(TAG, message);
-            Log.e(TAG, e.getMessage());
+            Log.e(TAG, String.format("Error occurred while starting receiver: %s(message: %s)", e, e.getMessage()));
             Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
             return;
         }

@@ -159,7 +159,7 @@ public class NsdSendingTask extends SendingTask {
         try {
             sender.initialize();
         } catch (SocketException e) {
-            Log.w(TAG, e.getMessage());
+            Log.e(TAG, String.format("Error occurred while sending: %s(message: %s)", e, e.getMessage()));
             Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
         }
         sender.sendAsync(entities, fileInfos, senderInfo, new InetSocketAddress(peer[0].getAddress(), serverPort));
