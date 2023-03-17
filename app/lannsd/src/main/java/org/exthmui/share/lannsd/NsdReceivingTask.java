@@ -20,6 +20,7 @@ import org.exthmui.share.shared.listeners.OnReceiveActionRejectListener;
 import org.exthmui.share.shared.misc.Constants;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.taskMgr.Result;
+import org.exthmui.share.taskMgr.entities.TaskEntity;
 import org.exthmui.share.udptransport.UDPReceiver;
 
 import java.net.ServerSocket;
@@ -38,6 +39,10 @@ public class NsdReceivingTask extends ReceivingTask {
 
     public NsdReceivingTask(Context context, Bundle inputData) {
         super(context, inputData);
+    }
+
+    public NsdReceivingTask(@NonNull TaskEntity taskEntity) {
+        super(taskEntity);
     }
 
     @NonNull
