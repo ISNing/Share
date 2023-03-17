@@ -51,6 +51,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CompletableFuture;
@@ -281,6 +282,10 @@ public class UDPReceiver {
                         cmd = in.readUTF();
                         dealWithCommand(cmd);
                     } catch (EOFException ignored) {
+                    } catch (SocketException e) {
+                        // Ignore socket closing
+                        if (!Objects.equals(e.getMessage(), "Socket closed"))
+                            e.printStackTrace();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

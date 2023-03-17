@@ -110,6 +110,10 @@ public class UDPSender {
                 cmd = in.readUTF();
                 dealWithCommand(cmd);
             } catch (EOFException ignored) {
+            } catch (SocketException e) {
+                // Ignore socket closing
+                if (!Objects.equals(e.getMessage(), "Socket closed"))
+                    e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -122,6 +126,10 @@ public class UDPSender {
                 if (!packetReceived.isDone())
                     packetReceived.complete(packet);
                 else packetsBlocked.add(packet);
+            } catch (SocketException e) {
+                // Ignore socket closing
+                if (!Objects.equals(e.getMessage(), "Socket closed"))
+                    e.printStackTrace();
             } catch (IOException e) {
                 e.printStackTrace();
             }
