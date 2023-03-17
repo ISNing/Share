@@ -28,7 +28,7 @@ import java.util.Map;
 
 public class PeerChooserFragment extends Fragment {
 
-    public static final String TAG = "PeerChooserView";
+    public static final String TAG = "PeerChooserFragment";
 
     private ViewGroup mScanningPlaceholder;
     private ViewGroup mNonScanningPlaceholder;
