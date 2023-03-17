@@ -85,7 +85,7 @@ public class Group {
             currentRunningTasks.getAndIncrement();
             executeTask(task.getTaskId());
             Log.d(TAG, String.format("The number of tasks running now in group %s hasn't reach the limit, " +
-                            "trying to execute the new taske",
+                            "trying to execute the new task %s(Id:%s)",
                     getGroupId(), task.getClass().getName(), task.getTaskId()));
         }
     }
