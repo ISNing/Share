@@ -111,4 +111,13 @@ public class Result {
         Result result = database.resultDao().getResultByTaskId(id);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "resultId='" + resultId + '\'' +
+                ", status=" + status +
+                ", data=" + data +
+                '}';
+    }
 }

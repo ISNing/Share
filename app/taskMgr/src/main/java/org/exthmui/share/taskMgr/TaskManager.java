@@ -128,9 +128,14 @@ public class TaskManager {
         Log.d(TAG, String.format("Adding task %s to group %s", task.getTaskId(), groupId));
         group.enqueueTask(task);
         task.registerListener((OnResultListener)  event -> {
-            updateTaskInDatabase(task);
-            addResult(event.getResult());
-            Log.d(TAG, String.format("Task %s of group %s finished", task.getTaskId(), groupId));
+            Log.d(TAG, String.format("Task %s(Id:%s) of group %s has completed: %s",
+                    task.getClass().getName(), task.getTaskId(), groupId, event.getResult()));
+            if (tasks.containsValue(task)) {
+                updateTaskInDatabase(task);
+                addResult(event.getResult());
+            } else Log.d(TAG, String.format("Task %s(Id:%s) of group %s has been deleted so it will not be " +
+                            "updated and it's result will not be inserted into database",
+                        task.getClass().getName(), task.getTaskId(), groupId));
             group.taskFinished();
         });
         updateGroupInDatabase(group);
@@ -153,12 +158,6 @@ public class TaskManager {
         database.runInDatabaseThread(() -> database.taskDao().delete(taskEntity));
         tasks.remove(task.getTaskId());
         group.removeTask(task);
-        // Don't update database for this task because it had already been deleted from database
-        task.registerListener((OnResultListener) event -> {
-            group.taskFinished();
-            Log.d(TAG, String.format("Task %s(Id:%s) has completed, resulted in %s(result id: %s)",
-                    task.getClass().getName(), task.getTaskId(), event.getResult().getStatus(), event.getResult().getResultId()));
-        });
         updateGroupInDatabase(group);
     }
 
