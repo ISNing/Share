@@ -196,8 +196,8 @@ public class BadgeHelper extends View {
                 android.R.integer.config_shortAnimTime);
         if (!mIsViewBound) setVisibility(enabled?VISIBLE:INVISIBLE);
         else {
-            if (enabled && getVisibility() != VISIBLE) CrossFadeUtils.fadeIn(this, duration);
-            else if (!enabled && getVisibility() == VISIBLE) CrossFadeUtils.fadeOut(this, duration);
+            if (enabled && getVisibility() != VISIBLE) CrossFadeUtils.fadeIn(this, duration).start();
+            else if (!enabled && getVisibility() == VISIBLE) CrossFadeUtils.fadeOut(this, duration).start();
         }
         return this;
     }

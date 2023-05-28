@@ -112,24 +112,24 @@ public class PeerChooserFragment extends Fragment {
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                });
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration);
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration);
+                }).start();
+                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
+                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
 
-                CrossFadeUtils.fadeIn(mRecyclerView, duration);
+                CrossFadeUtils.fadeIn(mRecyclerView, duration).start();
                 break;
             case PeerChooserView.STATE_ENABLED_NO_PEER:
                 mState = state;
-                CrossFadeUtils.fadeOut(mRecyclerView, duration);
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration);
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration);
+                CrossFadeUtils.fadeOut(mRecyclerView, duration).start();
+                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
+                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
 
                 CrossFadeUtils.fadeIn(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.startWave();
                     }
-                });
+                }).start();
                 break;
             case PeerChooserView.STATE_DISABLED:
                 mState = state;
@@ -139,23 +139,23 @@ public class PeerChooserFragment extends Fragment {
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                });
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration);
+                }).start();
+                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
 
-                CrossFadeUtils.fadeIn(mNonScanningPlaceholder, duration);
+                CrossFadeUtils.fadeIn(mNonScanningPlaceholder, duration).start();
                 break;
             case PeerChooserView.STATE_UNAVAILABLE:
                 mState = state;
-                CrossFadeUtils.fadeOut(mRecyclerView, duration);
+                CrossFadeUtils.fadeOut(mRecyclerView, duration).start();
                 CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                });
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration);
+                }).start();
+                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
 
-                CrossFadeUtils.fadeIn(mUnavailablePlaceholder, duration);
+                CrossFadeUtils.fadeIn(mUnavailablePlaceholder, duration).start();
                 break;
             default:
                 Log.e(TAG, String.format("Unknown state: %d", state));
