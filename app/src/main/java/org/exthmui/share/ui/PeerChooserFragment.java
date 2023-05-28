@@ -111,6 +111,7 @@ public class PeerChooserFragment extends Fragment {
     }
 
     void setState(@PeerChooserView.State int state) {
+        Log.d(TAG, String.format("State has been set to %d", state));
         if (mState == state && !stateFlag) return;
         stateFlag = false;
         if (!isAdded()) {

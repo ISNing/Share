@@ -166,6 +166,7 @@ public class PeerChooserView extends FrameLayout {
      *              {@link #STATE_UNAVAILABLE}
      */
     public void setState(@PublicState int state) {
+        Log.d(TAG, String.format("State has been set to %d", state));
         setStateInternal(state);
     }
 
