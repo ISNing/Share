@@ -323,7 +323,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
                     "ignoring stopping request", discoverer.getConnectionType().getCode()));
             return;
         }
-        discoverer.startDiscover();
+        discoverer.stopDiscover();
     }
 
     @Override
