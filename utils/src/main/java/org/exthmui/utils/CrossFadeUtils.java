@@ -6,8 +6,10 @@ import android.view.View;
 import android.view.ViewPropertyAnimator;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.UiThread;
 
 public abstract class CrossFadeUtils {
+    @UiThread
     public static ViewPropertyAnimator fadeIn(@NonNull View view, long duration, Animator.AnimatorListener listener) {
         view.setAlpha(0f);
         view.setVisibility(View.VISIBLE);
@@ -18,6 +20,7 @@ public abstract class CrossFadeUtils {
                 .setListener(listener);
     }
 
+    @UiThread
     public static ViewPropertyAnimator fadeOut(@NonNull View view, long duration, Animator.AnimatorListener listener) {
         return view.animate()
                 .alpha(0f)
