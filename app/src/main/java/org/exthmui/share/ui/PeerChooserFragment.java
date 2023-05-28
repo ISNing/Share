@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.widget.Button;
 
 import androidx.annotation.NonNull;
@@ -24,7 +25,9 @@ import org.exthmui.share.R;
 import org.exthmui.share.shared.base.IPeer;
 import org.exthmui.utils.CrossFadeUtils;
 
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class PeerChooserFragment extends Fragment {
 
@@ -38,6 +41,8 @@ public class PeerChooserFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private final PeersAdapter mAdapter = new PeersAdapter();
 
+    private final Set<ViewPropertyAnimator> mRunningAnimators = new HashSet<>();
+
     @Nullable
     private View.OnClickListener mEnableButtonOnClickListener;
 
@@ -47,6 +52,18 @@ public class PeerChooserFragment extends Fragment {
     private boolean stateFlag = false;
 
     public PeerChooserFragment() {
+    }
+
+    private void startAllAnimator() {
+        for (ViewPropertyAnimator animator: mRunningAnimators) {
+            animator.start();
+        }
+    }
+
+    private void cancelAllAnimator() {
+        for (ViewPropertyAnimator animator: mRunningAnimators) {
+            animator.cancel();
+        }
     }
 
     @Override
@@ -102,64 +119,77 @@ public class PeerChooserFragment extends Fragment {
         }
         long duration = getResources().getInteger(
                 android.R.integer.config_shortAnimTime);
+        requireActivity().runOnUiThread(() -> {
         switch (state) {
             case PeerChooserView.STATE_NOT_INITIALIZED:
                 break;
             case PeerChooserView.STATE_ENABLED:
                 mState = state;
-                CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
+                cancelAllAnimator();
+                mRunningAnimators.clear();
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                }).start();
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
+                }));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration));
 
-                CrossFadeUtils.fadeIn(mRecyclerView, duration).start();
+                mRunningAnimators.add(CrossFadeUtils.fadeIn(mRecyclerView, duration));
+                startAllAnimator();
                 break;
             case PeerChooserView.STATE_ENABLED_NO_PEER:
                 mState = state;
-                CrossFadeUtils.fadeOut(mRecyclerView, duration).start();
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
+                cancelAllAnimator();
+                mRunningAnimators.clear();
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mRecyclerView, duration));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration));
 
-                CrossFadeUtils.fadeIn(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
+                mRunningAnimators.add(CrossFadeUtils.fadeIn(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.startWave();
                     }
-                }).start();
+                }));
+                startAllAnimator();
                 break;
             case PeerChooserView.STATE_DISABLED:
                 mState = state;
-                CrossFadeUtils.fadeOut(mRecyclerView, duration);
-                CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
+                cancelAllAnimator();
+                mRunningAnimators.clear();
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mRecyclerView, duration));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                }).start();
-                CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration).start();
+                }));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mUnavailablePlaceholder, duration));
 
-                CrossFadeUtils.fadeIn(mNonScanningPlaceholder, duration).start();
+                mRunningAnimators.add(CrossFadeUtils.fadeIn(mNonScanningPlaceholder, duration));
+                startAllAnimator();
                 break;
             case PeerChooserView.STATE_UNAVAILABLE:
                 mState = state;
-                CrossFadeUtils.fadeOut(mRecyclerView, duration).start();
-                CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
+                cancelAllAnimator();
+                mRunningAnimators.clear();
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mRecyclerView, duration));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mScanningPlaceholder, duration, new AnimatorListenerAdapter() {
                     @Override
                     public void onAnimationEnd(Animator animation) {
                         mWaveView.stopWave();
                     }
-                }).start();
-                CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration).start();
+                }));
+                mRunningAnimators.add(CrossFadeUtils.fadeOut(mNonScanningPlaceholder, duration));
 
-                CrossFadeUtils.fadeIn(mUnavailablePlaceholder, duration).start();
+                mRunningAnimators.add(CrossFadeUtils.fadeIn(mUnavailablePlaceholder, duration));
+                startAllAnimator();
                 break;
             default:
                 Log.e(TAG, String.format("Unknown state: %d", state));
-        }
+        }});
     }
 
     void setData(Map<String, IPeer> peers) {
