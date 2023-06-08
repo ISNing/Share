@@ -38,6 +38,7 @@ android {
             excludes += ['META-INF/DEPENDENCIES']
         }
     }
+    namespace 'org.exthmui.share'
 
 }
 

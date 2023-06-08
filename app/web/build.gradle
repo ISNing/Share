@@ -33,6 +33,7 @@ android {
         sourceCompatibility rootProject.ext.sourceCompatibility
         targetCompatibility rootProject.ext.targetCompatibility
     }
+    namespace 'org.exthmui.share.web'
 }
 
 dependencies {
