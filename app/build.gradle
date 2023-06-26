@@ -44,8 +44,8 @@ android {
 
 dependencies {
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
-    implementation "com.microsoft.appcenter:appcenter-analytics:$rootProject.ext.appCenterSdkVersion"
-    implementation "com.microsoft.appcenter:appcenter-crashes:$rootProject.ext.appCenterSdkVersion"
+//    implementation "com.microsoft.appcenter:appcenter-analytics:$rootProject.ext.appCenterSdkVersion"
+//    implementation "com.microsoft.appcenter:appcenter-crashes:$rootProject.ext.appCenterSdkVersion"
 
     implementation "androidx.appcompat:appcompat:$rootProject.ext.appCompatVersion"
     implementation "com.google.android.material:material:$rootProject.ext.materialComponentsVersion"
