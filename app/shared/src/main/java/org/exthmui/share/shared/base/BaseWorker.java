@@ -6,7 +6,6 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.Data;
 import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
@@ -20,6 +19,7 @@ import org.exthmui.share.shared.base.results.SilentResult;
 import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.NotificationUtils;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
@@ -111,9 +111,7 @@ public abstract class BaseWorker extends Worker {
 
     private void setForegroundInfo(@NonNull ForegroundInfo foregroundInfo) {
         this.foregroundInfo.set(foregroundInfo);
-        NotificationManagerCompat notificationManager =
-                NotificationManagerCompat.from(getApplicationContext());
-        notificationManager.notify(getNotificationId(), foregroundInfo.getNotification());
+        NotificationUtils.postNotificationDirect(getApplicationContext(), getNotificationId(), foregroundInfo.getNotification());
     }
 
     @NonNull
@@ -202,7 +200,6 @@ public abstract class BaseWorker extends Worker {
     @Override
     public void onStopped() {
         super.onStopped();
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(getApplicationContext());
-        notificationManager.cancel(getNotificationId());
+        NotificationUtils.cancelNotificationDirect(getApplicationContext(), getNotificationId());
     }
 }

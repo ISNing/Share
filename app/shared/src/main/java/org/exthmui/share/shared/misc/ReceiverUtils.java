@@ -25,7 +25,6 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.util.Pair;
 import androidx.documentfile.provider.DocumentFile;
 import androidx.work.Data;
@@ -169,8 +168,7 @@ public abstract class ReceiverUtils {
                 .addAction(R.drawable.ic_action_reject, context.getString(R.string.notification_action_reject),
                         buildRejectPendingIntent(context, pluginCode, requestId, notificationId));
 
-        NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-        notificationManager.notify(notificationId, builder.build());
+        NotificationUtils.postNotification(context, notificationId, builder.build());
     }
 
     public static void startRequestActivity(@NonNull Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {

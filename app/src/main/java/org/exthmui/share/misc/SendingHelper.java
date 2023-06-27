@@ -5,7 +5,6 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 
@@ -16,6 +15,7 @@ import org.exthmui.share.shared.base.send.Sender;
 import org.exthmui.share.shared.exceptions.FailedInvokingSendingMethodException;
 import org.exthmui.share.shared.exceptions.FailedStartSendingException;
 import org.exthmui.share.shared.exceptions.InvalidSenderException;
+import org.exthmui.share.shared.misc.NotificationUtils;
 import org.exthmui.share.shared.misc.SenderUtils;
 import org.exthmui.share.taskMgr.Result;
 import org.exthmui.share.taskMgr.TaskManager;
@@ -60,13 +60,11 @@ public class SendingHelper {
                 if (result.getStatus() == Result.Status.SUCCESS) {
                     Notification notification =
                             SenderUtils.buildSendingSucceededNotification(mContext, result.getData());
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
-                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                    NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
                 } else if (result.getStatus() == Result.Status.ERROR) {
                     Notification notification =
                             SenderUtils.buildSendingFailedNotification(mContext, result.getData());
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
-                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                    NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
                 }
             });
             mWorkManager.getWorkInfoByIdLiveData(workId).observeForever(workInfo -> {
@@ -74,13 +72,11 @@ public class SendingHelper {
                 if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
                     Notification notification =
                             SenderUtils.buildSendingSucceededNotification(mContext, workInfo.getOutputData());
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
-                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                    NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
                 } else if (workInfo.getState() == WorkInfo.State.FAILED) {
                     Notification notification =
                             SenderUtils.buildSendingFailedNotification(mContext, workInfo.getOutputData());
-                    NotificationManagerCompat notificationManager = NotificationManagerCompat.from(mContext);
-                    notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+                    NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
                 }
             });
             return workId;

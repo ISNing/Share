@@ -2,9 +2,11 @@ package org.exthmui.share;
 
 import static android.content.Context.BIND_AUTO_CREATE;
 
+import android.Manifest;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.text.InputFilter;
@@ -21,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.preference.EditTextPreference;
 import androidx.preference.MultiSelectListPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -28,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import org.exthmui.share.misc.Constants;
 import org.exthmui.share.services.DiscoverService;
 import org.exthmui.share.services.ReceiveService;
+import org.exthmui.share.shared.misc.NotificationUtils;
 import org.exthmui.share.shared.misc.Utils;
 import org.exthmui.share.shared.preferences.ClickableStringPreference;
 import org.exthmui.share.shared.preferences.PluginPreferenceFragmentCompat;
@@ -49,8 +53,11 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
 
     @Nullable
     ClickableStringPreference mDestinationDirectoryPrefs;
+    @Nullable
+    Preference mGrantNotificationPermissionPrefs;
 
     ActivityResultLauncher<?> mDestinationDirectoryActivityResultLauncher;
+    ActivityResultLauncher<String> mNotificationPermGrantingActivityResultLauncher;
 
     @NonNull
     public String buildSummaryForPluginsEnabledPrefs(@Nullable Collection<String> codes) {
@@ -86,7 +93,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         Constants.ConnectionType[] types = Constants.ConnectionType.values();
         String[] entries = new String[types.length];
         String[] codes = new String[types.length];
-        for (int i=0;i < types.length; i++) {
+        for (int i=0; i < types.length; i++) {
             entries[i] = types[i].getFriendlyName();
             codes[i] = types[i].getCode();
         }
@@ -221,7 +228,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                 String deviceName = Utils.getDeviceNameOnBoard(requireContext());
                 if (deviceName.length() > org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH)
                     deviceName = deviceName.substring(0,
-                        org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH);
+                            org.exthmui.share.shared.misc.Constants.DISPLAY_NAME_LENGTH);
                 deviceNamePrefs.setSummary(deviceName);
                 return true;
             }
@@ -248,13 +255,45 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
             peerIdPrefs.setValue(Utils.genPeerId());
         if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
             peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
+
+        checkNotificationPermission();
+    }
+
+    public void removeNotificationGrantingPrefs() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && mGrantNotificationPermissionPrefs != null) {
+            getPreferenceScreen().removePreference(mGrantNotificationPermissionPrefs);
+            mGrantNotificationPermissionPrefs = null;
+        }
+    }
+
+    public void checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (!NotificationUtils.isPermissionGranted(requireContext())) {
+                mGrantNotificationPermissionPrefs = new Preference(requireContext());
+                mGrantNotificationPermissionPrefs.setTitle(R.string.prefs_title_global_permissions_not_granted_notification);
+                mGrantNotificationPermissionPrefs.setSummary(R.string.prefs_summary_global_permissions_not_granted_notification);
+                mGrantNotificationPermissionPrefs.setOnPreferenceClickListener(preference -> {
+                    mNotificationPermGrantingActivityResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+                    return true;
+                });
+                getPreferenceScreen().addPreference(mGrantNotificationPermissionPrefs);
+            } else removeNotificationGrantingPrefs();
+        }
     }
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mDestinationDirectoryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocumentTree(), uri -> {
-            if (mDestinationDirectoryPrefs != null) mDestinationDirectoryPrefs.setValue(uri == null ? "" : uri.toString());
+            if (mDestinationDirectoryPrefs != null)
+                mDestinationDirectoryPrefs.setValue(uri == null ? "" : uri.toString());
+        });
+        mNotificationPermGrantingActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), result -> {
+            if (result) {
+                removeNotificationGrantingPrefs();
+                NotificationUtils.notifyPermissionGranted(requireContext());
+            } else
+                Toast.makeText(requireContext(), getString(R.string.toast_notification_perm_not_granted), Toast.LENGTH_SHORT).show();
         });
     }
 }

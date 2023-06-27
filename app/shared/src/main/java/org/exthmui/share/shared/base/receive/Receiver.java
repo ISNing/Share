@@ -77,13 +77,11 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
 //            if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
 //                Notification notification =
 //                        ReceiverUtils.buildReceivingSucceededNotification(context, workInfo.getOutputData());
-//                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-//                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+//                NotificationUtils.postNotification(context, notificationId, notification);
 //            } else if (workInfo.getState() == WorkInfo.State.FAILED) {
 //                Notification notification =
 //                        ReceiverUtils.buildReceivingFailedNotification(context, workInfo.getOutputData());
-//                NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-//                notificationManager.notify(UUID.randomUUID().hashCode(), notification);
+//                NotificationUtils.postNotification(context, notificationId, notification);
 //            }
 //        });TODO
         return workId;

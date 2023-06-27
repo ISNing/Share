@@ -36,6 +36,9 @@
     <string name="prefs_title_global_use_saf">Use SAF</string>
     <string name="prefs_summary_global_use_saf">Whether to use SAF framework(May cause performance problem)</string>
 
+    <string name="prefs_title_global_permissions_not_granted_notification" formatted="true">Grant permissions for posting notifications</string>
+    <string name="prefs_summary_global_permissions_not_granted_notification">Touch here to grant for permission for posting notifications</string>
+
     <string name="prefs_title_global_permissions_not_granted_discover" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Discover)</string>
     <string name="prefs_summary_global_permissions_not_granted_discover">Touch here to grant for permission for sending/discovering</string>
     <string name="prefs_title_global_permissions_not_granted_receive" formatted="true">Grant permissions for <xliff:g id="plugin_friendly_name" example="WiFi Direct">%1$s</xliff:g>(Receive)</string>
@@ -227,4 +230,6 @@
     <string name="error_failed_casting_peer">Failed casting peer</string>
     <string name="error_peer_disappeared">Peer disappeared</string>
     <string name="error_invalid_sender">Invalid sender</string>
+
+    <string name="toast_notification_perm_not_granted" formatted="true" tools:ignore="UnusedResources">Warning: You will not be able to be noticed when others share something with you.</string>
 </resources>
