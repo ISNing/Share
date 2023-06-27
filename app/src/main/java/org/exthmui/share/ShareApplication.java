@@ -1,7 +1,8 @@
 package org.exthmui.share;
 
 import android.app.Application;
-import android.content.pm.PackageManager;
+
+import com.google.android.material.color.DynamicColors;
 
 //import com.microsoft.appcenter.AppCenter;
 //import com.microsoft.appcenter.analytics.Analytics;
@@ -11,6 +12,7 @@ public class ShareApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        DynamicColors.applyToActivitiesIfAvailable(this);
 //        try {
 //            AppCenter.start(this, getPackageManager()
 //                            .getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA)
