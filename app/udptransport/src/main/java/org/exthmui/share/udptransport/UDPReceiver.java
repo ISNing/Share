@@ -6,7 +6,6 @@ import android.util.Pair;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.RestrictTo;
 
 import com.google.gson.Gson;
 
@@ -38,9 +37,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Type;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -60,7 +58,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 public class UDPReceiver {
     public static final String TAG = "UDPReceiver";
@@ -85,7 +82,7 @@ public class UDPReceiver {
     @Nullable
     private ServerSocket serverSocket;
     @Nullable
-    private DatagramSocket datagramSocket;
+    private UDPUtil udpUtil;
 
     private boolean commandWatcherStopFlag;
     private boolean isRunning;
@@ -100,22 +97,6 @@ public class UDPReceiver {
             3, 1L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
     private final Runnable connectionWatcher;
-    private final Runnable packetInterceptor = () -> {
-        while (udpReady) {
-            try {
-                CommandPacket packet = receivePacket(new CommandPacket(new DatagramPacket(new byte[Constants.BUF_LEN_MAX_HI], Constants.BUF_LEN_MAX_HI)));
-                ConnectionHandler handler = CONN_ID_HANDLER_MAP.get(packet.getConnId());
-                if (handler != null) {
-                    if (!handler.packetReceived.isDone())
-                        handler.packetReceived.complete(packet);
-                    else handler.packetsBlocked.add(packet);
-                } else Log.e(TAG, String.format("Packet with connection id %d received, but no " +
-                        "correspond handler found", packet.getConnId()));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    };
 
     public UDPReceiver(@NonNull Context context, @NonNull OutputStreamFactory outputStreamFactory, @NonNull InputStreamFactory inputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
                        int serverPortUdp, boolean lazyInit, boolean validateMd5) throws IOException {
@@ -135,8 +116,10 @@ public class UDPReceiver {
                     for (int i = Byte.MIN_VALUE; i <= Byte.MAX_VALUE; i++)
                         if (i != 0 /* 0 is a invalid connection id*/ && !CONN_ID_HANDLER_MAP.containsKey((byte) i)) {
                             assert serverSocket != null;
-                            ConnectionHandler handler = new ConnectionHandler((byte) i,
-                                    serverSocket.accept());
+                            Socket socket = serverSocket.accept();
+                            assert udpUtil != null;
+                            udpUtil.addHandler(context, (byte) i);
+                            ConnectionHandler handler = new ConnectionHandler((byte) i, socket);
                             CONN_ID_HANDLER_MAP.put((byte) i, handler);
                             handler.receiveAsync();
                             this.listener.onConnectionEstablished((byte) i);
@@ -150,8 +133,8 @@ public class UDPReceiver {
     }
 
     public void initialize() throws IOException {
-        if (!lazyInit && !tcpReady) tcpReady();
-        if (!lazyInit && !udpReady) udpReady();
+        if (!tcpReady) tcpReady();
+        if (!udpReady) udpReady();
     }
 
     private void tcpReady() throws IOException {
@@ -170,25 +153,21 @@ public class UDPReceiver {
     }
 
     private void udpReady() throws SocketException {
-        datagramSocket = new DatagramSocket(serverPortUdp);
-        datagramSocket.setReuseAddress(true);
-        serverPortUdp = datagramSocket.getLocalPort();
-        udpReady = true;
-        threadPool.execute(packetInterceptor);
+        udpUtil = new UDPUtil(serverPortUdp);
+        udpUtil.setTAG(TAG);
+        serverPortUdp = udpUtil.getLocalPort();
+        udpUtil.startListening();
     }
 
     private void udpStop() {
-        if (datagramSocket != null) {
-            Utils.silentClose(datagramSocket);
-            datagramSocket = null;
-        }
-        udpReady = false;
+        assert udpUtil != null;
+        udpUtil.releaseResources();
+        udpUtil.stopListening();
     }
 
     public void startReceive() throws IOException {
         isRunning = true;
-        tcpReady();
-        if (!lazyInit && !udpReady) udpReady();
+        if (lazyInit) initialize();
         threadPool.execute(connectionWatcher);
     }
 
@@ -197,35 +176,12 @@ public class UDPReceiver {
         udpStop();
     }
 
-    private <T extends AbstractCommandPacket<T>> T receivePacket(T packet) throws IOException {
-        assert datagramSocket != null;
-        DatagramPacket p = packet.toDatagramPacket();
-        datagramSocket.receive(p);
-        p.setData(Arrays.copyOfRange(p.getData(), p.getOffset(), p.getOffset() + p.getLength()));
-        return packet;
-    }
-
-    private <T extends AbstractCommandPacket<T>> void sendPacket(T packet, byte connId) throws IOException {
-        assert datagramSocket != null;
-        packet.setConnId(connId);
-        DatagramPacket p = packet.toDatagramPacket();
-        ConnectionHandler handler = getHandler(connId);
-        if (handler == null) {
-            Log.e(TAG, String.format("Packet sending request with connection id %d received, but " +
-                    "no correspond handler found, ignoring", packet.getConnId()));
-            return;
-        }
-        p.setAddress(handler.address);
-        p.setPort(handler.remoteUdpPort);
-        datagramSocket.send(p);
-    }
-
     @Nullable
     public ConnectionHandler getHandler(byte connId) {
         return CONN_ID_HANDLER_MAP.get(connId);
     }
 
-    public class ConnectionHandler implements PacketListener {
+    public class ConnectionHandler {
         private final byte connId;
         private final InetAddress address;
         private final int remoteTcpPort;
@@ -246,9 +202,8 @@ public class UDPReceiver {
         @NonNull
         private final DataOutputStream out;
 
-        public final List<AbstractCommandPacket<?>> packetsBlocked = new ArrayList<>();
         @NonNull
-        public CompletableFuture<AbstractCommandPacket<?>> packetReceived = new CompletableFuture<>();
+        private final UDPUtil.Handler handler;
 
         private final Runnable commandWatcher;
         @Nullable
@@ -275,6 +230,8 @@ public class UDPReceiver {
             this.remoteTcpPort = socket.getPort();
             in = Utils.getDataInput(socket);
             out = Utils.getDataOutput(socket);
+            assert udpUtil != null;
+            handler = Objects.requireNonNull(udpUtil.getHandler(connId));
             commandWatcher = () -> {
                 String cmd;
                 while (!commandWatcherStopFlag) {
@@ -318,6 +275,8 @@ public class UDPReceiver {
         private void dealWithCommand(String cmd) {
             if (cmd.equals(Constants.COMMAND_CANCEL)) {
                 remoteCanceled = true;
+            } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
+                remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
             }
         }
 
@@ -375,8 +334,15 @@ public class UDPReceiver {
             this.fileInfos = fileInfosToReceive.toArray(new FileInfo[0]);
             threadPool.execute(commandWatcher);// (4-6)
 
-            if (!udpReady) udpReady();
+            assert udpUtil != null;
             writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverPortUdp, getConnId()));// (6)
+
+            while (remoteUdpPort == 0) {
+                Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> p =
+                        checkCanceled(resultMap, accepted);
+                if (p.first) return p.second;
+            }
+            udpUtil.connect(new InetSocketAddress(address, remoteUdpPort));
 
             for (FileInfo fileInfo : fileInfosToReceive) {
                 resultMap.put(fileInfo.getId(), receiveFile(fileInfo));
@@ -411,7 +377,6 @@ public class UDPReceiver {
 
                 long curFileBytesReceived = 0;
 
-                assert datagramSocket != null;
                 byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
                 Byte curGroup = null;
                 short startPacketId = Short.MIN_VALUE;
@@ -422,21 +387,19 @@ public class UDPReceiver {
                 boolean waitingForResending = false;
                 ResendRequestPacket resendPacket = null;
 
-               try {
+                {
                     IdentifierPacket packet = handler.receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
                     curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
-                } catch (TimeoutException e) {
-                    return new TimedOutException(context);
+                    handler.sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
                 }
-                sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
 
                 AbstractCommandPacket<?> packet;
                 do {
                     try {
                         if (waitingForResending && resendPacket != null)
-                            sendPacket(resendPacket);// (11)
-                        packet = receivePacket(-1, null);
-                    } catch (TimeoutException ignored) {
+                            handler.sendPacket(resendPacket);// (11)
+                        packet = handler.receivePacket(CommandPacket::new, -1, null);
+                    } catch (TimedOutException ignored) {
                         continue;
                     }
                     if (packet == null) continue;
@@ -449,7 +412,7 @@ public class UDPReceiver {
                             continue;
                         curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
                         groupIdExceeded = false;
-                        sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
+                        handler.sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
                     }
                     switch (packet.getCommand()) {
                         case Constants.COMMAND_FILE_PACKET:// (7), (13)
@@ -470,13 +433,15 @@ public class UDPReceiver {
                             if (identifierPacket.getIdentifier() == Constants.START_IDENTIFIER) {// (7)
                                 if (ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
                                     continue;
-                                sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
+                                handler.sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
                                 waitingForResending = false;
                                 startPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.START_ID_START_PACKET_ID_TIP, identifierPacket.getExtra()));
                             } else if (identifierPacket.getIdentifier() == Constants.END_IDENTIFIER) {// (10)
+                                Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                        String.format("Identifier group id: %d, current group: %d", ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0], curGroup));
                                 if (ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
                                     continue;
-                                sendIdentifier(Constants.END_ACK_IDENTIFIER, null);// (11)
+                                handler.sendIdentifier(Constants.END_ACK_IDENTIFIER, null);// (11)
                                 endPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.END_ID_END_PACKET_ID_TIP, identifierPacket.getExtra()));
 
                                 Set<Short> idsToResendAsSet = new HashSet<>();
@@ -488,7 +453,7 @@ public class UDPReceiver {
                                         ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
                                 resendPacket = new ResendRequestPacket();
                                 resendPacket.setPacketIds(idsToResend);
-                                sendPacket(resendPacket);// (11)
+                                handler.sendPacket(resendPacket);// (11)
 
                                 if (idsToResendAsSet.isEmpty()) {
                                     for (int i = startPacketId; i <= endPacketId; i++) {
@@ -499,15 +464,19 @@ public class UDPReceiver {
                                     outputStream.flush();
                                     if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
                                     else curGroup++;
-                                } else waitingForResending = true;
+                                } else {
+                                    Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                            String.format("Resend required: %s", Arrays.toString(idsToResend)));
+                                    waitingForResending = true;
+                                }
                             } else if (identifierPacket.getIdentifier() == Constants.GROUP_ID_RESET_IDENTIFIER) {
                                 if (ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
                                     continue;
                                 curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
-                                sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
+                                handler.sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
                             } else if (identifierPacket.getIdentifier() == Constants.FILE_END_IDENTIFIER) {// (14)
                                 fileEnded = true;
-                                sendIdentifier(Constants.FILE_END_ACK_IDENTIFIER, null);// (15)
+                                handler.sendIdentifier(Constants.FILE_END_ACK_IDENTIFIER, null);// (15)
                             }
                             break;
                     }
@@ -539,102 +508,6 @@ public class UDPReceiver {
                 return new SuccessTransmissionResult(context);
             } catch (TransmissionException e) {
                 return e;
-            }
-        }
-
-        private <T extends AbstractCommandPacket<T>> T receivePacket(T packet, int timeout, TimeUnit unit) throws TimeoutException {
-            assert datagramSocket != null;
-            boolean tryAgain = false;
-            do {
-                try {
-                    DatagramPacket datagramPacket = receivePacket(timeout, unit).toDatagramPacket();
-                    packet.toDatagramPacket().setData(datagramPacket.getData(), datagramPacket.getOffset(), datagramPacket.getLength());
-                } catch (IllegalArgumentException ignored) {
-                    tryAgain = true;
-                }
-            } while (tryAgain);
-            return packet;
-        }
-
-        private AbstractCommandPacket<?> receivePacket(int timeout, TimeUnit unit) throws TimeoutException {
-            AbstractCommandPacket<?> packet = null;
-            try {
-                if (timeout < 0) {
-                    packet = this.packetReceived.get();
-                } else packet = this.packetReceived.get(timeout, unit);
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            } finally {
-                if (!this.packetReceived.isDone()) this.packetReceived.cancel(true);
-                this.packetReceived = new CompletableFuture<>();
-            }
-            if (!packetsBlocked.isEmpty()) {
-                this.packetReceived.complete(packetsBlocked.get(0));
-                packetsBlocked.remove(0);
-            }
-            if (packet != null) this.remoteUdpPort = packet.getPort();
-            return packet;
-        }
-
-        private <T extends AbstractCommandPacket<T>> void sendPacket(T packet) throws IOException {
-            UDPReceiver.this.sendPacket(packet, connId);
-        }
-
-        /**
-         * Send Identifier under udp socket
-         *
-         * @param identifier    Identifier
-         * @param ackIdentifier Ack Identifier (Value {@link null} means not to wait for ack)
-         * @return Ack packet
-         */
-        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException, TimedOutException {
-            return sendIdentifier(identifier, ackIdentifier, null);
-        }
-
-        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier, byte[] extra) throws IOException, TimedOutException {
-            assert datagramSocket != null;
-            IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier).setExtra(extra);
-            if (ackIdentifier != null) {
-                IdentifierPacket recvPacket = new IdentifierPacket();
-                int tryouts = 0;
-                boolean timedout;
-                do {
-                    try {
-                        tryouts++;
-                        timedout = false;
-                        sendPacket(sendPacket);
-
-                        if (isCanceled()) return null;
-
-                        receivePacket(recvPacket, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-
-                        Log.d(TAG,
-                                String.format("Ack Identifier \"%d\" received", recvPacket.getIdentifier()));
-                        if (recvPacket.getIdentifier() == ackIdentifier &&
-                                recvPacket.getConnId() == connId) {
-                            return recvPacket;
-                        }
-                    } catch (TimeoutException e) {
-                        Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s", e), e);
-                        if (tryouts >= Constants.MAX_ACK_TRYOUTS)
-                            throw new TimedOutException(context, e);
-                        timedout = true;
-                    }
-                } while (timedout);
-            } else {
-                sendPacket(sendPacket);
-            }
-            return null;
-        }
-
-        private IdentifierPacket receiveIdentifier(byte identifier, int timeout, TimeUnit unit) throws TimeoutException {
-            while (true) {
-                IdentifierPacket recvPacket = IdentifierPacket.fromDatagramPacket(
-                        receivePacket(timeout, unit).toDatagramPacket());
-                if (recvPacket.getIdentifier() == identifier &&
-                        recvPacket.getConnId() == connId) {
-                    return recvPacket;
-                }
             }
         }
 
@@ -685,13 +558,6 @@ public class UDPReceiver {
         public FileInfo[] getFileInfos() {
             return fileInfos;
         }
-
-        @Override
-        @RestrictTo(RestrictTo.Scope.LIBRARY)
-        public void onReceivePacket(AbstractCommandPacket<?> packet) {
-            if (!this.packetReceived.isDone()) this.packetReceived.complete(packet);
-            else packetsBlocked.add(packet);
-        }
     }
 
     public int getServerPortTcp() {
@@ -710,11 +576,6 @@ public class UDPReceiver {
                               String curFileId, long curFileBytesToSend, long curFileBytesReceived);
 
         void onComplete(TransmissionResult result, Map<String, TransmissionResult> resultMap);
-    }
-
-    public interface PacketListener {
-        @RestrictTo(RestrictTo.Scope.LIBRARY)
-        void onReceivePacket(AbstractCommandPacket<?> packet);
     }
 
     public interface OutputStreamFactory {
