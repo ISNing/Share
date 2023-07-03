@@ -19,6 +19,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Bundle;
 import android.text.format.Formatter;
 import android.util.Log;
 
@@ -27,7 +28,6 @@ import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 import androidx.core.util.Pair;
 import androidx.documentfile.provider.DocumentFile;
-import androidx.work.Data;
 import androidx.work.WorkManager;
 
 import org.exthmui.share.shared.IShareBroadcastReceiver;
@@ -243,7 +243,7 @@ public abstract class ReceiverUtils {
     }
 
     @NonNull
-    public static Notification buildReceivingSucceededNotification(@NonNull Context context, @NonNull Data output) {
+    public static Notification buildReceivingSucceededNotification(@NonNull Context context, @NonNull Bundle output) {
         createProgressNotificationChannel(context);
 
         String senderName = output.getString(Receiver.FROM_PEER_NAME);
@@ -270,7 +270,7 @@ public abstract class ReceiverUtils {
     }
 
     @NonNull
-    public static Notification buildReceivingFailedNotification(@NonNull Context context, @NonNull Data output) {
+    public static Notification buildReceivingFailedNotification(@NonNull Context context, @NonNull Bundle output) {
         createProgressNotificationChannel(context);
 
         int statusCode = output.getInt(BaseWorker.STATUS_CODE, Constants.TransmissionStatus.ERROR.getNumVal());
