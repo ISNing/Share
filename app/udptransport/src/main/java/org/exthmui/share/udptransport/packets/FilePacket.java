@@ -1,5 +1,7 @@
 package org.exthmui.share.udptransport.packets;
 
+import android.util.Log;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
 import org.exthmui.share.udptransport.Constants;
@@ -17,14 +19,20 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
 
     private FilePacket(DatagramPacket packet) {
         super(packet);
-        if (getCommand() != Constants.COMMAND_FILE_PACKET ||
-                packet.getLength() < HEADER_LENGTH + MIN_DATA_LENGTH)
-            throw new IllegalArgumentException();
     }
 
     public FilePacket() {
         this(new DatagramPacket(new byte[]{Constants.COMMAND_FILE_PACKET, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
                 HEADER_LENGTH + MIN_DATA_LENGTH));
+    }
+
+    @Override
+    public void legalCheck() {
+        if (getCommand() != Constants.COMMAND_FILE_PACKET ||
+                toDatagramPacket().getLength() < HEADER_LENGTH + MIN_DATA_LENGTH) {
+            Log.e(this.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
+            throw new IllegalArgumentException();
+        }
     }
 
     public static FilePacket fromDatagramPacket(DatagramPacket packet) {

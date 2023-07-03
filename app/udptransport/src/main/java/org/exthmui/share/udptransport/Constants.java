@@ -55,6 +55,7 @@ public class Constants {
      */
     public static final byte COMMAND_IDENTIFIER = 0x1;
     /**
+     * Command extra:
      * Byte 3: Group id
      * Packet ids as data
      */

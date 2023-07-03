@@ -422,8 +422,8 @@ public class UDPReceiver {
                 boolean waitingForResending = false;
                 ResendRequestPacket resendPacket = null;
 
-                try {
-                    IdentifierPacket packet = receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
+               try {
+                    IdentifierPacket packet = handler.receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
                     curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
                 } catch (TimeoutException e) {
                     return new TimedOutException(context);
@@ -443,7 +443,7 @@ public class UDPReceiver {
                     if (groupIdExceeded) {
                         if (packet.getCommand() != Constants.COMMAND_IDENTIFIER) continue;
                         IdentifierPacket identifierPacket =
-                                IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
+                                new IdentifierPacket(packet.toDatagramPacket());
                         if (identifierPacket.getIdentifier() != Constants.GROUP_ID_RESET_IDENTIFIER ||
                                 ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
                             continue;
@@ -463,7 +463,7 @@ public class UDPReceiver {
                                     totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), curFileBytesReceived);
                             break;
                         case Constants.COMMAND_IDENTIFIER:
-                            IdentifierPacket identifierPacket = IdentifierPacket.fromDatagramPacket(packet.toDatagramPacket());
+                            IdentifierPacket identifierPacket = new IdentifierPacket(packet.toDatagramPacket());
                             Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
                                     String.format("Identifier \"%d\" received", identifierPacket.getIdentifier()));
 

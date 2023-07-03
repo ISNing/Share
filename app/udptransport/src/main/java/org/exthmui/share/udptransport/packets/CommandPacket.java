@@ -11,6 +11,9 @@ public final class CommandPacket extends AbstractCommandPacket<CommandPacket> {
         super();
     }
 
+    @Override
+    public void legalCheck() {}
+
     public static CommandPacket fromDatagramPacket(DatagramPacket packet) {
         return new CommandPacket(packet);
     }

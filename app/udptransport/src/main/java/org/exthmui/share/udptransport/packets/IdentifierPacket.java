@@ -14,21 +14,21 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
     public static final int[] IDENTIFIER_TIP = {0, 0};
     public static final int[] EXTRA_TIP = {1, 3};
 
-    private IdentifierPacket(DatagramPacket packet) {
+    public IdentifierPacket(DatagramPacket packet) {
         super(packet);
-        if (getCommand() != Constants.COMMAND_IDENTIFIER ||
-                packet.getLength() != HEADER_LENGTH + DATA_LENGTH) {
-            Log.e(this.toString(), Arrays.toString(packet.getData()));
-            throw new IllegalArgumentException();
-        }
     }
 
     public IdentifierPacket() {
         this(new DatagramPacket(new byte[]{Constants.COMMAND_IDENTIFIER, 0x0, 0x0, 0x0, 0x0, 0x0}, HEADER_LENGTH + DATA_LENGTH));
     }
 
-    public static IdentifierPacket fromDatagramPacket(DatagramPacket packet) {
-        return new IdentifierPacket(packet);
+    @Override
+    public void legalCheck() {
+        if (getCommand() != Constants.COMMAND_IDENTIFIER ||
+                toDatagramPacket().getLength() != HEADER_LENGTH + DATA_LENGTH) {
+            Log.e(this.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
+            throw new IllegalArgumentException();
+        }
     }
 
     public byte getIdentifier() {

@@ -1,11 +1,14 @@
 package org.exthmui.share.udptransport.packets;
 
+import android.util.Log;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
 import org.exthmui.share.udptransport.Constants;
 
 import java.net.DatagramPacket;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public final class ResendRequestPacket extends AbstractCommandPacket<ResendRequestPacket> {
@@ -13,11 +16,8 @@ public final class ResendRequestPacket extends AbstractCommandPacket<ResendReque
 
     public static final int[] PACKET_IDS_TIP = {0};
 
-    private ResendRequestPacket(DatagramPacket packet) {
+    public ResendRequestPacket(DatagramPacket packet) {
         super(packet);
-        if (getCommand() != Constants.COMMAND_PACKET_RESEND_REQ ||
-                packet.getLength() < HEADER_LENGTH + MIN_DATA_LENGTH)
-            throw new IllegalArgumentException();
     }
 
     public ResendRequestPacket() {
@@ -29,8 +29,13 @@ public final class ResendRequestPacket extends AbstractCommandPacket<ResendReque
         toDatagramPacket().setLength(HEADER_LENGTH + MIN_DATA_LENGTH);
     }
 
-    public static ResendRequestPacket fromDatagramPacket(DatagramPacket packet) {
-        return new ResendRequestPacket(packet);
+    @Override
+    public void legalCheck() {
+        if (getCommand() != Constants.COMMAND_PACKET_RESEND_REQ ||
+                toDatagramPacket().getLength() < HEADER_LENGTH + MIN_DATA_LENGTH) {
+            Log.e(this.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
+            throw new IllegalArgumentException();
+        }
     }
 
     public ResendRequestPacket setPacketIds(short[] ids) {

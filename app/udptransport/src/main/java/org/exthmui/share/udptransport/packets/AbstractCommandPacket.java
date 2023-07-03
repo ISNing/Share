@@ -20,6 +20,7 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
 
     protected AbstractCommandPacket(DatagramPacket packet) {
         this.packet = packet;
+        legalCheck();
     }
 
     public AbstractCommandPacket() {
@@ -29,6 +30,8 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
     public DatagramPacket toDatagramPacket() {
         return packet;
     }
+
+    public abstract void legalCheck();
 
     public InetAddress getAddress() {
         return packet.getAddress();
