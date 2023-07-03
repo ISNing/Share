@@ -12,6 +12,7 @@ import static org.exthmui.share.lannsd.Constants.WORKER_INPUT_KEY_CONN_ID;
 import static org.exthmui.share.shared.misc.Constants.CONNECTION_CODE_LANNSD;
 
 import android.Manifest;
+import android.app.Notification;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -42,11 +43,14 @@ import org.exthmui.share.shared.listeners.OnReceiverErrorOccurredListener;
 import org.exthmui.share.shared.listeners.OnReceiverStartedListener;
 import org.exthmui.share.shared.listeners.OnReceiverStoppedListener;
 import org.exthmui.share.shared.misc.Constants;
+import org.exthmui.share.shared.misc.NotificationUtils;
 import org.exthmui.share.shared.misc.ReceiverUtils;
 import org.exthmui.share.shared.misc.Utils;
+import org.exthmui.share.taskMgr.Result;
 import org.exthmui.share.taskMgr.Task;
 import org.exthmui.share.taskMgr.TaskManager;
 import org.exthmui.share.taskMgr.TaskStatus;
+import org.exthmui.share.taskMgr.listeners.OnResultListener;
 import org.exthmui.share.udptransport.UDPReceiver;
 import org.exthmui.utils.BaseEventListenersUtils;
 import org.exthmui.utils.StackTraceUtils;
@@ -323,6 +327,18 @@ public class NsdReceiver implements Receiver {
         Bundle input = new Bundle();
         input.putByte(WORKER_INPUT_KEY_CONN_ID, connId);
         NsdReceivingTask task = new NsdReceivingTask(mContext, input);
+        task.registerListener((OnResultListener) event -> {
+            Result result = event.getResult();
+            if (result.getStatus() == Result.Status.SUCCESS) {
+                Notification notification =
+                        ReceiverUtils.buildReceivingSucceededNotification(mContext, result.getData());
+                NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
+            } else if (result.getStatus() == Result.Status.ERROR) {
+                Notification notification =
+                        ReceiverUtils.buildReceivingFailedNotification(mContext, result.getData());
+                NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
+            }
+        });
         TaskManager.getInstance(mContext).enqueueTask(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), task);
         mTaskIds.add(task.getTaskId());
         return UUID.fromString(task.getTaskId());
