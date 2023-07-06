@@ -40,7 +40,7 @@ public class TaskManager {
             int id = 0;
             @Override
             public Thread newThread(Runnable r) {
-                return new Thread(String.format(Locale.ROOT, "TaskManager-ChildThread-%d", id++)) {
+                return new Thread(String.format(Locale.ROOT, "TM:%d", id++)) {
                     @Override
                     public void run() {
                         r.run();
