@@ -65,11 +65,7 @@ public class UDPSender {
     private final SendingListener listener;
 
     @Nullable
-    private Socket socket;
-    @Nullable
-    private DataInputStream in;
-    @Nullable
-    private DataOutputStream out;
+    private TCPUtil tcpUtil;
     @Nullable
     private UDPUtil udpUtil;
     @Nullable
@@ -82,8 +78,6 @@ public class UDPSender {
     private int udpPort;
     private byte connId;
 
-    private boolean commandWatcherStopFlag;
-
     private boolean canceled;
     private boolean remoteCanceled;
 
@@ -95,22 +89,6 @@ public class UDPSender {
     private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(0,
             2, 1L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
-    private final Runnable commandWatcher = () -> {
-        String cmd;
-        while (!commandWatcherStopFlag) {
-            try {
-                cmd = in.readUTF();
-                dealWithCommand(cmd);
-            } catch (EOFException ignored) {
-            } catch (SocketException e) {
-                // Ignore socket closing
-                if (!Objects.equals(e.getMessage(), "Socket closed"))
-                    e.printStackTrace();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    };
 
     public UDPSender(@NonNull Context context, @NonNull SendingListener listener) {
         this.context = context;
@@ -122,57 +100,10 @@ public class UDPSender {
     }
 
     public void initialize() throws SocketException {
-        socket = new Socket();
-        socket.setTcpNoDelay(true);
-        socket.setReuseAddress(true);
+        tcpUtil = new TCPUtil();
         udpUtil = new UDPUtil();
         udpUtil.setTAG(TAG);
         udpUtil.setStateChecker(this::checkCanceled);
-    }
-
-    public void connectTcp(SocketAddress tcpAddress) throws IOException {
-        assert socket != null;
-        Log.d(TAG, "Trying to connect to receiver under tcp socket: " + tcpAddress);
-        socket.connect(tcpAddress);
-        in = Utils.getDataInput(socket);
-        out = Utils.getDataOutput(socket);
-    }
-
-    public void writeJson(Object object) throws IOException {
-        assert socket != null;
-        String jsonStr = GSON.toJson(object);
-        Log.d(TAG, "Trying to send \"" + jsonStr + "\" -> " + socket.getInetAddress());
-        assert out != null;
-        out.writeUTF(jsonStr);
-    }
-
-    public void writeCommand(String command) throws IOException {
-        assert out != null;
-        out.writeUTF(command);
-    }
-
-    public <T> T readJson(Class<T> classOfT) throws IOException {
-        assert in != null;
-        return GSON.fromJson(in.readUTF(), classOfT);
-    }
-
-    public <T> T readJson(Class<T> classOfT, Type typeOfT) throws IOException {
-        assert in != null;
-        return GSON.fromJson(in.readUTF(), typeOfT);
-    }
-
-    public void dealWithCommand(String cmd) {
-        if (cmd.equals(Constants.COMMAND_CANCEL)) {
-            remoteCanceled = true;
-        } else {/*
-                e.g. UDP_READY5000:-128
-                 */
-            if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {
-                udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
-                connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
-                udpReady = true;
-            }
-        }
     }
 
     public Future<Integer> sendAsync(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
@@ -197,13 +128,14 @@ public class UDPSender {
     private void send(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
                       @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) throws IOException {
         if (entities.length != fileInfos.length) throw new IllegalArgumentException();
-        connectTcp(tcpAddress);// (1)
-        writeJson(sender);// (2)
-        writeJson(fileInfos);// (3}
+        assert tcpUtil != null;
+        tcpUtil.connect(tcpAddress);// (1)
+        tcpUtil.writeJson(sender);// (2)
+        tcpUtil.writeJson(fileInfos);// (3}
         listener.onProgressUpdate(
                 org.exthmui.share.shared.misc.Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(),
                 0, 0, null, 0, 0);
-        String[] accepted = readJson(String[].class);// (4)
+        String[] accepted = tcpUtil.readJson(String[].class);// (4)
         if (accepted == null || accepted.length == 0) {
             Log.d(TAG, "No file were accepted");
             listener.onComplete(
@@ -221,17 +153,25 @@ public class UDPSender {
                 entitiesToSend.add(entities[Arrays.asList(fileInfos).indexOf(fileInfo)]);
             }
         }
-        threadPool.execute(commandWatcher);// (4-6)
+
+        tcpUtil.setCommandListener(cmd -> {
+            if (cmd.equals(Constants.COMMAND_CANCEL)) {
+                remoteCanceled = true;
+            } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
+                    udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                    connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
+                    udpReady = true;
+            }
+        });// (4-6)
         while (!udpReady) {// (6)
             if (checkCanceled()) return;
         }
-        assert socket != null;
         assert udpUtil != null;
         udpUtil.addHandler(context, connId);
         handler = udpUtil.getHandler(connId);
-        udpUtil.connect(new InetSocketAddress(socket.getInetAddress(), udpPort));
+        udpUtil.connect(new InetSocketAddress(tcpUtil.getInetAddress(), udpPort));
         udpUtil.startListening();
-        writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, udpUtil.getLocalPort(), connId));// (6)
+        tcpUtil.writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, udpUtil.getLocalPort(), connId));// (6)
         listener.onProgressUpdate(
                 org.exthmui.share.shared.misc.Constants.TransmissionStatus.CONNECTION_ESTABLISHED.getNumVal(),
                 totalBytesToSend, 0, null, 0, 0);
@@ -241,9 +181,8 @@ public class UDPSender {
 
             if (checkCanceled()) return;
         }
-        commandWatcherStopFlag = true;
         @SuppressWarnings("unchecked") Map<String, Pair<Integer, String>> resultMap =
-                readJson(Map.class, new TypeToken<Map<String, Pair<Integer, String>>>() {
+                tcpUtil.readJson(Map.class, new TypeToken<Map<String, Pair<Integer, String>>>() {
                 }.getType());// (16)
         for (String id : resultMap.keySet()) {
             if ((Objects.requireNonNull(resultMap.get(id)).first &
@@ -374,14 +313,11 @@ public class UDPSender {
     }
 
     public void releaseResources() {
-        commandWatcherStopFlag = true;
+        if (tcpUtil != null) {
+            tcpUtil.releaseResources();
+            tcpUtil = null;
+        }
         udpReady = false;
-        Utils.silentClose(in);
-        in = null;
-        Utils.silentClose(out);
-        out = null;
-        Utils.silentClose(socket);
-        socket = null;
         if (udpUtil != null) {
             udpUtil.releaseResources();
             udpUtil = null;

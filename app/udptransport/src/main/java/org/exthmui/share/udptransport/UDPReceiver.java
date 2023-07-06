@@ -196,16 +196,11 @@ public class UDPReceiver {
         FileInfo[] fileInfos = null;
 
         @NonNull
-        private final Socket socket;
-        @NonNull
-        private final DataInputStream in;
-        @NonNull
-        private final DataOutputStream out;
+        private final TCPUtil tcpUtil;
 
         @NonNull
         private final UDPUtil.Handler handler;
 
-        private final Runnable commandWatcher;
         @Nullable
         private ReceivingListener listener;
 
@@ -226,60 +221,20 @@ public class UDPReceiver {
                 throws IOException {
             this.connId = connId;
             this.address = socket.getInetAddress();
-            this.socket = socket;
+            this.tcpUtil = new TCPUtil(socket);
+            tcpUtil.initialize();
             this.remoteTcpPort = socket.getPort();
-            in = Utils.getDataInput(socket);
-            out = Utils.getDataOutput(socket);
             assert udpUtil != null;
             handler = Objects.requireNonNull(udpUtil.getHandler(connId));
-            commandWatcher = () -> {
-                String cmd;
-                while (!commandWatcherStopFlag) {
-                    try {
-                        cmd = in.readUTF();
-                        dealWithCommand(cmd);
-                    } catch (EOFException ignored) {
-                    } catch (SocketException e) {
-                        // Ignore socket closing
-                        if (!Objects.equals(e.getMessage(), "Socket closed"))
-                            e.printStackTrace();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            tcpUtil.setCommandListener(cmd -> {
+                if (cmd.equals(Constants.COMMAND_CANCEL)) {
+                    remoteCanceled = true;
+                } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
+                    remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
                 }
-            };
+            });// (4-6)
         }
-
-        private void writeJson(Object object) throws IOException {
-            String jsonStr = GSON.toJson(object);
-            Log.d(TAG, "Trying to send \"" + jsonStr + "\" -> " + socket.getInetAddress());
-            out.writeUTF(jsonStr);
-        }
-
-        private void writeCommand(String command) throws IOException {
-            out.writeUTF(command);
-        }
-
-        private <T> T readJson(Class<T> classOfT) throws IOException {
-            String s = in.readUTF();
-            Log.d(TAG, "String \"" + s + "\" <- " + socket.getInetAddress());
-            return GSON.fromJson(s, classOfT);
-        }
-
-        private <T> T readJson(Class<T> classOfT, Type typeOfT) throws IOException {
-            String s = in.readUTF();
-            Log.d(TAG, "String \"" + s + "\" <- " + socket.getInetAddress());
-            return GSON.fromJson(s, typeOfT);
-        }
-
-        private void dealWithCommand(String cmd) {
-            if (cmd.equals(Constants.COMMAND_CANCEL)) {
-                remoteCanceled = true;
-            } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
-                remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
-            }
-        }
-
+        
         public Future<Pair<TransmissionResult, Map<String, TransmissionResult>>> receiveAsync() {
             return coreThreadPool.submit(() -> {
                 try {
@@ -300,9 +255,9 @@ public class UDPReceiver {
 
         public Pair<TransmissionResult, Map<String, TransmissionResult>> receive() throws IOException, ExecutionException, InterruptedException {
             Map<String, TransmissionResult> resultMap = new HashMap<>();
-            SenderInfo senderInfo = readJson(SenderInfo.class);// (2)
+            SenderInfo senderInfo = tcpUtil.readJson(SenderInfo.class);// (2)
             this.senderInfo = senderInfo;
-            FileInfo[] fileInfos = readJson(FileInfo[].class);// (3)
+            FileInfo[] fileInfos = tcpUtil.readJson(FileInfo[].class);// (3)
             CompletableFuture<Set<String>> idsAccepted = new CompletableFuture<>();
 
             while (true) {
@@ -314,7 +269,7 @@ public class UDPReceiver {
                     0, 0, senderInfo, fileInfos, null, 0, 0);
             Set<String> acceptedIdsAsSet = idsAccepted.get();
             String[] accepted = acceptedIdsAsSet.toArray(new String[0]);
-            writeJson(accepted);// (4)
+            tcpUtil.writeJson(accepted);// (4)
             if (accepted.length == 0) {
                 Log.d(TAG, "No file were accepted");
                 listener.onComplete(
@@ -332,10 +287,9 @@ public class UDPReceiver {
                 }
             }
             this.fileInfos = fileInfosToReceive.toArray(new FileInfo[0]);
-            threadPool.execute(commandWatcher);// (4-6)
 
             assert udpUtil != null;
-            writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverPortUdp, getConnId()));// (6)
+            tcpUtil.writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverPortUdp, getConnId()));// (6)
 
             while (remoteUdpPort == 0) {
                 Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> p =
@@ -513,9 +467,7 @@ public class UDPReceiver {
 
         public void releaseResources() {
             commandWatcherStopFlag = true;
-            Utils.silentClose(in);
-            Utils.silentClose(out);
-            Utils.silentClose(socket);
+            tcpUtil.releaseResources();
             isRunning = false;
             CONN_ID_HANDLER_MAP.remove(connId);
         }
