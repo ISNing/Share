@@ -42,12 +42,22 @@ public class NsdSendingTask extends SendingTask {
 
     public static final String TAG = "NsdSendingTask";
 
+    private final Object lock = new Object();
+
     public NsdSendingTask(@NonNull Context context, Bundle inputData) {
         super(context, inputData);
     }
 
     public NsdSendingTask(@NonNull TaskEntity taskEntity) {
         super(taskEntity);
+    }
+
+    @Override
+    public void cancel() {
+        super.cancel();
+        synchronized (lock) {
+            lock.notify();
+        }
     }
 
     @NonNull
@@ -154,6 +164,9 @@ public class NsdSendingTask extends SendingTask {
                     result.set(genFailureResult(new ReceiverCancelledException(getApplicationContext()), null));
                 else if ((status | Constants.TransmissionStatus.ERROR.getNumVal()) == status)
                     result.set(genFailureResult(new UnknownErrorException(getApplicationContext()), null));//TODO:Improvement required
+                synchronized (lock) {
+                    lock.notify();
+                }
             }
         });
         try {
@@ -168,6 +181,13 @@ public class NsdSendingTask extends SendingTask {
             // Check if user cancelled
             if (isCancelled()) {
                 sender.cancel();
+            }
+            synchronized (lock) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
         return result.get();

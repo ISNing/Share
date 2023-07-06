@@ -37,12 +37,22 @@ public class NsdReceivingTask extends ReceivingTask {
 
     public static final String TAG = "NsdReceivingTask";
 
+    private final Object lock = new Object();
+
     public NsdReceivingTask(Context context, Bundle inputData) {
         super(context, inputData);
     }
 
     public NsdReceivingTask(@NonNull TaskEntity taskEntity) {
         super(taskEntity);
+    }
+
+    @Override
+    public void cancel() {
+        super.cancel();
+        synchronized (lock) {
+            lock.notify();
+        }
     }
 
     @NonNull
@@ -111,6 +121,9 @@ public class NsdReceivingTask extends ReceivingTask {
                 generalResult.set(result);
                 resultMap.set(r);
                 completed.set(true);
+                synchronized (lock) {
+                    lock.notify();
+                }
             }
         });
 
@@ -119,6 +132,13 @@ public class NsdReceivingTask extends ReceivingTask {
             if (isCancelled()) {
                 Log.d(TAG, "User cancelled receiving file");
                 handler.cancel();
+            }
+            synchronized (lock) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
