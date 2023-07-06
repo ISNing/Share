@@ -19,3 +19,17 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+-dontwarn javax.lang.model.element.Modifier
+
+-keep public class * extends org.exthmui.utils.listeners.BaseEventListener {
+    public <methods>;
+}
+-keep public class * extends org.exthmui.share.shared.base.receive.Receiver {
+    public static getInstance(android.content.Context);
+}
+-keep public class * extends org.exthmui.share.shared.base.send.Sender {
+    public static getInstance(android.content.Context);
+}
+-keep class * extends org.exthmui.share.taskMgr.Task{
+    public <init>(org.exthmui.share.taskMgr.entities.TaskEntity);
+}
