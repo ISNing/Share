@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class UDPSender {
     public static final String TAG = "UDPSender";
-    private static final Gson GSON = new Gson();
+    private final Object lock = new Object();
 
     @NonNull
     private final Context context;
@@ -97,6 +97,9 @@ public class UDPSender {
 
     public void cancel() {
         canceled = true;
+        synchronized (lock) {
+            lock.notify();
+        }
     }
 
     public void initialize() throws SocketException {
@@ -157,6 +160,9 @@ public class UDPSender {
         tcpUtil.setCommandListener(cmd -> {
             if (cmd.equals(Constants.COMMAND_CANCEL)) {
                 remoteCanceled = true;
+                synchronized (lock) {
+                    lock.notify();
+                }
             } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
                     udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
                     connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
@@ -165,6 +171,13 @@ public class UDPSender {
         });// (4-6)
         while (!udpReady) {// (6)
             if (checkCanceled()) return;
+            synchronized (lock) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         assert udpUtil != null;
         udpUtil.addHandler(context, connId);

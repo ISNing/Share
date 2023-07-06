@@ -182,6 +182,8 @@ public class UDPReceiver {
     }
 
     public class ConnectionHandler {
+        private final Object handlerLock = new Object();
+
         private final byte connId;
         private final InetAddress address;
         private final int remoteTcpPort;
@@ -206,6 +208,9 @@ public class UDPReceiver {
 
         public void cancel() {
             canceled = true;
+            synchronized (handlerLock) {
+                handlerLock.notify();
+            }
         }
 
         public ConnectionHandler setListener(@Nullable ReceivingListener listener) {
@@ -229,8 +234,14 @@ public class UDPReceiver {
             tcpUtil.setCommandListener(cmd -> {
                 if (cmd.equals(Constants.COMMAND_CANCEL)) {
                     remoteCanceled = true;
+                    synchronized (handlerLock) {
+                        handlerLock.notify();
+                    }
                 } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
                     remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                    synchronized (handlerLock) {
+                        handlerLock.notify();
+                    }
                 }
             });// (4-6)
         }
@@ -295,6 +306,9 @@ public class UDPReceiver {
                 Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> p =
                         checkCanceled(resultMap, accepted);
                 if (p.first) return p.second;
+                synchronized (handlerLock) {
+                    handlerLock.wait();
+                }
             }
             udpUtil.connect(new InetSocketAddress(address, remoteUdpPort));
 
