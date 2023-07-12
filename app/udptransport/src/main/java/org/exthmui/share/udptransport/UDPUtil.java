@@ -263,24 +263,29 @@ public class UDPUtil {
             assert datagramSocket != null;
             IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier).setExtra(extra);
             if (ackIdentifier != null) {
-                IdentifierPacket recvPacket;
-                try {
-                    sendPacket(sendPacket);
+                int tryouts = 0;
 
-                    if (checkCanceled()) return null;
+                IdentifierPacket recvPacket = null;
+                while (recvPacket == null) {
+                    try {
+                        tryouts++;
+                        sendPacket(sendPacket);
 
-                    recvPacket = receivePacket(IdentifierPacket::new, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS, Constants.MAX_ACK_TRYOUTS);
+                        if (checkCanceled()) return null;
 
-                    Log.d(TAG,
-                            String.format("Ack Identifier \"%d\" received, connId: %d", recvPacket.getIdentifier(), recvPacket.getConnId()));
-                    if (recvPacket.getIdentifier() == ackIdentifier &&
-                            recvPacket.getConnId() == connId) {
-                        return recvPacket;
+                        recvPacket = receiveIdentifier(ackIdentifier, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+
+                        Log.d(TAG,
+                                String.format("Ack Identifier \"%d\" received, connId: %d", recvPacket.getIdentifier(), recvPacket.getConnId()));
+                    } catch (TimedOutException e) {
+                        if (tryouts >= Constants.MAX_ACK_TRYOUTS) {
+                            Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s, reached maximum retries", e), e);
+                            throw new TimedOutException(context, e);
+                        } else
+                            Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s, retrying: %d", e, tryouts + 1), e);
                     }
-                } catch (TimedOutException e) {
-                    Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s", e), e);
-                    throw e;
                 }
+                return recvPacket;
             } else {
                 sendPacket(sendPacket);
             }
