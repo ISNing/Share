@@ -296,7 +296,7 @@ public class NsdReceiver implements Receiver {
     public void startReceive() {
         try {
             mUdpReceiver.startReceive();
-            mOnListeningPortListener.onListening(mUdpReceiver.getServerPortTcp());
+            mOnListeningPortListener.onListening(mUdpReceiver.getServerTcpPort());
         } catch (IOException e) {
             String message = String.format(Locale.ENGLISH, "UdpReceiver start failed: %s", e.getMessage());
             String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_start_failed, e.getLocalizedMessage());

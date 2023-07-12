@@ -49,9 +49,9 @@ public class NsdReceivingTask extends ReceivingTask {
 
     @Override
     public void cancel() {
-        super.cancel();
         synchronized (lock) {
-            lock.notify();
+            super.cancel();
+            lock.notifyAll();
         }
     }
 

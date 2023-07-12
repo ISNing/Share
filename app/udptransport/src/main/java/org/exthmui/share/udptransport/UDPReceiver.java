@@ -74,8 +74,8 @@ public class UDPReceiver {
     @NonNull
     private final ConnectionListener listener;
 
-    private int serverPortTcp;
-    private int serverPortUdp;
+    private int serverTcpPort;
+    private int serverUdpPort;
     private final boolean lazyInit;
     private final boolean validateMd5;
 
@@ -98,14 +98,14 @@ public class UDPReceiver {
             r -> new Thread(r, r.toString()));
     private final Runnable connectionWatcher;
 
-    public UDPReceiver(@NonNull Context context, @NonNull OutputStreamFactory outputStreamFactory, @NonNull InputStreamFactory inputStreamFactory, @NonNull ConnectionListener listener, int serverPortTcp,
-                       int serverPortUdp, boolean lazyInit, boolean validateMd5) throws IOException {
+    public UDPReceiver(@NonNull Context context, @NonNull OutputStreamFactory outputStreamFactory, @NonNull InputStreamFactory inputStreamFactory, @NonNull ConnectionListener listener, int serverTcpPort,
+                       int serverUdpPort, boolean lazyInit, boolean validateMd5) throws IOException {
         this.context = context;
         this.outputStreamFactory = outputStreamFactory;
         this.inputStreamFactory = inputStreamFactory;
         this.listener = listener;
-        this.serverPortTcp = serverPortTcp;
-        this.serverPortUdp = serverPortUdp;
+        this.serverTcpPort = serverTcpPort;
+        this.serverUdpPort = serverUdpPort;
         this.lazyInit = lazyInit;
         this.validateMd5 = validateMd5;
         if (!lazyInit) initialize();
@@ -138,9 +138,9 @@ public class UDPReceiver {
     }
 
     private void tcpReady() throws IOException {
-        serverSocket = new ServerSocket(serverPortTcp);
+        serverSocket = new ServerSocket(serverTcpPort);
         serverSocket.setReuseAddress(true);
-        serverPortTcp = serverSocket.getLocalPort();
+        serverTcpPort = serverSocket.getLocalPort();
         tcpReady = true;
     }
 
@@ -153,9 +153,9 @@ public class UDPReceiver {
     }
 
     private void udpReady() throws SocketException {
-        udpUtil = new UDPUtil(serverPortUdp);
+        udpUtil = new UDPUtil(serverUdpPort);
         udpUtil.setTAG(TAG);
-        serverPortUdp = udpUtil.getLocalPort();
+        serverUdpPort = udpUtil.getLocalPort();
         udpUtil.startListening();
     }
 
@@ -300,7 +300,7 @@ public class UDPReceiver {
             this.fileInfos = fileInfosToReceive.toArray(new FileInfo[0]);
 
             assert udpUtil != null;
-            tcpUtil.writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverPortUdp, getConnId()));// (6)
+            tcpUtil.writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, serverUdpPort, getConnId()));// (6)
 
             while (remoteUdpPort == 0) {
                 Pair<Boolean, Pair<TransmissionResult, Map<String, TransmissionResult>>> p =
@@ -526,8 +526,8 @@ public class UDPReceiver {
         }
     }
 
-    public int getServerPortTcp() {
-        return serverPortTcp;
+    public int getServerTcpPort() {
+        return serverTcpPort;
     }
 
     public interface ConnectionListener {
