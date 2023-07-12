@@ -75,7 +75,7 @@ public class UDPSender {
     long bytesSent = 0;
     ReceiverInfo receiverInfo = null;
     FileInfo[] fileInfos = null;
-    private int udpPort;
+    private int remoteUdpPort;
     private byte connId;
 
     private boolean canceled;
@@ -164,7 +164,7 @@ public class UDPSender {
                     lock.notifyAll();
                 }
             } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
-                    udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                    remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
                     connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
                     udpReady = true;
             }
@@ -182,7 +182,7 @@ public class UDPSender {
         assert udpUtil != null;
         udpUtil.addHandler(context, connId);
         handler = udpUtil.getHandler(connId);
-        udpUtil.connect(new InetSocketAddress(tcpUtil.getInetAddress(), udpPort));
+        udpUtil.connect(new InetSocketAddress(tcpUtil.getInetAddress(), remoteUdpPort));
         udpUtil.startListening();
         tcpUtil.writeCommand(String.format(Locale.ROOT, "%s%d:%d", Constants.COMMAND_UDP_SOCKET_READY, udpUtil.getLocalPort(), connId));// (6)
         listener.onProgressUpdate(
