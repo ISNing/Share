@@ -31,7 +31,7 @@ import java.util.concurrent.TimeoutException;
 
 public class UDPUtil {
     public static final String SUB_TAG = "UDPUtil";
-    private static final Map<Byte, Handler> CONN_ID_HANDLER_MAP = new HashMap<>();
+    private final Map<Byte, Handler> CONN_ID_HANDLER_MAP = new HashMap<>();
     private final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(0,
             2, 1L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
