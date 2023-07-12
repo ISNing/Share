@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,7 +93,7 @@ public class UDPUtil {
         stopInterceptorFlag = true;
     }
 
-    public void connect(SocketAddress udpAddress) throws IOException {
+    public void connect(InetSocketAddress udpAddress) throws IOException {
         assert datagramSocket != null;
         datagramSocket.connect(udpAddress);
     }

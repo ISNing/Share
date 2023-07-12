@@ -13,8 +13,8 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +108,7 @@ public class TCPUtil {
         this.socket = socket;
     }
 
-    public void connect(SocketAddress tcpAddress) throws IOException {
+    public void connect(InetSocketAddress tcpAddress) throws IOException {
         Log.d(TAG, "Trying to connect to receiver under tcp socket: " + tcpAddress);
         socket.connect(tcpAddress);
         initialize();

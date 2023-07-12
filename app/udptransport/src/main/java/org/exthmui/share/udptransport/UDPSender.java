@@ -123,7 +123,7 @@ public class UDPSender {
     }
 
     public Future<Integer> sendAsync(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
-                                     @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) {
+                                     @NonNull SenderInfo sender, @NonNull InetSocketAddress tcpAddress) {
         if (entities.length != fileInfos.length) throw new IllegalArgumentException();
         return coreThreadPool.submit(() -> {
             try {
@@ -142,7 +142,7 @@ public class UDPSender {
     }
 
     private void send(@NonNull Entity[] entities, @NonNull FileInfo[] fileInfos,
-                      @NonNull SenderInfo sender, @NonNull SocketAddress tcpAddress) throws IOException {
+                      @NonNull SenderInfo sender, @NonNull InetSocketAddress tcpAddress) throws IOException {
         if (entities.length != fileInfos.length) throw new IllegalArgumentException();
         assert tcpUtil != null;
         tcpUtil.connect(tcpAddress);// (1)
