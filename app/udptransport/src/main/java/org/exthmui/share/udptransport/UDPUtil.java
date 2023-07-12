@@ -120,7 +120,7 @@ public class UDPUtil {
     }
 
     public void releaseResources() {
-        stopInterceptorFlag = true;
+        stopListening();
         Utils.silentClose(datagramSocket);
         threadPool.shutdown();
         stateChecker = null;
