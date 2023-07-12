@@ -65,8 +65,22 @@ public class TCPUtil {
         while (!stringWatcherStopFlag) {
             try {
                 str = in.readUTF();
-                if (str.startsWith(PREFIX_COMMAND) && commandListener != null)
-                    commandListener.onReceiveCommand(str.replaceFirst(PREFIX_COMMAND, ""));
+                if (str.startsWith(PREFIX_COMMAND))
+                    if (commandListener == null) if (!cmdReceived.isDone())
+                        cmdReceived.complete(str.replaceFirst(PREFIX_COMMAND, ""));
+                    else cmdBlocked.add(str.replaceFirst(PREFIX_COMMAND, ""));
+                    else {
+                        if (cmdReceived.isDone()) {
+                            try {
+                                commandListener.onReceiveCommand(cmdReceived.get().replaceFirst(PREFIX_COMMAND, ""));
+                            } catch (ExecutionException | InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                        if (!cmdBlocked.isEmpty()) for (String cmd: cmdBlocked)
+                            commandListener.onReceiveCommand(cmd.replaceFirst(PREFIX_COMMAND, ""));
+                        commandListener.onReceiveCommand(str.replaceFirst(PREFIX_COMMAND, ""));
+                    }
                 if (str.startsWith(PREFIX_JSON)) if (!jsonReceived.isDone())
                     jsonReceived.complete(str.replaceFirst(PREFIX_JSON, ""));
                 else jsonBlocked.add(str.replaceFirst(PREFIX_JSON, ""));
@@ -109,19 +123,40 @@ public class TCPUtil {
 
     public void writeCommand(String command) throws IOException {
         assert out != null;
+        Log.d(TAG, "Trying to send COMMAND \"" + command + "\" -> " + socket.getInetAddress());
         out.writeUTF(PREFIX_COMMAND + command);
     }
 
     public void writeJson(Object object) throws IOException {
         String jsonStr = GSON.toJson(object);
-        Log.d(TAG, "Trying to send \"" + jsonStr + "\" -> " + socket.getInetAddress());
+        Log.d(TAG, "Trying to send JSON \"" + jsonStr + "\" -> " + socket.getInetAddress());
         assert out != null;
         out.writeUTF(PREFIX_JSON + jsonStr);
     }
 
-    public void writeBare(String command) throws IOException {
+    public void writeBare(String s) throws IOException {
         assert out != null;
-        out.writeUTF(PREFIX_BARE + command);
+        Log.d(TAG, "Trying to send BARE \"" + s + "\" -> " + socket.getInetAddress());
+        out.writeUTF(PREFIX_BARE + s);
+    }
+
+    public String readCommand() {
+        String str = null;
+        do {
+            try {
+                str = cmdReceived.get();
+            } catch (ExecutionException | InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                if (!cmdReceived.isDone()) cmdReceived.cancel(true);
+                cmdReceived = new CompletableFuture<>();
+            }
+            if (!cmdBlocked.isEmpty()) {
+                cmdReceived.complete(cmdBlocked.get(0));
+                cmdBlocked.remove(0);
+            }
+        } while (str == null);
+        return str;
     }
 
     public <T> T readJson(Class<T> classOfT) {
