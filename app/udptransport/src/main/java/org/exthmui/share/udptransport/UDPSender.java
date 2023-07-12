@@ -102,6 +102,21 @@ public class UDPSender {
 
     public void initialize() throws SocketException {
         tcpUtil = new TCPUtil();
+        tcpUtil.setTAG(TAG);
+        tcpUtil.setCommandListener(cmd -> {
+            if (cmd.equals(Constants.COMMAND_CANCEL)) {
+                synchronized (lock) {
+                    remoteCanceled = true;
+                    lock.notifyAll();
+                }
+            } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
+                synchronized (lock) {
+                    remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                    connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
+                    lock.notifyAll();
+                }
+            }
+        });// (4-6)
         udpUtil = new UDPUtil();
         udpUtil.setTAG(TAG);
         udpUtil.setStateChecker(this::checkCanceled);
