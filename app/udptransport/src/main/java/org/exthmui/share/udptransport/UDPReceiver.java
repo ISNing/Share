@@ -207,9 +207,9 @@ public class UDPReceiver {
         private ReceivingListener listener;
 
         public void cancel() {
-            canceled = true;
             synchronized (handlerLock) {
-                handlerLock.notify();
+                canceled = true;
+                handlerLock.notifyAll();
             }
         }
 
@@ -232,15 +232,13 @@ public class UDPReceiver {
             assert udpUtil != null;
             handler = Objects.requireNonNull(udpUtil.getHandler(connId));
             tcpUtil.setCommandListener(cmd -> {
-                if (cmd.equals(Constants.COMMAND_CANCEL)) {
-                    remoteCanceled = true;
-                    synchronized (handlerLock) {
-                        handlerLock.notify();
-                    }
-                } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
-                    remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
-                    synchronized (handlerLock) {
-                        handlerLock.notify();
+                synchronized (handlerLock) {
+                    if (cmd.equals(Constants.COMMAND_CANCEL)) {
+                        remoteCanceled = true;
+                        handlerLock.notifyAll();
+                    } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) {// e.g. UDP_READY5000:-128
+                        remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
+                        handlerLock.notifyAll();
                     }
                 }
             });// (4-6)

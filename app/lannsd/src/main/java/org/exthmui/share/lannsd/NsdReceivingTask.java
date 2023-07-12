@@ -118,11 +118,11 @@ public class NsdReceivingTask extends ReceivingTask {
 
             @Override
             public void onComplete(TransmissionResult result, Map<String, TransmissionResult> r) {
-                generalResult.set(result);
-                resultMap.set(r);
-                completed.set(true);
                 synchronized (lock) {
-                    lock.notify();
+                    generalResult.set(result);
+                    resultMap.set(r);
+                    completed.set(true);
+                    lock.notifyAll();
                 }
             }
         });

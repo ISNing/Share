@@ -96,9 +96,9 @@ public class UDPSender {
     }
 
     public void cancel() {
-        canceled = true;
         synchronized (lock) {
-            lock.notify();
+            canceled = true;
+            lock.notifyAll();
         }
     }
 
@@ -161,7 +161,7 @@ public class UDPSender {
             if (cmd.equals(Constants.COMMAND_CANCEL)) {
                 remoteCanceled = true;
                 synchronized (lock) {
-                    lock.notify();
+                    lock.notifyAll();
                 }
             } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
                     udpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);

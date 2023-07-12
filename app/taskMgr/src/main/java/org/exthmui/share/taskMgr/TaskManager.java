@@ -115,7 +115,7 @@ public class TaskManager {
         database.runInDatabaseThread(() -> {
             synchronized (lock) {
                 database.taskDao().insert(new TaskEntity(task, groupId));
-                lock.notify();
+                lock.notifyAll();
             }
         });
         synchronized (lock) {

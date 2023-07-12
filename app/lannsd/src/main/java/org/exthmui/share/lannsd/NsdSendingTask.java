@@ -54,9 +54,9 @@ public class NsdSendingTask extends SendingTask {
 
     @Override
     public void cancel() {
-        super.cancel();
         synchronized (lock) {
-            lock.notify();
+            super.cancel();
+            lock.notifyAll();
         }
     }
 
@@ -154,18 +154,18 @@ public class NsdSendingTask extends SendingTask {
 
             @Override
             public void onComplete(int status, Map<String, Pair<Integer, String>> resultMap) {
-                if ((status | Constants.TransmissionStatus.COMPLETED.getNumVal()) == status)
-                    result.set(genSuccessResult());
-                if ((status | Constants.TransmissionStatus.REJECTED.getNumVal()) == status)
-                    result.set(genFailureResult(new RejectedException(getApplicationContext()), null));
-                else if ((status | Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal()) == status)
-                    result.set(genFailureResult(new SenderCancelledException(getApplicationContext()), null));
-                else if ((status | Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal()) == status)
-                    result.set(genFailureResult(new ReceiverCancelledException(getApplicationContext()), null));
-                else if ((status | Constants.TransmissionStatus.ERROR.getNumVal()) == status)
-                    result.set(genFailureResult(new UnknownErrorException(getApplicationContext()), null));//TODO:Improvement required
                 synchronized (lock) {
-                    lock.notify();
+                    if ((status | Constants.TransmissionStatus.COMPLETED.getNumVal()) == status)
+                        result.set(genSuccessResult());
+                    if ((status | Constants.TransmissionStatus.REJECTED.getNumVal()) == status)
+                        result.set(genFailureResult(new RejectedException(getApplicationContext()), null));
+                    else if ((status | Constants.TransmissionStatus.SENDER_CANCELLED.getNumVal()) == status)
+                        result.set(genFailureResult(new SenderCancelledException(getApplicationContext()), null));
+                    else if ((status | Constants.TransmissionStatus.RECEIVER_CANCELLED.getNumVal()) == status)
+                        result.set(genFailureResult(new ReceiverCancelledException(getApplicationContext()), null));
+                    else if ((status | Constants.TransmissionStatus.ERROR.getNumVal()) == status)
+                        result.set(genFailureResult(new UnknownErrorException(getApplicationContext()), null));//TODO:Improvement required
+                    lock.notifyAll();
                 }
             }
         });
