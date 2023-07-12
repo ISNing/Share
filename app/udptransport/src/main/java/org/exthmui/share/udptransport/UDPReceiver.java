@@ -225,11 +225,12 @@ public class UDPReceiver {
                 throws IOException {
             this.connId = connId;
             this.address = socket.getInetAddress();
-            this.tcpUtil = new TCPUtil(socket);
-            tcpUtil.initialize();
             this.remoteTcpPort = socket.getPort();
             assert udpUtil != null;
             handler = Objects.requireNonNull(udpUtil.getHandler(connId));
+            tcpUtil = new TCPUtil(socket);
+            tcpUtil.setTAG(TAG);
+            tcpUtil.initialize();
             tcpUtil.setCommandListener(cmd -> {
                 synchronized (handlerLock) {
                     if (cmd.equals(Constants.COMMAND_CANCEL)) {
@@ -242,7 +243,7 @@ public class UDPReceiver {
                 }
             });// (4-6)
         }
-        
+
         public Future<Pair<TransmissionResult, Map<String, TransmissionResult>>> receiveAsync() {
             return coreThreadPool.submit(() -> {
                 try {
