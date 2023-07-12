@@ -51,7 +51,13 @@ public class UDPUtil {
                 if (handler != null) {
                     if (!handler.packetReceived.isDone())
                         handler.packetReceived.complete(packet);
-                    else handler.packetsBlocked.add(packet);
+                    else {
+                        if (handler.packetsBlocked.size() == Constants.MAX_UDP_PACKETS_RETENTION) {
+                            handler.packetReceived = new CompletableFuture<>();
+                            handler.packetReceived.complete(handler.packetsBlocked.get(0));
+                            handler.packetsBlocked.remove(0);
+                        } else handler.packetsBlocked.add(packet);
+                    }
                 } else Log.e(TAG, String.format("Packet with connection id %d received, but no " +
                         "correspond handler found", commandPacket.getConnId()));
             } catch (SocketException e) {
@@ -157,7 +163,7 @@ public class UDPUtil {
     }
 
     public class Handler {
-        public final List<DatagramPacket> packetsBlocked = new ArrayList<>();
+        public final List<DatagramPacket> packetsBlocked = new ArrayList<>(Constants.MAX_UDP_PACKETS_RETENTION);
         private final byte connId;
         @NonNull
         private final Context context;

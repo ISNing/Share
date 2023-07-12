@@ -61,6 +61,8 @@ public class Constants {
      */
     public static final byte COMMAND_PACKET_RESEND_REQ = 0x3;
 
+    public static final int MAX_UDP_PACKETS_RETENTION = 100;
+
     public static final int IDENTIFIER_TIMEOUT_MILLIS = 10000;
     public static final int MAX_ACK_TRYOUTS = 50;
     public static final int ACK_TIMEOUT_MILLIS = 5000;
