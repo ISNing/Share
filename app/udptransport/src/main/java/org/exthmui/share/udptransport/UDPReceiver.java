@@ -354,7 +354,7 @@ public class UDPReceiver {
                 ResendRequestPacket resendPacket = null;
 
                 {
-                    IdentifierPacket packet = handler.receiveIdentifier(Constants.START_IDENTIFIER, -1, null);//Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
+                    IdentifierPacket packet = handler.receiveIdentifier(Constants.START_IDENTIFIER, Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
                     curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
                     handler.sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
                 }
