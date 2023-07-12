@@ -162,7 +162,6 @@ public class UDPReceiver {
     private void udpStop() {
         assert udpUtil != null;
         udpUtil.releaseResources();
-        udpUtil.stopListening();
     }
 
     public void startReceive() throws IOException {
