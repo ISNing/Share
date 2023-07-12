@@ -2,6 +2,8 @@ package org.exthmui.share.udptransport.packets;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.Constants;
 
@@ -52,5 +54,11 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
             System.arraycopy(extra, 0, e, 0, Math.min(extra.length, e.length));
         setData(ArrayUtils.addFirst(e, getIdentifier()));
         return this;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return String.format("IdentifierPacket{Identifier: %s, extra: %s}", getIdentifier(), Arrays.toString(getExtra()));
     }
 }

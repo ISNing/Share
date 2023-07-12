@@ -8,6 +8,7 @@ import org.exthmui.share.udptransport.Constants;
 
 import java.net.DatagramPacket;
 import java.util.Arrays;
+import java.util.Locale;
 
 public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     public static final int MIN_DATA_LENGTH = 3;
@@ -112,5 +113,10 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     public FilePacket setData(byte[] packetIdBytes, byte groupId, byte flags, byte[] data, int length, int offset) {
         super.setData(ArrayUtils.addAll(ArrayUtils.add(ArrayUtils.addFirst(packetIdBytes, groupId), flags), Arrays.copyOfRange(data, offset, offset + length)));
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.ROOT, "FilePacket{GroupId: %d, PacketId: %d, Data: %s}", getGroupId(), getPacketId(), Arrays.toString(getData()));
     }
 }
