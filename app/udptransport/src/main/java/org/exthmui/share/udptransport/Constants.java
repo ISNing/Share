@@ -65,7 +65,7 @@ public class Constants {
 
     public static final int IDENTIFIER_TIMEOUT_MILLIS = 10000;
     public static final int MAX_ACK_TRYOUTS = 50;
-    public static final int ACK_TIMEOUT_MILLIS = 5000;
+    public static final int ACK_TIMEOUT_MILLIS = 1000;
 
     /**
      * The number of packet a group contains
