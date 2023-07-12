@@ -132,7 +132,7 @@ public class UDPSender {
         assert tcpUtil != null;
         tcpUtil.connect(tcpAddress);// (1)
         tcpUtil.writeJson(sender);// (2)
-        tcpUtil.writeJson(fileInfos);// (3}
+        tcpUtil.writeJson(fileInfos);// (3)
         listener.onProgressUpdate(
                 org.exthmui.share.shared.misc.Constants.TransmissionStatus.WAITING_FOR_ACCEPTATION.getNumVal(),
                 0, 0, null, 0, 0);

@@ -26,7 +26,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class TCPUtil {
-    public static final String SUB_TAG = "UDPUtil";
+    public static final String SUB_TAG = "TCPUtil";
 
     private static final Gson GSON = new Gson();
 
