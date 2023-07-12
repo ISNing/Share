@@ -81,8 +81,6 @@ public class UDPSender {
     private boolean canceled;
     private boolean remoteCanceled;
 
-    private boolean udpReady;
-
     private final ThreadPoolExecutor coreThreadPool = new ThreadPoolExecutor(1,
             1, 0L, TimeUnit.SECONDS, new SynchronousQueue<>(),
             r -> new Thread(r, r.toString()));
@@ -166,10 +164,9 @@ public class UDPSender {
             } else if (StringUtils.startsWith(cmd, Constants.COMMAND_UDP_SOCKET_READY)) { // e.g. UDP_READY5000:-128
                     remoteUdpPort = Integer.parseInt(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[0]);
                     connId = Byte.parseByte(cmd.replace(Constants.COMMAND_UDP_SOCKET_READY, "").split(":")[1]);
-                    udpReady = true;
             }
         });// (4-6)
-        while (!udpReady) {// (6)
+        while (remoteUdpPort == 0) {// (6)
             if (checkCanceled()) return;
             synchronized (lock) {
                 try {
@@ -330,7 +327,6 @@ public class UDPSender {
             tcpUtil.releaseResources();
             tcpUtil = null;
         }
-        udpReady = false;
         if (udpUtil != null) {
             udpUtil.releaseResources();
             udpUtil = null;
