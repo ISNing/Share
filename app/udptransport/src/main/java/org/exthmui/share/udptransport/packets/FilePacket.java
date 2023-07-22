@@ -11,36 +11,36 @@ import java.util.Arrays;
 import java.util.Locale;
 
 public final class FilePacket extends AbstractCommandPacket<FilePacket> {
-    public static final int MIN_DATA_LENGTH = 3;
+    public static final int MIN_DATA_LENGTH = 4;
 
-    public static final int[] GROUP_ID_TIP = {0, 0};
-    public static final int[] PACKET_ID_TIP = {1, 2};
-    public static final int[] FLAG_TIP = {3, 3};
-    public static final int[] DATA_TIP = {4};
+    public static final ByteUtils.Tip GROUP_ID_TIP = new ByteUtils.Tip(0, 0);
+    public static final ByteUtils.Tip PACKET_ID_TIP = new ByteUtils.Tip(1, 2);
+    public static final ByteUtils.Tip FLAG_TIP = new ByteUtils.Tip(3, 3);
+    public static final ByteUtils.Tip DATA_TIP = new ByteUtils.Tip(4);
 
-    private FilePacket(DatagramPacket packet) {
+    public FilePacket(DatagramPacket packet) {
         super(packet);
     }
 
     public FilePacket() {
-        this(new DatagramPacket(new byte[]{Constants.COMMAND_FILE_PACKET, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0},
-                HEADER_LENGTH + MIN_DATA_LENGTH));
+        super(Constants.UdpCommand.FILE_PACKET, MIN_DATA_LENGTH);
     }
 
     @Override
     public void legalCheck() {
-        if (getCommand() != Constants.COMMAND_FILE_PACKET ||
-                toDatagramPacket().getLength() < HEADER_LENGTH + MIN_DATA_LENGTH) {
-            Log.e(this.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
+        super.legalCheck();
+        if (getCommand() != Constants.UdpCommand.FILE_PACKET ||
+                super.getData().length < MIN_DATA_LENGTH) {
+            Log.e(super.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
             throw new IllegalArgumentException();
         }
     }
 
-    public static FilePacket fromDatagramPacket(DatagramPacket packet) {
+    public static FilePacket of(DatagramPacket packet) {
         return new FilePacket(packet);
     }
 
-    private byte getFlags() {
+    private byte getFlag() {
         return cutDataByTip(FLAG_TIP)[0];
     }
 
@@ -54,7 +54,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket setGroupId(byte groupId) {
-        setData(getPacketIdBytes(), groupId, getFlags(), getData());
+        setData(getPacketIdBytes(), groupId, getFlag(), getData());
         return this;
     }
 
@@ -67,7 +67,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket setPacketId(byte[] packetId) {
-        setData(packetId, getGroupId(), getFlags(), getData());
+        setData(packetId, getGroupId(), getFlag(), getData());
         return this;
     }
 
@@ -96,7 +96,7 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     }
 
     public FilePacket setData(byte[] data, int length, int offset) {
-        setData(getPacketIdBytes(), getGroupId(), getFlags(), data, length, offset);
+        setData(getPacketIdBytes(), getGroupId(), getFlag(), data, length, offset);
         return this;
     }
 
@@ -117,6 +117,6 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
 
     @Override
     public String toString() {
-        return String.format(Locale.ROOT, "FilePacket{GroupId: %d, PacketId: %d, Data: %s}", getGroupId(), getPacketId(), Arrays.toString(getData()));
+        return String.format(Locale.ROOT, "FilePacket{GroupId: %d, PacketId: %d, Flag: %s}", getGroupId(), getPacketId(), getFlag());
     }
 }

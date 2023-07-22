@@ -1,6 +1,19 @@
 package org.exthmui.share.udptransport;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import org.exthmui.share.udptransport.exceptions.InvalidPacketException;
+import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
+import org.exthmui.share.udptransport.packets.CommandPacket;
+import org.exthmui.share.udptransport.packets.FilePacket;
+import org.exthmui.share.udptransport.packets.IdentifierPacket;
+import org.exthmui.share.udptransport.packets.ResendRequestPacket;
+
+import java.lang.reflect.InvocationTargetException;
+import java.net.DatagramPacket;
 import java.nio.ByteOrder;
+import java.util.function.Supplier;
 
 /**
  * Packet structure:
@@ -36,32 +49,79 @@ import java.nio.ByteOrder;
  */
 public class Constants {
     public static final ByteOrder DEFAULT_ORDER = ByteOrder.BIG_ENDIAN;
+    public static final byte PACKET_END_FLAG = 0x1;
+
+    public enum UdpCommand {
+        UNKNOWN((byte) 0x0, CommandPacket.class),
+        /**
+         * Command extra:
+         * Byte 3: Group id
+         * Byte 4-5: Packet id
+         * Byte 6+: Data
+         * <p>
+         * File content as data
+         */
+        FILE_PACKET((byte) 0x1, FilePacket.class),
+        /**
+         * Command extra:
+         * Byte 3: Identifier
+         * Bytes 4-15: Reserved for identifiers
+         * <p>
+         * No data
+         */
+        IDENTIFIER((byte) 0x2, IdentifierPacket.class),
+        /**
+         * Command extra:
+         * Byte 3: Group id
+         * Byte 4+: Data
+         * <p>
+         * Packet ids as data
+         */
+        PACKET_RESEND_REQ((byte) 0x3, ResendRequestPacket.class);
+
+        private final byte cmd;
+        private final Class<? extends AbstractCommandPacket<?>> clazz;
+
+        UdpCommand(byte cmd, Class<? extends AbstractCommandPacket<?>> clazz) {
+            this.cmd = cmd;
+            this.clazz = clazz;
+        }
+
+        public byte getCmd() {
+            return cmd;
+        }
+
+        public Class<? extends AbstractCommandPacket<?>> getClazz() {
+            return clazz;
+        }
+
+        @Nullable
+        public static UdpCommand parse(byte cmd) {
+            for (UdpCommand c : UdpCommand.values()) {
+                if (c.getCmd() == cmd) return c;
+            }
+            return null;
+        }
+
+        @NonNull
+        public static AbstractCommandPacket<?> parse(DatagramPacket packet) throws IllegalArgumentException {
+            try {
+                return new CommandPacket(packet).getCommand().getClazz().getConstructor(DatagramPacket.class).newInstance(packet);
+            } catch (InvocationTargetException e) {
+                if (e.getTargetException() instanceof IllegalArgumentException)
+                    throw new InvalidPacketException(e);
+                else throw new RuntimeException(e);
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
 
     public static final String COMMAND_CANCEL = "CANCEL";
     public static final String COMMAND_UDP_SOCKET_READY = "UDP_READY";
 
-    /**
-     * Command extra:
-     * Byte 3: Group id
-     * Byte 4-5: Packet id
-     * File content as data
-     */
-    public static final byte COMMAND_FILE_PACKET = 0x0;
-    /**
-     * Command extra:
-     * Byte 3: Identifier
-     * Bytes 4-5: Reserved for identifiers
-     */
-    public static final byte COMMAND_IDENTIFIER = 0x1;
-    /**
-     * Command extra:
-     * Byte 3: Group id
-     * Packet ids as data
-     */
-    public static final byte COMMAND_PACKET_RESEND_REQ = 0x3;
-
-    public static final int MAX_UDP_PACKETS_RETENTION = 100;
+    public static final int MAX_UDP_PACKETS_RETENTION = 2000;
 
     public static final int IDENTIFIER_TIMEOUT_MILLIS = 10000;
     public static final int MAX_ACK_TRYOUTS = 50;
@@ -84,33 +144,71 @@ public class Constants {
 
     public static final String STRING_CHARSET = "UTF-8";
 
+    public enum Identifier {
+        START((byte) 0x0, false, () -> Identifier.valueOf("START_ACK")),
+        START_ACK((byte) 0x1, true, () -> Identifier.valueOf("START")),
+        GROUP_ID_RESET((byte) 0x2, false, () -> Identifier.valueOf("GROUP_ID_RESET_ACK")),
+        GROUP_ID_RESET_ACK((byte) 0x3, true, () -> Identifier.valueOf("GROUP_ID_RESET")),
+        /**
+         * Extra define:
+         * Byte 1: Group ID
+         * Byte 2-3: End Packet ID
+         * Byte 4: Is Resend END:          0: Is Not resend
+         * Otherwise: Is resend
+         */
+        END((byte) 0x4, false, () -> Identifier.valueOf("END_ACK")),
+        END_ACK((byte) 0x5, true, () -> Identifier.valueOf("END")),
+        FILE_END((byte) 0x6, false, () -> Identifier.valueOf("FILE_END_ACK")),
+        FILE_END_ACK((byte) 0x7, true, () -> Identifier.valueOf("FILE_END"));
+
+        private final byte identifier;
+        private final boolean isAck;
+        private final Supplier<Identifier> correspondIdentifier;
+
+        Identifier(byte identifier, boolean isAck, Supplier<Identifier> correspondIdentifier) {
+            this.identifier = identifier;
+            this.isAck = isAck;
+            this.correspondIdentifier = correspondIdentifier;
+        }
+
+        public byte getIdentifier() {
+            return identifier;
+        }
+
+        public boolean isAck() {
+            return isAck;
+        }
+
+        public Identifier getCorrespondIdentifier() {
+            return correspondIdentifier.get();
+        }
+
+        @Nullable
+        public static Identifier parse(byte identifier) {
+            for (Identifier i : Identifier.values()) {
+                if (i.getIdentifier() == identifier) return i;
+            }
+            return null;
+        }
+    }
+
     /**
      * Group id and packet id to start as extra
      */
-    public static final int[] START_ID_GROUP_ID_TIP = new int[]{0, 0};
-    public static final int[] START_ID_START_PACKET_ID_TIP = new int[]{1, 2};
-    public static final byte START_IDENTIFIER = 0x0;
-    public static final byte START_ACK_IDENTIFIER = 0x1;
+    public static final ByteUtils.Tip START_ID_GROUP_ID_TIP = new ByteUtils.Tip(0, 0);
+    public static final ByteUtils.Tip START_ID_START_PACKET_ID_TIP = new ByteUtils.Tip(1, 2);
 
     /**
      * Group id before and after reset as extra
      * Receiver will reset current group id io {@link Byte#MIN_VALUE}
      */
-    public static final int[] GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP = new int[]{0, 0};
-    public static final int[] GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP = new int[]{1, 1};
-    public static final byte GROUP_ID_RESET_IDENTIFIER = 0x2;
-    public static final byte GROUP_ID_RESET_ACK_IDENTIFIER = 0x3;
-
+    public static final ByteUtils.Tip GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP = new ByteUtils.Tip(0, 0);
+    public static final ByteUtils.Tip GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP = new ByteUtils.Tip(1, 1);
     /**
      * Group id and end packet id to end as extra
      */
-    public static final int[] END_ID_GROUP_ID_TIP = new int[]{0, 0};
-    public static final int[] END_ID_END_PACKET_ID_TIP = new int[]{1, 2};
-    public static final byte END_IDENTIFIER = 0x4;
-    public static final byte END_ACK_IDENTIFIER = 0x5;
-
-    public static final byte FILE_END_IDENTIFIER = 0x6;
-    public static final byte FILE_END_ACK_IDENTIFIER = 0x7;
+    public static final ByteUtils.Tip END_ID_GROUP_ID_TIP = new ByteUtils.Tip(0, 0);
+    public static final ByteUtils.Tip END_ID_END_PACKET_ID_TIP = new ByteUtils.Tip(1, 2);
 
     public static final String FILE_INFO_EXTRA_KEY_MD5 = "md5";
 }

@@ -209,6 +209,11 @@ public class UDPUtil {
             }
         }
 
+        @SuppressWarnings("unchecked")
+        public <T extends AbstractCommandPacket<T>> T receivePacket(int timeout, TimeUnit unit) throws TimedOutException {
+            return receivePacket(datagramPacket -> (T) Constants.UdpCommand.parse(datagramPacket), timeout, unit);
+        }
+
         public <T extends AbstractCommandPacket<T>> T receivePacket(UDPSender.PacketFactory<T> factory, int timeout, TimeUnit unit) throws TimedOutException {
             assert datagramSocket != null;
             T targetPacket = null;
@@ -223,11 +228,13 @@ public class UDPUtil {
                 try {
                     targetPacket = factory.produce(datagramPacket);
                 } catch (IllegalArgumentException ignored) {
+                    Log.w(TAG, String.format("Packet rejected: %s", Arrays.toString(datagramPacket.getData())));
                     packetsRejected.add(datagramPacket);
                 }
             } while (targetPacket == null);
 
-            reinsertPackets(packetsRejected);
+            if (!packetsRejected.isEmpty()) reinsertPackets(packetsRejected);
+            Log.d(TAG, String.format("Packet received: %s <- %s", targetPacket, targetPacket.getSocketAddress()));
             return targetPacket;
         }
 
@@ -241,10 +248,15 @@ public class UDPUtil {
             }
         }
 
+        public boolean isPacketsClear() {
+            return packetsBlocked.isEmpty() && !packetReceived.isDone();
+        }
+
         public <T extends AbstractCommandPacket<T>> void sendPacket(@NonNull T packet) throws IOException {
             assert datagramSocket != null;
             packet.setConnId(connId);
             DatagramPacket p = packet.toDatagramPacket();
+            Log.d(TAG, String.format("Sending packet: %s -> %s", packet, datagramSocket.getRemoteSocketAddress()));
             datagramSocket.send(p);
         }
 
@@ -255,11 +267,11 @@ public class UDPUtil {
          * @param ackIdentifier Ack Identifier (Value {@link null} means not to wait for ack)
          * @return Ack packet
          */
-        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier) throws IOException, TimedOutException {
+        public IdentifierPacket sendIdentifier(Constants.Identifier identifier, Constants.Identifier ackIdentifier) throws IOException, TimedOutException {
             return sendIdentifier(identifier, ackIdentifier, null);
         }
 
-        public IdentifierPacket sendIdentifier(byte identifier, Byte ackIdentifier, byte[] extra) throws IOException, TimedOutException {
+        public IdentifierPacket sendIdentifier(Constants.Identifier identifier, Constants.Identifier ackIdentifier, byte[] extra) throws IOException, TimedOutException {
             assert datagramSocket != null;
             IdentifierPacket sendPacket = new IdentifierPacket().setIdentifier(identifier).setExtra(extra);
             if (ackIdentifier != null) {
@@ -276,7 +288,7 @@ public class UDPUtil {
                         recvPacket = receiveIdentifier(ackIdentifier, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 
                         Log.d(TAG,
-                                String.format("Ack Identifier \"%d\" received, connId: %d", recvPacket.getIdentifier(), recvPacket.getConnId()));
+                                String.format("Ack Identifier \"%s\" received, connId: %d", recvPacket.getIdentifier(), recvPacket.getConnId()));
                     } catch (TimedOutException e) {
                         if (tryouts >= Constants.MAX_ACK_TRYOUTS) {
                             Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s, reached maximum retries", e), e);
@@ -292,10 +304,14 @@ public class UDPUtil {
             return null;
         }
 
-        public IdentifierPacket receiveIdentifier(byte identifier, int timeout, TimeUnit unit) throws TimedOutException {
+        public IdentifierPacket receiveIdentifier(Constants.Identifier identifier, int timeout, TimeUnit unit) throws TimedOutException {
             return receivePacket(datagramPacket -> {
                 IdentifierPacket p = new IdentifierPacket(datagramPacket);
-                if (p.getIdentifier() != identifier) throw new IllegalArgumentException();
+                Log.d(TAG, String.format("Identifier received: \"%s\"", p.getIdentifier())); // TODO: 2023/7/8
+                if (p.getIdentifier() != identifier) {// TODO: 2023/7/8  
+                    Log.w(TAG, String.format("Identifier received \"%s\", but illegal", p.getIdentifier()));
+                    throw new IllegalArgumentException();
+                }
                 return p;
             }, timeout, unit);
         }

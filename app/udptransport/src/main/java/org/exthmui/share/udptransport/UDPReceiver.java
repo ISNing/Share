@@ -22,7 +22,6 @@ import org.exthmui.share.shared.exceptions.trans.TimedOutException;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
 import org.exthmui.share.shared.exceptions.trans.UnknownErrorException;
 import org.exthmui.share.udptransport.packets.AbstractCommandPacket;
-import org.exthmui.share.udptransport.packets.CommandPacket;
 import org.exthmui.share.udptransport.packets.FilePacket;
 import org.exthmui.share.udptransport.packets.IdentifierPacket;
 import org.exthmui.share.udptransport.packets.ResendRequestPacket;
@@ -30,13 +29,9 @@ import org.exthmui.utils.FileUtils;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.reflect.Type;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -354,9 +349,9 @@ public class UDPReceiver {
                 ResendRequestPacket resendPacket = null;
 
                 {
-                    IdentifierPacket packet = handler.receiveIdentifier(Constants.START_IDENTIFIER, Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
+                    IdentifierPacket packet = handler.receiveIdentifier(Constants.Identifier.START, Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
                     curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
-                    handler.sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
+                    handler.sendIdentifier(Constants.Identifier.START_ACK, null);// (8)
                 }
 
                 AbstractCommandPacket<?> packet;
@@ -364,25 +359,24 @@ public class UDPReceiver {
                     try {
                         if (waitingForResending && resendPacket != null)
                             handler.sendPacket(resendPacket);// (11)
-                        packet = handler.receivePacket(CommandPacket::new, -1, null);
+                        packet = handler.receivePacket(-1, null);
                     } catch (TimedOutException ignored) {
                         continue;
                     }
                     if (packet == null) continue;
                     if (groupIdExceeded) {
-                        if (packet.getCommand() != Constants.COMMAND_IDENTIFIER) continue;
-                        IdentifierPacket identifierPacket =
-                                new IdentifierPacket(packet.toDatagramPacket());
-                        if (identifierPacket.getIdentifier() != Constants.GROUP_ID_RESET_IDENTIFIER ||
+                        if (!(packet instanceof IdentifierPacket)) continue;
+                        IdentifierPacket identifierPacket = (IdentifierPacket) packet;
+                        if (identifierPacket.getIdentifier() != Constants.Identifier.GROUP_ID_RESET ||
                                 ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
                             continue;
                         curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
                         groupIdExceeded = false;
-                        handler.sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
+                        handler.sendIdentifier(Constants.Identifier.GROUP_ID_RESET_ACK, null);
                     }
                     switch (packet.getCommand()) {
-                        case Constants.COMMAND_FILE_PACKET:// (7), (13)
-                            FilePacket filePacket = FilePacket.fromDatagramPacket(packet.toDatagramPacket());
+                        case FILE_PACKET:// (7), (13)
+                            FilePacket filePacket = (FilePacket) packet;
                             if (filePacket.getGroupId() != curGroup) continue;
                             byte[] data = bufTemp[filePacket.getPacketId() - Short.MIN_VALUE] = filePacket.getData();
                             curFileBytesReceived += data.length;
@@ -391,58 +385,68 @@ public class UDPReceiver {
                                     org.exthmui.share.shared.misc.Constants.TransmissionStatus.IN_PROGRESS.getNumVal(),
                                     totalBytesToSend, bytesReceived, senderInfo, fileInfos, fileInfo.getId(), fileInfo.getFileSize(), curFileBytesReceived);
                             break;
-                        case Constants.COMMAND_IDENTIFIER:
-                            IdentifierPacket identifierPacket = new IdentifierPacket(packet.toDatagramPacket());
+                        case IDENTIFIER:
+                            IdentifierPacket identifierPacket = (IdentifierPacket) packet;
                             Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                                    String.format("Identifier \"%d\" received", identifierPacket.getIdentifier()));
+                                    String.format("Identifier \"%s\" received", identifierPacket.getIdentifier()));
 
-                            if (identifierPacket.getIdentifier() == Constants.START_IDENTIFIER) {// (7)
-                                if (ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
-                                    continue;
-                                handler.sendIdentifier(Constants.START_ACK_IDENTIFIER, null);// (8)
-                                waitingForResending = false;
-                                startPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.START_ID_START_PACKET_ID_TIP, identifierPacket.getExtra()));
-                            } else if (identifierPacket.getIdentifier() == Constants.END_IDENTIFIER) {// (10)
-                                Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                                        String.format("Identifier group id: %d, current group: %d", ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0], curGroup));
-                                if (ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
-                                    continue;
-                                handler.sendIdentifier(Constants.END_ACK_IDENTIFIER, null);// (11)
-                                endPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.END_ID_END_PACKET_ID_TIP, identifierPacket.getExtra()));
-
-                                Set<Short> idsToResendAsSet = new HashSet<>();
-                                for (int i = startPacketId; i <= endPacketId; i++) {
-                                    if (bufTemp[i - Short.MIN_VALUE] == null)
-                                        idsToResendAsSet.add((short) (i));
-                                }
-                                short[] idsToResend =
-                                        ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
-                                resendPacket = new ResendRequestPacket();
-                                resendPacket.setPacketIds(idsToResend);
-                                handler.sendPacket(resendPacket);// (11)
-
-                                if (idsToResendAsSet.isEmpty()) {
-                                    for (int i = startPacketId; i <= endPacketId; i++) {
-                                        byte[] buf = bufTemp[i - Short.MIN_VALUE];
-                                        if (buf == null) break;
-                                        outputStream.write(buf, 0, buf.length);
+                            switch (identifierPacket.getIdentifier()) {
+                                case START:// (7)
+                                    if (ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                        continue;
+                                    handler.sendIdentifier(Constants.Identifier.START_ACK, null);// (8)
+                                    waitingForResending = false;
+                                    startPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.START_ID_START_PACKET_ID_TIP, identifierPacket.getExtra()));
+                                    break;
+                                case END:// (10)
+                                    if (waitingForResending && identifierPacket.getExtra()[3] == 0) {
+                                        Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                                "Waiting for resending, but received END, ignoring");
+                                        continue;
                                     }
-                                    outputStream.flush();
-                                    if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
-                                    else curGroup++;
-                                } else {
                                     Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
-                                            String.format("Resend required: %s", Arrays.toString(idsToResend)));
-                                    waitingForResending = true;
-                                }
-                            } else if (identifierPacket.getIdentifier() == Constants.GROUP_ID_RESET_IDENTIFIER) {
-                                if (ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
-                                    continue;
-                                curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
-                                handler.sendIdentifier(Constants.GROUP_ID_RESET_ACK_IDENTIFIER, null);
-                            } else if (identifierPacket.getIdentifier() == Constants.FILE_END_IDENTIFIER) {// (14)
-                                fileEnded = true;
-                                handler.sendIdentifier(Constants.FILE_END_ACK_IDENTIFIER, null);// (15)
+                                            String.format("Identifier group id: %d, current group: %d", ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0], curGroup));
+                                    if (ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                        continue;
+                                    handler.sendIdentifier(Constants.Identifier.END_ACK, null);// (11)
+                                    endPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.END_ID_END_PACKET_ID_TIP, identifierPacket.getExtra()));
+
+                                    Set<Short> idsToResendAsSet = new HashSet<>();
+                                    for (int i = startPacketId; i <= endPacketId; i++) {
+                                        if (bufTemp[i - Short.MIN_VALUE] == null)
+                                            idsToResendAsSet.add((short) (i));
+                                    }
+                                    short[] idsToResend =
+                                            ArrayUtils.toPrimitive(idsToResendAsSet.toArray(new Short[0]));
+                                    resendPacket = new ResendRequestPacket();
+                                    resendPacket.setPacketIds(idsToResend);
+                                    handler.sendPacket(resendPacket);// (11)
+
+                                    if (idsToResendAsSet.isEmpty()) {
+                                        for (int i = startPacketId; i <= endPacketId; i++) {
+                                            byte[] buf = bufTemp[i - Short.MIN_VALUE];
+                                            if (buf == null) break;
+                                            outputStream.write(buf, 0, buf.length);
+                                        }
+                                        outputStream.flush();
+                                        if (curGroup == Byte.MAX_VALUE) groupIdExceeded = true;
+                                        else curGroup++;
+                                    } else {
+                                        Log.d(String.format(TAG + "/ConnectionHandler(ConnId: %d)", getConnId()),
+                                                String.format("Resend required: %s", Arrays.toString(idsToResend)));
+                                        waitingForResending = true;
+                                    }
+                                    break;
+                                case GROUP_ID_RESET:
+                                    if (ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
+                                        continue;
+                                    curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
+                                    handler.sendIdentifier(Constants.Identifier.GROUP_ID_RESET_ACK, null);
+                                    break;
+                                case FILE_END:// (14)
+                                    fileEnded = true;
+                                    handler.sendIdentifier(Constants.Identifier.FILE_END_ACK, null);// (15)
+                                    break;
                             }
                             break;
                     }

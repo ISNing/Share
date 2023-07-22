@@ -1,20 +1,26 @@
 package org.exthmui.share.udptransport.packets;
 
+import static org.exthmui.share.udptransport.Constants.PACKET_END_FLAG;
+
+import android.util.Log;
+
 import androidx.annotation.IntRange;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
+import org.exthmui.share.udptransport.Constants;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.SocketAddress;
+import java.util.Arrays;
 
-public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>> {
+public abstract class AbstractCommandPacket<T extends AbstractCommandPacket<T>> {
     public static final int HEADER_LENGTH = 2;
 
-    public static final int[] COMMAND_TIP = {0, 0};
-    public static final int[] CONN_ID_TIP = {1, 1};
-    public static final int[] DATA_TIP = {2};
+    public static final ByteUtils.Tip COMMAND_TIP = new ByteUtils.Tip(0, 0);
+    public static final ByteUtils.Tip CONN_ID_TIP = new ByteUtils.Tip(1, 1);
+    public static final ByteUtils.Tip DATA_TIP = new ByteUtils.Tip(2);
 
     private final DatagramPacket packet;
 
@@ -23,15 +29,29 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
         legalCheck();
     }
 
+    protected AbstractCommandPacket(Constants.UdpCommand command, int dataLength) {
+        byte[] rawData = new byte[HEADER_LENGTH + dataLength + 1];
+        rawData[rawData.length - 1] = PACKET_END_FLAG;
+        this.packet = new DatagramPacket(rawData, 0, rawData.length);
+        setCommand(command);
+        legalCheck();
+    }
+
     public AbstractCommandPacket() {
-        packet = new DatagramPacket(new byte[]{0x0, 0x0}, 0, 2);
+        this(Constants.UdpCommand.UNKNOWN, 0);
     }
 
     public DatagramPacket toDatagramPacket() {
         return packet;
     }
 
-    public abstract void legalCheck();
+    public void legalCheck() {
+        if (toDatagramPacket().getLength() < HEADER_LENGTH ||
+                packet.getData()[packet.getData().length - 1] != PACKET_END_FLAG) {
+            Log.e(super.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
+            throw new IllegalArgumentException();
+        }
+    }
 
     public InetAddress getAddress() {
         return packet.getAddress();
@@ -46,24 +66,28 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
     }
 
     private byte[] getDataAbstract() {
-        return ByteUtils.cutBytesByTip(DATA_TIP, packet.getData(), packet.getOffset());
+        return ByteUtils.removeLastElement(ByteUtils.cutBytesByTip(DATA_TIP, packet.getData(), packet.getOffset()));
     }
 
     @SuppressWarnings("unchecked")
     public T setData(byte[] buf) {
-        byte[] bytes = ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, buf);
+        byte[] bytes = ArrayUtils.add(ArrayUtils.addAll(new byte[]{getCommandByte(), getConnId()}, buf), PACKET_END_FLAG);
         packet.setData(bytes);
         packet.setLength(bytes.length);
         return (T) this;
     }
 
-    public byte getCommand() {
+    public Constants.UdpCommand getCommand() {
+        return Constants.UdpCommand.parse(getCommandByte());
+    }
+
+    private byte getCommandByte() {
         return ByteUtils.cutBytesByTip(COMMAND_TIP, packet.getData(), packet.getOffset())[0];
     }
 
     @SuppressWarnings("unchecked")
-    public T setCommand(byte command) {
-        packet.setData(ArrayUtils.addAll(new byte[]{command, getConnId()}, getDataAbstract()));
+    public T setCommand(Constants.UdpCommand command) {
+        packet.getData()[0] = command.getCmd();
         return (T) this;
     }
 
@@ -73,12 +97,8 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
 
     @SuppressWarnings("unchecked")
     public T setConnId(byte connId) {
-        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), connId}, getDataAbstract()));
+        packet.getData()[1] = connId;
         return (T) this;
-    }
-
-    private void updateData() {
-        packet.setData(ArrayUtils.addAll(new byte[]{getCommand(), getConnId()}, getDataAbstract()));
     }
 
     @SuppressWarnings("unchecked")
@@ -103,11 +123,11 @@ public abstract class AbstractCommandPacket <T extends AbstractCommandPacket<T>>
         return packet.getSocketAddress();
     }
 
-    final byte[] cutDataByTip(int[] tip, @IntRange(from = 0) int initOffset) {
+    final byte[] cutDataByTip(ByteUtils.Tip tip, @IntRange(from = 0) int initOffset) {
         return ByteUtils.cutBytesByTip(tip, AbstractCommandPacket.this.getDataAbstract(), initOffset);
     }
 
-    final byte[] cutDataByTip(int[] tip) {
+    final byte[] cutDataByTip(ByteUtils.Tip tip) {
         return cutDataByTip(tip, 0);
     }
 }

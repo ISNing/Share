@@ -7,7 +7,6 @@ import android.util.Pair;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -28,16 +27,10 @@ import org.exthmui.share.udptransport.packets.ResendRequestPacket;
 import org.exthmui.utils.StackTraceUtils;
 
 import java.io.BufferedInputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -243,8 +236,15 @@ public class UDPSender {
             byte[][] bufTemp = new byte[Short.MAX_VALUE - Short.MIN_VALUE + 1][];
             byte[] buf = new byte[Constants.DATA_LEN_MAX_HI];
             int len = 0;
-            handler.sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+            handler.sendIdentifier(Constants.Identifier.START, Constants.Identifier.START_ACK, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
             while ((len = (inputStream.read(buf))) > 0) {
+//                synchronized (sendPacket) {
+//                    try {
+//                        sendPacket.wait(10);
+//                    } catch (InterruptedException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }
                 bufTemp[curPacket - Short.MIN_VALUE] = buf.clone();
                 handler.sendPacket(sendPacket.setPacketId(curPacket).setGroupId(curGroup).setData(buf, len));// (9)
 
@@ -255,7 +255,7 @@ public class UDPSender {
                 if (curPacket == endPacket) {
                     boolean packetAllSent = false;
                     while (!packetAllSent) {
-                        handler.sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
+                        handler.sendIdentifier(Constants.Identifier.END, Constants.Identifier.END_ACK, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
 
                         ResendRequestPacket resendReq = handler.receivePacket(ResendRequestPacket::new, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS, Constants.MAX_ACK_TRYOUTS);// (12)
                         short[] packetIds = resendReq.getPacketIds();
@@ -269,12 +269,12 @@ public class UDPSender {
                     }
 
                     if (curGroup + 1 > endGroup) {
-                        handler.sendIdentifier(Constants.GROUP_ID_RESET_IDENTIFIER, Constants.GROUP_ID_RESET_ACK_IDENTIFIER, new byte[]{curGroup, startGroup});
+                        handler.sendIdentifier(Constants.Identifier.GROUP_ID_RESET, Constants.Identifier.GROUP_ID_RESET_ACK, new byte[]{curGroup, startGroup});
                         curGroup = startGroup;
-                        handler.sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+                        handler.sendIdentifier(Constants.Identifier.START, Constants.Identifier.START_ACK, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
                     } else {
                         curGroup++;
-                        handler.sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
+                        handler.sendIdentifier(Constants.Identifier.START, Constants.Identifier.START_ACK, ArrayUtils.addFirst(ByteUtils.shortToBytes(startPacket), curGroup));// (7), (8)
                     }
                     curPacket = startPacket;
                 } else {
@@ -285,7 +285,7 @@ public class UDPSender {
             curPacket--;
             boolean packetAllSent = false;
             while (!packetAllSent) {
-                handler.sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
+                handler.sendIdentifier(Constants.Identifier.END, Constants.Identifier.END_ACK, ArrayUtils.addFirst(ByteUtils.shortToBytes(curPacket), curGroup));// (10), (11)
 
                 ResendRequestPacket resendReq = handler.receivePacket(ResendRequestPacket::new, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS, Constants.MAX_ACK_TRYOUTS);// (12)
 
@@ -302,7 +302,7 @@ public class UDPSender {
                 } else packetAllSent = true;
             }
 
-            handler.sendIdentifier(Constants.FILE_END_IDENTIFIER, Constants.FILE_END_ACK_IDENTIFIER);// (7), (8)
+            handler.sendIdentifier(Constants.Identifier.FILE_END, Constants.Identifier.FILE_END_ACK);// (7), (8)
             return new SuccessTransmissionResult(context);
         } catch (TransmissionException e) {
             return e;
@@ -312,11 +312,11 @@ public class UDPSender {
     public void resendPackets(FilePacket[] packets, byte curGroup, short curGroupEndPacket) throws IOException, TimedOutException {
         assert handler != null;
         Log.d(TAG, String.format("Resend start: %s", Arrays.toString(Arrays.stream(packets).map(FilePacket::getPacketId).toArray())));
-        handler.sendIdentifier(Constants.START_IDENTIFIER, Constants.START_ACK_IDENTIFIER, new byte[]{curGroup});
+        handler.sendIdentifier(Constants.Identifier.START, Constants.Identifier.START_ACK, new byte[]{curGroup});
         for (FilePacket packet : packets)
             handler.sendPacket(packet);
 
-        handler.sendIdentifier(Constants.END_IDENTIFIER, Constants.END_ACK_IDENTIFIER, ArrayUtils.addFirst(ByteUtils.shortToBytes(curGroupEndPacket), curGroup));// (10), (11)
+        handler.sendIdentifier(Constants.Identifier.END, Constants.Identifier.END_ACK, ArrayUtils.add(ArrayUtils.addFirst(ByteUtils.shortToBytes(curGroupEndPacket), curGroup), (byte) 0x1));// (10), (11)
 
         ResendRequestPacket resendReq = handler.receivePacket(ResendRequestPacket::new, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS, Constants.MAX_ACK_TRYOUTS);// (12)
 

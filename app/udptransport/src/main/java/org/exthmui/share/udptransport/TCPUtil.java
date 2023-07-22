@@ -217,6 +217,7 @@ public class TCPUtil {
     }
 
     public void releaseResources() {
+        stringWatcherStopFlag = true;
         Utils.silentClose(in);
         in = null;
         Utils.silentClose(out);

@@ -205,7 +205,7 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
 
                     @Override
                     public void onServiceResolved(NsdPeer peer) {
-                        Log.d(TAG, String.format("Successfully resolved peer, adding it:  %s(%s)", peer.getDisplayName(), peer.getId()));
+                        Log.d(TAG, String.format("Successfully resolved peer, adding it: %s(%s)", peer.getDisplayName(), peer.getId()));
 
                         mPeers.put(peer.getId(), peer);
                         notifyListeners(new PeerAddedEvent(NsdManager.this, peer));
