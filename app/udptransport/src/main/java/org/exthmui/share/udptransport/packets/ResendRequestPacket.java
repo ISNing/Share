@@ -2,6 +2,8 @@ package org.exthmui.share.udptransport.packets;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
 import org.exthmui.share.udptransport.Constants;
@@ -34,6 +36,12 @@ public final class ResendRequestPacket extends AbstractCommandPacket<ResendReque
             Log.e(super.toString(), String.format("Illegal data: %s", Arrays.toString(toDatagramPacket().getData())));
             throw new IllegalArgumentException();
         }
+    }
+
+    @NonNull
+    @Override
+    public ResendRequestPacket clone() {
+        return new ResendRequestPacket(this.toDatagramPacket());
     }
 
     public ResendRequestPacket setData(byte groupId, byte[] idsBytes) {

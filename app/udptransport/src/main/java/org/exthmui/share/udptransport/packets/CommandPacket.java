@@ -1,5 +1,7 @@
 package org.exthmui.share.udptransport.packets;
 
+import androidx.annotation.NonNull;
+
 import java.net.DatagramPacket;
 
 public final class CommandPacket extends AbstractCommandPacket<CommandPacket> {
@@ -16,7 +18,15 @@ public final class CommandPacket extends AbstractCommandPacket<CommandPacket> {
         super.legalCheck();
     }
 
+    @NonNull
+    @Override
+    public CommandPacket clone() {
+        return new CommandPacket(this.toDatagramPacket());
+    }
+
     public static CommandPacket of(DatagramPacket packet) {
         return new CommandPacket(packet);
     }
+
+
 }

@@ -2,6 +2,8 @@ package org.exthmui.share.udptransport.packets;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
 import org.exthmui.share.udptransport.Constants;
@@ -88,6 +90,12 @@ public final class FilePacket extends AbstractCommandPacket<FilePacket> {
     public FilePacket setData(byte[] data) {
         setData(data, data.length);
         return this;
+    }
+
+    @NonNull
+    @Override
+    public FilePacket clone() {
+        return new FilePacket(this.toDatagramPacket());
     }
 
     public FilePacket setData(byte[] data, int length) {

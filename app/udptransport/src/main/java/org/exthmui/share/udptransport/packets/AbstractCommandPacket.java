@@ -5,6 +5,7 @@ import static org.exthmui.share.udptransport.Constants.PACKET_END_FLAG;
 import android.util.Log;
 
 import androidx.annotation.IntRange;
+import androidx.annotation.NonNull;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.exthmui.share.udptransport.ByteUtils;
@@ -15,7 +16,7 @@ import java.net.InetAddress;
 import java.net.SocketAddress;
 import java.util.Arrays;
 
-public abstract class AbstractCommandPacket<T extends AbstractCommandPacket<T>> {
+public abstract class AbstractCommandPacket<T extends AbstractCommandPacket<T>> implements Cloneable {
     public static final int HEADER_LENGTH = 2;
 
     public static final ByteUtils.Tip COMMAND_TIP = new ByteUtils.Tip(0, 0);
@@ -130,4 +131,8 @@ public abstract class AbstractCommandPacket<T extends AbstractCommandPacket<T>> 
     final byte[] cutDataByTip(ByteUtils.Tip tip) {
         return cutDataByTip(tip, 0);
     }
+
+    @NonNull
+    @Override
+    public abstract AbstractCommandPacket<T> clone();
 }

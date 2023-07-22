@@ -34,6 +34,12 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
         }
     }
 
+    @NonNull
+    @Override
+    public IdentifierPacket clone() {
+        return new IdentifierPacket(this.toDatagramPacket());
+    }
+
     public Constants.Identifier getIdentifier() {
         return Constants.Identifier.parse(getIdentifierByte());
     }
