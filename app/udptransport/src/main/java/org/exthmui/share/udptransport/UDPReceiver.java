@@ -351,7 +351,7 @@ public class UDPReceiver {
                 {
                     IdentifierPacket packet = handler.receiveIdentifier(Constants.Identifier.START, Constants.IDENTIFIER_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);// (7)
                     curGroup = ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, packet.getExtra())[0];
-                    handler.sendIdentifier(Constants.Identifier.START_ACK, null);// (8)
+                    handler.sendIdentifierReply(packet);// (8)
                 }
 
                 AbstractCommandPacket<?> packet;
@@ -372,7 +372,7 @@ public class UDPReceiver {
                             continue;
                         curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
                         groupIdExceeded = false;
-                        handler.sendIdentifier(Constants.Identifier.GROUP_ID_RESET_ACK, null);
+                        handler.sendIdentifierReply(identifierPacket);
                     }
                     switch (packet.getCommand()) {
                         case FILE_PACKET:// (7), (13)
@@ -394,7 +394,7 @@ public class UDPReceiver {
                                 case START:// (7)
                                     if (ByteUtils.cutBytesByTip(Constants.START_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
                                         continue;
-                                    handler.sendIdentifier(Constants.Identifier.START_ACK, null);// (8)
+                                    handler.sendIdentifierReply(identifierPacket);// (8)
                                     waitingForResending = false;
                                     startPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.START_ID_START_PACKET_ID_TIP, identifierPacket.getExtra()));
                                     break;
@@ -408,7 +408,7 @@ public class UDPReceiver {
                                             String.format("Identifier group id: %d, current group: %d", ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0], curGroup));
                                     if (ByteUtils.cutBytesByTip(Constants.END_ID_GROUP_ID_TIP, identifierPacket.getExtra())[0] != curGroup)
                                         continue;
-                                    handler.sendIdentifier(Constants.Identifier.END_ACK, null);// (11)
+                                    handler.sendIdentifierReply(identifierPacket);// (11)
                                     endPacketId = ByteUtils.bytesToShort(ByteUtils.cutBytesByTip(Constants.END_ID_END_PACKET_ID_TIP, identifierPacket.getExtra()));
 
                                     Set<Short> idsToResendAsSet = new HashSet<>();
@@ -441,11 +441,11 @@ public class UDPReceiver {
                                     if (ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_BEF_TIP, identifierPacket.getExtra())[0] != curGroup)
                                         continue;
                                     curGroup = ByteUtils.cutBytesByTip(Constants.GROUP_ID_RESET_ID_GROUP_ID_AFT_TIP, identifierPacket.getExtra())[0];
-                                    handler.sendIdentifier(Constants.Identifier.GROUP_ID_RESET_ACK, null);
+                                    handler.sendIdentifierReply(identifierPacket);
                                     break;
                                 case FILE_END:// (14)
                                     fileEnded = true;
-                                    handler.sendIdentifier(Constants.Identifier.FILE_END_ACK, null);// (15)
+                                    handler.sendIdentifierReply(identifierPacket);// (15)
                                     break;
                             }
                             break;
