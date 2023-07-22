@@ -260,6 +260,18 @@ public class UDPUtil {
             datagramSocket.send(p);
         }
 
+        public void sendIdentifierReply(IdentifierPacket packet) throws IOException, TimedOutException {
+            sendPacket(packet.clone().turnIdentifier());
+        }
+
+        public IdentifierPacket sendIdentifier(Constants.Identifier identifier) throws IOException, TimedOutException {
+            return sendIdentifier(identifier, (byte[]) null);
+        }
+
+        public IdentifierPacket sendIdentifier(Constants.Identifier identifier, byte[] extra) throws IOException, TimedOutException {
+            return sendIdentifier(identifier, identifier.isAck() ? null : identifier.getCorrespondIdentifier(), extra);
+        }
+
         /**
          * Send Identifier under udp socket
          *

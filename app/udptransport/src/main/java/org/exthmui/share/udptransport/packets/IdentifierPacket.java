@@ -71,6 +71,14 @@ public final class IdentifierPacket extends AbstractCommandPacket<IdentifierPack
         return this;
     }
 
+    /**
+     * Change non-ack identifier to ack identifier or vice versa
+     */
+    public IdentifierPacket turnIdentifier() {
+        setIdentifier(getIdentifier().getCorrespondIdentifier());
+        return this;
+    }
+
     @NonNull
     @Override
     public String toString() {
