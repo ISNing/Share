@@ -28,6 +28,7 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Consumer;
 
 public class UDPUtil {
     public static final String SUB_TAG = "UDPUtil";
@@ -297,10 +298,9 @@ public class UDPUtil {
 
                         if (checkCanceled()) return null;
 
-                        recvPacket = receiveIdentifier(ackIdentifier, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-
-                        Log.d(TAG,
-                                String.format("Ack Identifier \"%s\" received, connId: %d", recvPacket.getIdentifier(), recvPacket.getConnId()));
+                        do {
+                            recvPacket = receiveIdentifier(ackIdentifier, Constants.ACK_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+                        } while (!Arrays.equals(sendPacket.getExtra(), recvPacket.getExtra()));// Different extra, rejected and dropped
                     } catch (TimedOutException e) {
                         if (tryouts >= Constants.MAX_ACK_TRYOUTS) {
                             Log.w(TAG, String.format("Ack identifier packet receiving timed out: %s, reached maximum retries", e), e);
@@ -317,13 +317,17 @@ public class UDPUtil {
         }
 
         public IdentifierPacket receiveIdentifier(Constants.Identifier identifier, int timeout, TimeUnit unit) throws TimedOutException {
+            return receiveIdentifier(identifier, timeout, unit, null);
+        }
+
+        public IdentifierPacket receiveIdentifier(Constants.Identifier identifier, int timeout, TimeUnit unit, Consumer<IdentifierPacket> customCheck) throws TimedOutException {
             return receivePacket(datagramPacket -> {
                 IdentifierPacket p = new IdentifierPacket(datagramPacket);
-                Log.d(TAG, String.format("Identifier received: \"%s\"", p.getIdentifier())); // TODO: 2023/7/8
-                if (p.getIdentifier() != identifier) {// TODO: 2023/7/8  
-                    Log.w(TAG, String.format("Identifier received \"%s\", but illegal", p.getIdentifier()));
+                if (p.getIdentifier() != identifier) {
+                    Log.w(TAG, String.format("Identifier received: %s, but illegal, rejected", p));
                     throw new IllegalArgumentException();
                 }
+                if (customCheck != null) customCheck.accept(p);
                 return p;
             }, timeout, unit);
         }
