@@ -1,0 +1,63 @@
+[versions]
+agp = "8.2.0-alpha14"
+kotlin = "1.8.21"
+
+kotlinx-coroutines-core = "1.7.2"
+
+core-ktx = "1.9.0"
+appcompat = "1.6.1"
+material = "1.9.0"
+
+annotation = "1.6.0"
+documentfile = "1.0.1"
+lifecycle-livedata-core = "2.6.1"
+lifecycle-process = "2.6.1"
+room-runtime = "2.5.2"
+room-compiler = "2.5.2"
+work-runtime = "2.7.1"
+constraintlayout = "2.1.4"
+percentlayout = "1.0.0"
+preference = "1.2.0"
+
+gson = "2.10.1"
+apache-commons-lang3 = "3.13.0"
+apache-commons-codec = "1.8"
+
+junit = "4.13.2"
+androidx-test-ext-junit = "1.1.5"
+espresso-core = "3.5.1"
+
+leakcanary-android = "2.9.1"
+
+[libraries]
+kotlinx-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
+
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+
+annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
+lifecycle-livedata-core = { group = "androidx.lifecycle", name = "lifecycle-livedata-core", version.ref = "lifecycle-livedata-core" }
+lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-process" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room-runtime" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room-compiler" }
+work-runtime = { module = "androidx.work:work-runtime", version.ref = "work-runtime" }
+constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+percentlayout = { group = "androidx.percentlayout", name = "percentlayout", version.ref = "percentlayout" }
+preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+apache-commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "apache-commons-lang3" }
+apache-commons-codec = { group = "org.apache.directory.studio", name = "org.apache.commons.codec", version.ref = "apache-commons-codec" }
+
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
+espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
+
+leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-android", version.ref = "leakcanary-android" }
+
+[plugins]
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
