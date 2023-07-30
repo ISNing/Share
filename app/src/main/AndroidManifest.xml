@@ -20,8 +20,6 @@
         android:enableOnBackInvokedCallback="true"
         android:hardwareAccelerated="true">
 
-        <meta-data android:name="appCenterSecret" android:value="${appCenterSecret}" />
-
         <service
             android:name=".services.DiscoveringTileService"
             android:enabled="true"
