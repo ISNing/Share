@@ -5,8 +5,8 @@ buildscript {
         set("targetSdkVersion", this["compileSdkVersion"])
         set("versionCode", 1)
         set("versionName", "1.0")
-        set("sourceCompatibility", JavaVersion.VERSION_1_8)
-        set("targetCompatibility", JavaVersion.VERSION_1_8)
-        set("jvmTarget", "1.8")
+        set("sourceCompatibility", JavaVersion.VERSION_17)
+        set("targetCompatibility", JavaVersion.VERSION_17)
+        set("jvmTarget", "17")
     }
 }

@@ -223,16 +223,16 @@ public abstract class FileUtils {
     }
 
     @Nullable
-    public static String getMD5(@NonNull InputStream inputStream) throws IOException {
+    public static String getMd5(@NonNull InputStream inputStream) throws IOException {
         try {
-            MessageDigest MD5 = MessageDigest.getInstance("MD5");
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
             byte[] buffer = new byte[1024];
             int length;
             while ((length = inputStream.read(buffer)) != -1) {
-                MD5.update(buffer, 0, length);
+                md5.update(buffer, 0, length);
             }
             inputStream.close();
-            return new String(Hex.encodeHex(MD5.digest()));
+            return new String(Hex.encodeHex(md5.digest()));
         } catch (NoSuchAlgorithmException ignored) {
             return null;
         }

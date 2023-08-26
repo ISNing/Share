@@ -70,7 +70,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     @Override
     public void registerListener(@NonNull BaseEventListener listener) {
-        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+        if (BaseEventListenersUtils.INSTANCE.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
@@ -86,7 +86,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
         mAcceptationBroadcastReceiver.setListener(new OnReceiveShareBroadcastActionListener() {
             @Override
             public void onReceiveActionAcceptationDialog(String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
-                ReceiverUtils.startRequestActivity(ReceiveService.this, pluginCode, requestId, senderInfo, fileInfos, notificationId);
+                // Due to changes of API 31, we must start activity directly
             }
 
             @Override
@@ -103,7 +103,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
                 receiver.onReceiveActionReject(new ReceiveActionRejectEvent(this, pluginCode, requestId));
             }
         });
-        registerReceiver(mAcceptationBroadcastReceiver, AcceptationBroadcastReceiver.getIntentFilter());
+        registerReceiver(mAcceptationBroadcastReceiver, AcceptationBroadcastReceiver.Companion.getIntentFilter());
 
         addReceivers();
         registerInternalListeners();
@@ -223,7 +223,7 @@ public class ReceiveService extends ServiceUtils.MyService implements org.exthmu
 
     @Override
     public void notifyListeners(@NonNull EventObject event) {
-        BaseEventListenersUtils.notifyListeners(event, mListeners);
+        BaseEventListenersUtils.INSTANCE.notifyListeners(event, mListeners);
     }
 
     @Override

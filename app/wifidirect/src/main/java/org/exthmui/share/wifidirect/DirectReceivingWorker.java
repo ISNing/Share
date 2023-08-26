@@ -228,7 +228,7 @@ public class DirectReceivingWorker extends ReceivingWorker {
 //                } catch (FileNotFoundException e) {
 //                    return genFailureResult(new UnknownErrorException("Failed calculating MD5"), senderInfo, fileInfos);
 //                }
-//                String md5 = FileUtils.getMD5(inputStream);
+//                String md5 = FileUtils.getMd5(inputStream);
 //                inputStream = null;
 //                if (!StringUtils.equals(fileInfoList.get(i).getExtra(FILE_INFO_EXTRA_KEY_MD5), md5)) {
 //                    Log.e(TAG, "Md5 validation failed");

@@ -50,17 +50,10 @@ public interface Receiver extends OnReceiveActionAcceptListener, OnReceiveAction
 
     @NonNull
     @Override
-    default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap(){
-        this._getEventToMethodMap();
-        return this._getEventToMethodMap();
-    }
-
-    @NonNull
-    @Override
-    default Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap() {
+    default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap() {
         Map<Class<? extends EventObject>, Method[]> map = new HashMap<>();
-        map.putAll(OnReceiveActionAcceptListener.super._getEventToMethodMap());
-        map.putAll(OnReceiveActionRejectListener.super._getEventToMethodMap());
+        map.putAll(OnReceiveActionAcceptListener.super.getEventToMethodMap());
+        map.putAll(OnReceiveActionRejectListener.super.getEventToMethodMap());
         return map;
     }
 

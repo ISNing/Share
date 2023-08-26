@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
 }
 
 android {
@@ -7,7 +8,7 @@ android {
     compileSdk = rootProject.extra["compileSdkVersion"] as Int
 
     defaultConfig {
-        minSdk = rootProject.extra["minSdkVersion"] as Int
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -26,10 +27,18 @@ android {
         sourceCompatibility = rootProject.extra["sourceCompatibility"] as JavaVersion
         targetCompatibility = rootProject.extra["targetCompatibility"] as JavaVersion
     }
+    kotlinOptions {
+        jvmTarget = rootProject.extra["jvmTarget"] as String
+    }
 }
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.core.ktx)
+
     implementation(libs.annotation)
+    implementation(libs.databinding.runtime)
     implementation(libs.documentfile)
     implementation(libs.lifecycle.process)
 

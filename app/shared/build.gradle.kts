@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
 }
 
 android {
@@ -26,11 +27,18 @@ android {
         sourceCompatibility = rootProject.extra["sourceCompatibility"] as JavaVersion
         targetCompatibility = rootProject.extra["targetCompatibility"] as JavaVersion
     }
+    kotlinOptions {
+        jvmTarget = rootProject.extra["jvmTarget"] as String
+    }
 }
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)
+
     implementation(libs.preference)
     implementation(libs.work.runtime)
 

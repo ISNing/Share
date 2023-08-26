@@ -35,7 +35,7 @@ public abstract class Utils {
     public static DocumentFile getDestinationDirectory(@NonNull Context context) {
         String destinationDirectoryUri = PreferenceManager.getDefaultSharedPreferences(context).getString(context.getString(R.string.prefs_key_global_destination_directory), context.getString(R.string.prefs_default_global_destination_directory));
 
-        DocumentFile downloadsDirectory = DocumentFile.fromFile(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS));
+        DocumentFile downloadsDirectory = DocumentFile.fromFile(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));
 
         if (TextUtils.isEmpty(destinationDirectoryUri)) return downloadsDirectory;
         DocumentFile destinationDirectory = DocumentFile.fromTreeUri(context, Uri.parse(destinationDirectoryUri));

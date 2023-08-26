@@ -137,7 +137,7 @@ public class NsdPeer extends Peer {
         return uid;
     }
 
-    public void setUid(@IntRange(from = 5001, to = 65535) int uid) {
+    public void setUid(@IntRange(from = 0) int uid) {
         this.uid = uid;
     }
 

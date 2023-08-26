@@ -51,7 +51,7 @@ public class Entity implements Parcelable {
     private int fileType;
     private final long fileSize;
     @Nullable
-    private String MD5;
+    private String md5;
     private final boolean initialized;
 
     public static Entity[] stringsToEntities(String[] strings) {
@@ -105,6 +105,7 @@ public class Entity implements Parcelable {
      * @throws FailedResolvingUriException Failed resolving uri
      */
     public Entity(@NonNull Context context, @NonNull Uri uri) throws FailedResolvingUriException {
+        if (uri.getScheme() == null) throw new FailedResolvingUriException("null scheme in uri");
         switch (uri.getScheme()) {
             case SCHEME_FILE:
                 try {
@@ -162,23 +163,25 @@ public class Entity implements Parcelable {
     }
 
     private Entity(@NonNull Uri uri, @Nullable String fileName, @Nullable String filePath,
-                   int fileType, long fileSize, @Nullable String MD5) {
+                   int fileType, long fileSize, @Nullable String md5) {
         this.uri = uri;
         this.fileName = fileName;
         this.filePath = filePath;
         this.fileType = fileType;
         this.fileSize = fileSize;
-        this.MD5 = MD5;
+        this.md5 = md5;
         this.initialized = true;
     }
 
     private Entity(@NonNull Parcel source) {
-        this.uri = source.readParcelable(Uri.class.getClassLoader());
+        Uri uri = source.readParcelable(Uri.class.getClassLoader());//TODO
+        if (uri == null) throw new IllegalArgumentException();
+        this.uri = uri;
         this.fileName = source.readString();
         this.filePath = source.readString();
         this.fileType = source.readInt();
         this.fileSize = source.readLong();
-        this.MD5 = source.readString();
+        this.md5 = source.readString();
         if (VERSION.SDK_INT >= VERSION_CODES.Q) {
             this.initialized = source.readBoolean();
         } else {
@@ -198,7 +201,7 @@ public class Entity implements Parcelable {
         parcel.writeString(filePath);
         parcel.writeInt(fileType);
         parcel.writeLong(fileSize);
-        parcel.writeString(MD5);
+        parcel.writeString(md5);
         if (VERSION.SDK_INT >= VERSION_CODES.Q) {
             parcel.writeBoolean(initialized);
         } else {
@@ -209,7 +212,7 @@ public class Entity implements Parcelable {
     private Uri generateContentUri(@NonNull Context context, @NonNull Uri uri)
         throws EmptyPathException, FileNotExistsException {
         final String path = uri.getPath();
-        if (path.isEmpty()) {
+        if (path == null || path.isEmpty()) {
             Log.e(TAG, "Failed resolving Uri: Empty path. Uri:" + uri);
             throw new EmptyPathException();
         }
@@ -233,13 +236,13 @@ public class Entity implements Parcelable {
      *
      * @param context {@link Context} object
      */
-    public void calculateMD5(@NonNull Context context) throws IOException {
+    public void calculateMd5(@NonNull Context context) throws IOException {
         InputStream inputStream = getInputStream(context);
         if (inputStream == null) {
             Log.e(TAG, String.format("Failed to calculate MD5 for %s due to got null InoutStream", fileName));
             return;
         }
-        this.MD5 = FileUtils.getMD5(inputStream);
+        this.md5 = FileUtils.getMd5(inputStream);
     }
 
     @NonNull
@@ -270,11 +273,11 @@ public class Entity implements Parcelable {
     }
 
     @Nullable
-    public String getMD5() {
-        return MD5;
+    public String getMd5() {
+        return md5;
     }
 
-    public void setMD5(@Nullable String MD5) {
-        this.MD5 = MD5;
+    public void setMd5(@Nullable String md5) {
+        this.md5 = md5;
     }
 }

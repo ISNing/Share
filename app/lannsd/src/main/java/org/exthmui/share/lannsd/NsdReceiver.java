@@ -52,6 +52,7 @@ import org.exthmui.share.taskMgr.TaskManager;
 import org.exthmui.share.taskMgr.TaskStatus;
 import org.exthmui.share.taskMgr.listeners.OnResultListener;
 import org.exthmui.share.udptransport.UDPReceiver;
+import org.exthmui.share.udptransport.exceptions.FailedCreatingStreamException;
 import org.exthmui.utils.BaseEventListenersUtils;
 import org.exthmui.utils.StackTraceUtils;
 import org.exthmui.utils.listeners.BaseEventListener;
@@ -59,6 +60,7 @@ import org.exthmui.utils.listeners.BaseEventListener;
 import java.io.BufferedOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EventObject;
@@ -126,7 +128,7 @@ public class NsdReceiver implements Receiver {
     }
 
     private void notifyListeners(@NonNull EventObject event) {
-        BaseEventListenersUtils.notifyListeners(event, mListeners);
+        BaseEventListenersUtils.INSTANCE.notifyListeners(event, mListeners);
     }
 
     @NonNull
@@ -173,7 +175,7 @@ public class NsdReceiver implements Receiver {
 
     @Override
     public void registerListener(@NonNull BaseEventListener listener) {
-        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+        if (BaseEventListenersUtils.INSTANCE.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
@@ -188,38 +190,31 @@ public class NsdReceiver implements Receiver {
         int serverPortUdp = NsdUtils.getServerPortUdp(mContext);
         boolean md5ValidationEnabled = NsdUtils.isMd5ValidationEnabled(mContext);
         mTaskIds = new ArrayList<>();
-        try {
-            mUdpReceiver = new UDPReceiver(mContext, fileInfo -> {
-                Pair<Uri, BufferedOutputStream> p = ReceiverUtils.openFileOutputStream(mContext, fileInfo.getFileName());
-                if (p == null) return null;
-                try {
-                    mEntityMap.put(fileInfo.getId(), new Entity(mContext, p.first));
-                } catch (FailedResolvingUriException e) {
-                    Log.e(TAG + "/UDPReceiver.OutputStreamFactory", e.getMessage());
-                    Log.e(TAG + "/UDPReceiver.OutputStreamFactory", StackTraceUtils.getStackTraceString(e.getStackTrace()));
-                    return null;
-                }
-                return p.second;
-            }, fileInfo -> {
-                Entity entity = mEntityMap.get(fileInfo.getId());
-                if (entity == null) return null;
-                try {
-                    return entity.getInputStream(mContext);
-                } catch (FileNotFoundException e) {
-                    Log.e(TAG + "/UDPReceiver.InputStreamFactory", e.getMessage());
-                    Log.e(TAG + "/UDPReceiver.InputStreamFactory", StackTraceUtils.getStackTraceString(e.getStackTrace()));
-                    return null;
-                }
-            }, connId -> startWorkWrapped(mContext, Map.of(WORK_PROP_CONN_ID, String.valueOf(connId))), serverPortTcp, serverPortUdp, true, md5ValidationEnabled);
-        } catch (IOException e) {
-            String message = String.format(Locale.ENGLISH, "UdpReceiver initialize failed: %s", e.getMessage());
-            String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_initialize_failed, e.getLocalizedMessage());
-            notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
-            Log.e(TAG, message);
-            Log.e(TAG, String.format("Error occurred while receiving: %s(message: %s)", e, e.getMessage()));
-            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
-            return;
-        }
+        mUdpReceiver = new UDPReceiver(mContext, fileInfo -> {
+            Pair<Uri, BufferedOutputStream> p = ReceiverUtils.openFileOutputStream(mContext, fileInfo.getFileName());
+            if (p == null) throw new FailedCreatingStreamException();
+            try {
+                mEntityMap.put(fileInfo.getId(), new Entity(mContext, p.first));
+            } catch (FailedResolvingUriException e) {
+                Log.e(TAG + "/UDPReceiver.OutputStreamFactory", e.getMessage() + "\n" +
+                        StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                throw new FailedCreatingStreamException(e);
+            }
+            return p.second;
+        }, fileInfo -> {
+            Entity entity = mEntityMap.get(fileInfo.getId());
+            if (entity == null) return null;
+            try {
+                InputStream is = entity.getInputStream(mContext);
+                if (is == null) throw new FailedCreatingStreamException();
+                return is;
+            } catch (FileNotFoundException e) {
+                Log.e(TAG + "/UDPReceiver.InputStreamFactory", e.getMessage() + "\n" +
+                        StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                throw new FailedCreatingStreamException(e);
+            }
+        }, connId -> startWorkWrapped(mContext, Map.of(WORK_PROP_CONN_ID, String.valueOf(connId))), serverPortTcp, serverPortUdp, true, md5ValidationEnabled);
+
         mNsdManager = (android.net.nsd.NsdManager) mContext.getSystemService(Context.NSD_SERVICE);
 
         mRegistrationListener = new NsdManager.RegistrationListener() {
@@ -302,8 +297,8 @@ public class NsdReceiver implements Receiver {
             String messageLocalized = mContext.getString(R.string.error_lannsd_udp_receiver_start_failed, e.getLocalizedMessage());
             notifyListeners(new ReceiverErrorOccurredEvent(NsdReceiver.this, message, messageLocalized));
             Log.e(TAG, message);
-            Log.e(TAG, String.format("Error occurred while starting receiver: %s(message: %s)", e, e.getMessage()));
-            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            Log.e(TAG, String.format("Error occurred while starting receiver: %s(message: %s)\n%s", e, e.getMessage(),
+                    StackTraceUtils.getStackTraceString(e.getStackTrace())));
             return;
         }
         mReceiverStarted = true;
@@ -328,6 +323,7 @@ public class NsdReceiver implements Receiver {
         input.putByte(WORKER_INPUT_KEY_CONN_ID, connId);
         NsdReceivingTask task = new NsdReceivingTask(mContext, input);
         task.registerListener((OnResultListener) event -> {
+
             Result result = event.getResult();
             if (result.getStatus() == Result.Status.SUCCESS) {
                 Notification notification =
@@ -339,7 +335,7 @@ public class NsdReceiver implements Receiver {
                 NotificationUtils.postNotification(mContext, UUID.randomUUID().hashCode(), notification);
             }
         });
-        TaskManager.getInstance(mContext).enqueueTask(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), task);
+        TaskManager.Companion.getInstance(mContext).enqueueTaskBlocking(String.format(Locale.ROOT, WORK_UNIQUE_NAME, connId), task);
         mTaskIds.add(task.getTaskId());
         return UUID.fromString(task.getTaskId());
     }
@@ -348,7 +344,7 @@ public class NsdReceiver implements Receiver {
     public void stopReceive() {
         boolean workerRunning = false;
         for (String taskId : mTaskIds) {
-            Task task = TaskManager.getInstance(mContext).getTask(taskId);
+            Task task = TaskManager.Companion.getInstance(mContext).getTask(taskId);
             if (task == null) return;
             if (task.getStatus() == TaskStatus.RUNNING) {
                 workerRunning = true;

@@ -76,7 +76,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public void registerListener(@NonNull BaseEventListener listener) {
-        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+        if (BaseEventListenersUtils.INSTANCE.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
@@ -245,7 +245,7 @@ public class DiscoverService extends ServiceUtils.MyService implements org.exthm
 
     @Override
     public void notifyListeners(@NonNull EventObject event) {
-        BaseEventListenersUtils.notifyListeners(event, mListeners);
+        BaseEventListenersUtils.INSTANCE.notifyListeners(event, mListeners);
     }
 
     @Override

@@ -62,12 +62,12 @@ public class DirectMultiSendingWorker extends SendingWorker {
 //            fileInfos[i].setFileName(fileNames[i]);
 //            fileInfos[i].setFileSize(fileSizes[i]);
 //            try {
-//                entities[i].calculateMD5(getApplicationContext());
+//                entities[i].calculateMd5(getApplicationContext());
 //            } catch (IOException e) {
 //                Log.i(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
 //                return genFailureResult(new FileIOErrorException(getApplicationContext(), e));
 //            }
-//            fileInfos[i].putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMD5());
+//            fileInfos[i].putExtra(FILE_INFO_EXTRA_KEY_MD5, entities[i].getMd5());
 //            totalBytesToSend += fileInfos[i].getFileSize();
 //        }
 //

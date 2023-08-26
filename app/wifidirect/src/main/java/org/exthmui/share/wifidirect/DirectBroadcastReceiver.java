@@ -68,6 +68,7 @@ public class DirectBroadcastReceiver extends BroadcastReceiver {
                 // The connection status of WiFi P2P has changed
                 case WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION: {
                     @SuppressWarnings("deprecated") NetworkInfo networkInfo = intent.getParcelableExtra(WifiP2pManager.EXTRA_NETWORK_INFO);
+                    if (networkInfo == null) break; // TODO: Null Handle
                     if (networkInfo.isConnected()) {
                         mWifiP2pManager.requestConnectionInfo(mChannel, mDirectActionListener::onConnectionInfoChanged);
                     } else {

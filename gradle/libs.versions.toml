@@ -1,6 +1,7 @@
 [versions]
-agp = "8.2.0-alpha14"
+agp = "8.3.0-alpha01"
 kotlin = "1.8.21"
+ksp = "1.8.21-1.0.11"
 
 kotlinx-coroutines-core = "1.7.2"
 
@@ -9,6 +10,7 @@ appcompat = "1.6.1"
 material = "1.9.0"
 
 annotation = "1.6.0"
+databinding-runtime = "8.1.0"
 documentfile = "1.0.1"
 lifecycle-livedata-core = "2.6.1"
 lifecycle-process = "2.6.1"
@@ -37,6 +39,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 
 annotation = { group = "androidx.annotation", name = "annotation", version.ref = "annotation" }
+databinding-runtime = { group = "androidx.databinding", name = "databinding-runtime", version.ref = "databinding-runtime" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
 lifecycle-livedata-core = { group = "androidx.lifecycle", name = "lifecycle-livedata-core", version.ref = "lifecycle-livedata-core" }
 lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycle-process" }
@@ -61,3 +64,5 @@ leakcanary-android = { group = "com.squareup.leakcanary", name = "leakcanary-and
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

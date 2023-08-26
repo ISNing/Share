@@ -23,7 +23,7 @@ public interface OnResultListener extends BaseEventListener {
 
     @NonNull
     @Override
-    default Map<Class<? extends EventObject>, Method[]> _getEventToMethodMap() {
+    default Map<Class<? extends EventObject>, Method[]> getEventToMethodMap() {
         return EVENT_TYPES_ALLOWED;
     }
 

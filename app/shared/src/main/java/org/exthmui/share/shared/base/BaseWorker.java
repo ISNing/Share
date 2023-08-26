@@ -14,7 +14,6 @@ import androidx.work.impl.utils.futures.SettableFuture;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import org.exthmui.share.shared.base.results.BasicTransmissionResult;
 import org.exthmui.share.shared.base.results.SilentResult;
 import org.exthmui.share.shared.base.results.TransmissionResult;
 import org.exthmui.share.shared.exceptions.trans.TransmissionException;
@@ -178,7 +177,7 @@ public abstract class BaseWorker extends Worker {
                 .putString(F_MESSAGE, result.getMessage())
                 .putString(F_LOCALIZED_MESSAGE, result.getLocalizedMessage())
                 .putString(F_RESULT_MAP, resultMap == null ?
-                        null : BasicTransmissionResult.mapToString(resultMap));
+                        null : TransmissionResult.mapToString(resultMap));
     }
 
     @NonNull

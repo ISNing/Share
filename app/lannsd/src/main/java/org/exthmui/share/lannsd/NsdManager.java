@@ -91,7 +91,7 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
     }
 
     private void notifyListeners(@NonNull EventObject event) {
-        BaseEventListenersUtils.notifyListeners(event, mListeners);
+        BaseEventListenersUtils.INSTANCE.notifyListeners(event, mListeners);
     }
 
     @NonNull
@@ -131,13 +131,13 @@ public class NsdManager implements Discoverer, Sender<NsdPeer> {
     @Override
     public UUID send(@NonNull NsdPeer peer, @NonNull List<Entity> entities) {
         NsdSendingTask task = new NsdSendingTask(mContext, genSendingInputDataBundle(peer, entities));
-        TaskManager.getInstance(mContext).enqueueTask(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), task);
+        TaskManager.Companion.getInstance(mContext).enqueueTaskBlocking(Constants.WORK_NAME_PREFIX_SEND + peer.getId(), task);
         return UUID.fromString(task.getTaskId());
     }
 
     @Override
     public void registerListener(@NonNull BaseEventListener listener) {
-        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+        if (BaseEventListenersUtils.INSTANCE.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 

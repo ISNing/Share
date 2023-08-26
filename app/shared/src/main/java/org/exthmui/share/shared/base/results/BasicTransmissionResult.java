@@ -4,15 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 
 import org.exthmui.share.shared.misc.Constants;
 
-import java.lang.reflect.Type;
-import java.util.HashMap;
-import java.util.Map;
-
 public final class BasicTransmissionResult extends AbstractTransmissionResult {
+    public static final BasicTransmissionResult UNKNOWN_RESULT =
+            new BasicTransmissionResult(Constants.TransmissionStatus.UNKNOWN, null, null);
 
     private static final Gson GSON = new Gson();
 
@@ -44,23 +41,5 @@ public final class BasicTransmissionResult extends AbstractTransmissionResult {
     @Override
     protected String getDefaultMessage() {
         return "Unknown Status";
-    }
-
-    public static String mapToString(Map<String, TransmissionResult> resultMap) {
-        Map<String, BasicTransmissionResult> basicMap = new HashMap<>();
-        for (String key : resultMap.keySet()) {
-            TransmissionResult result = resultMap.get(key);
-            if (result == null) continue;
-            if (result instanceof BasicTransmissionResult)
-                basicMap.put(key, (BasicTransmissionResult) result);
-            else basicMap.put(key, new BasicTransmissionResult(result));
-        }
-        return GSON.toJson(basicMap);
-    }
-
-    public static Map<String, BasicTransmissionResult> stringToMap(String resultMapStr) {
-        Type type = new TypeToken<Map<String, BasicTransmissionResult>>() {
-        }.getType();
-        return GSON.fromJson(resultMapStr, type);
     }
 }

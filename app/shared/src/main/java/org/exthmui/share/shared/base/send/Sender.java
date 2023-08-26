@@ -41,6 +41,7 @@ public interface Sender<T extends IPeer> {
         try {
             return send((T) peer, entities);
         } catch (ClassCastException e) {
+            e.printStackTrace();
             throw new FailedCastingPeerException(context, e);
         }
     }

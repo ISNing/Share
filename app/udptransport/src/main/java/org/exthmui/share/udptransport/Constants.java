@@ -1,5 +1,6 @@
 package org.exthmui.share.udptransport;
 
+import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -130,17 +131,20 @@ public class Constants {
     /**
      * The number of packet a group contains
      */
-    public static final int GROUP_DATA = 30000;
+    public static final int GROUP_DATA = 300;
     /**
      * The length of data of a packet
      */
-    public static final int DATA_LEN_MAX = 1000;
+    public static final int DATA_LEN_MAX = 3000;
     public static final int DATA_LEN_MAX_HI = 25500;
     public static final int BUF_LEN_MAX_HI = 65507;
     public static final byte START_GROUP_ID = Byte.MIN_VALUE;
     public static final byte END_GROUP_ID = Byte.MAX_VALUE;
     public static final short START_PACKET_ID = Short.MIN_VALUE;
-    public static final short END_PACKET_ID = 30000;
+    public static final short END_PACKET_ID_MIN = Short.MIN_VALUE;
+    public static final short END_PACKET_ID_MAX = Short.MAX_VALUE;
+    @IntRange(from = END_PACKET_ID_MIN, to = END_PACKET_ID_MAX)
+    public static final short END_PACKET_ID = Short.MIN_VALUE + GROUP_DATA - 1;
 
     public static final String STRING_CHARSET = "UTF-8";
 

@@ -1,5 +1,7 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -7,7 +9,7 @@ android {
     compileSdk = rootProject.extra["compileSdkVersion"] as Int
 
     defaultConfig {
-        minSdk = 1
+        minSdk = 24
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -32,12 +34,20 @@ android {
         sourceCompatibility = rootProject.extra["sourceCompatibility"] as JavaVersion
         targetCompatibility = rootProject.extra["targetCompatibility"] as JavaVersion
     }
+    kotlinOptions {
+        jvmTarget = rootProject.extra["jvmTarget"] as String
+    }
 }
 
 dependencies {
+    implementation(libs.kotlinx.coroutines.core)
+
+    implementation(libs.core.ktx)
+
     implementation(libs.lifecycle.livedata.core)
+    implementation(libs.lifecycle.process)
     implementation(libs.room.runtime)
-    annotationProcessor(libs.room.compiler)
+    ksp(libs.room.compiler)
 
     implementation(project(":utils"))
 }

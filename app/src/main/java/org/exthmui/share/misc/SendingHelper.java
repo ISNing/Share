@@ -40,7 +40,7 @@ public class SendingHelper {
 
     public SendingHelper(@NonNull Context context) {
         mContext = context.getApplicationContext();
-        mTaskManager = TaskManager.getInstance(mContext);
+        mTaskManager = TaskManager.Companion.getInstance(mContext);
         mWorkManager = WorkManager.getInstance(mContext);
     }
 
@@ -81,7 +81,7 @@ public class SendingHelper {
             });
             return workId;
         } catch (@NonNull IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            Log.e(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+            Log.e(TAG, e.getMessage() + "\n" + StackTraceUtils.getStackTraceString(e.getStackTrace()));
             throw new FailedInvokingSendingMethodException(mContext, e);
         }
     }

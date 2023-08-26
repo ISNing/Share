@@ -119,14 +119,9 @@ public abstract class ReceiverUtils {
     }
 
     public static PendingIntent buildDialogPendingIntent(Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
-        Intent dialogIntent = new Intent()
-                .setAction(ACTION_ACCEPTATION_DIALOG)
-                .putExtra(EXTRA_PLUGIN_CODE, pluginCode)
-                .putExtra(EXTRA_REQUEST_ID, requestId)
-                .putExtra(EXTRA_PEER_INFO_TRANSFER, senderInfo)
-                .putExtra(EXTRA_FILE_INFOS, fileInfos)
-                .putExtra(EXTRA_NOTIFICATION_ID, notificationId);
-        return PendingIntent.getBroadcast(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent dialogIntent = buildRequestActivityIntent(context, pluginCode, requestId, senderInfo, fileInfos, notificationId);
+        dialogIntent.setAction(ACTION_ACCEPTATION_DIALOG);
+        return PendingIntent.getActivity(context, 0, dialogIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
     public static PendingIntent buildAcceptPendingIntent(Context context, String pluginCode, String requestId, int notificationId) {
@@ -171,7 +166,7 @@ public abstract class ReceiverUtils {
         NotificationUtils.postNotification(context, notificationId, builder.build());
     }
 
-    public static void startRequestActivity(@NonNull Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
+    public static Intent buildRequestActivityIntent(@NonNull Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
         Intent intent = new Intent(context, AcceptationRequestActivity.class)
                 .putExtra(EXTRA_PLUGIN_CODE, pluginCode)
                 .putExtra(EXTRA_REQUEST_ID, requestId)
@@ -179,7 +174,11 @@ public abstract class ReceiverUtils {
                 .putExtra(EXTRA_FILE_INFOS, fileInfos)
                 .putExtra(EXTRA_NOTIFICATION_ID, notificationId)
                 .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        context.startActivity(intent);
+        return intent;
+    }
+
+    public static void startRequestActivity(@NonNull Context context, String pluginCode, String requestId, SenderInfo senderInfo, FileInfo[] fileInfos, int notificationId) {
+        context.startActivity(buildRequestActivityIntent(context, pluginCode, requestId, senderInfo, fileInfos, notificationId));
     }
 
     @NonNull
@@ -302,17 +301,25 @@ public abstract class ReceiverUtils {
 
     public static Pair<Uri, BufferedOutputStream> openFileOutputStream(@NonNull Context context, @Nullable String fileName) {
         DocumentFile destinationDirectory = Utils.getDestinationDirectory(context);
+        if (!destinationDirectory.canWrite()) {
+            Log.e(TAG, "Error occurred while opening FileOutputStream: No permission writing into the destination folder");
+            return null;
+        }
         if (fileName == null)
             fileName = Utils.getDefaultFileName(context);
         if (Utils.useSAF(context)) {
             DocumentFile file = destinationDirectory.createFile("", fileName);
             if (file == null) return null;
             OutputStream os;
+            if (!file.canWrite()) {
+                Log.e(TAG, "Error occurred while opening FileOutputStream: No permission writing into the file");
+                return null;
+            }
             try {
                 os = context.getContentResolver().openOutputStream(file.getUri());
             } catch (FileNotFoundException e) {
-                Log.e(TAG, String.format("Error occurred while opening FileOutputStream: %s(message: %s)", e, e.getMessage()));
-                Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                Log.e(TAG, String.format("Error occurred while opening FileOutputStream: %s(message: %s)", e, e.getMessage())
+                        + "\n" + StackTraceUtils.getStackTraceString(e.getStackTrace()));
                 return null;
             }
             if (os == null) return null;
@@ -325,8 +332,8 @@ public abstract class ReceiverUtils {
             try {
                 fos = new FileOutputStream(file);
             } catch (FileNotFoundException e) {
-                Log.e(TAG, String.format("Error occurred while FileOutputStream: %s(message: %s)", e, e.getMessage()));
-                Log.w(TAG, StackTraceUtils.getStackTraceString(e.getStackTrace()));
+                Log.e(TAG, String.format("Error occurred while FileOutputStream: %s(message: %s)", e, e.getMessage())
+                        + "\n" + StackTraceUtils.getStackTraceString(e.getStackTrace()));
                 return null;
             }
             return new Pair<>(Uri.fromFile(file), new BufferedOutputStream(fos));

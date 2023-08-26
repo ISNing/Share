@@ -234,6 +234,6 @@ public class ShareBottomSheetFragment extends BaseBottomSheetFragment {
 
     private void handleError(@NonNull Context context, @NonNull Throwable throwable) {
         handleError(context, throwable.getMessage(), throwable.getLocalizedMessage());
-        Log.e(TAG, StackTraceUtils.getStackTraceString(throwable.getStackTrace()));
+        Log.e(TAG, throwable.getMessage() + "\n" + StackTraceUtils.getStackTraceString(throwable.getStackTrace()));
     }
 }

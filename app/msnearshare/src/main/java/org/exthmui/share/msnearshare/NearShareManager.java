@@ -98,7 +98,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
 
     @Override
     public void registerListener(@NonNull BaseEventListener listener) {
-        if (BaseEventListenersUtils.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
+        if (BaseEventListenersUtils.INSTANCE.isThisListenerSuitable(listener, LISTENER_TYPES_ALLOWED))
             mListeners.add(listener);
     }
 
@@ -108,7 +108,7 @@ public class NearShareManager implements Sender<NearSharePeer>, Discoverer {
     }
 
     private void notifyListeners(@NonNull EventObject event){
-        BaseEventListenersUtils.notifyListeners(event, mListeners);
+        BaseEventListenersUtils.INSTANCE.notifyListeners(event, mListeners);
     }
 
     @NonNull

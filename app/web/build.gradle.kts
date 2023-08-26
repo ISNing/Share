@@ -53,6 +53,6 @@ dependencies {
 
     implementation(project(":app:shared"))
 
-    implementation("io.github.isning.andserver:api:3.0.0")
+//    implementation("io.github.isning.andserver:api:3.0.0")
 //    annotationProcessor("io.github.isning.andserver:processor:3.0.0")
 }
