@@ -179,7 +179,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         });
         getPreferenceScreen().addPreference(pluginsEnabledPrefs);
 
-        mDestinationDirectoryPrefs = findPreference(getString(R.string.prefs_key_global_destination_directory));
+        mDestinationDirectoryPrefs = findPreference(getString(org.exthmui.share.shared.R.string.prefs_key_global_destination_directory));
         assert mDestinationDirectoryPrefs != null;
         mDestinationDirectoryPrefs.setOnPreferenceClickListener(preference -> {
             mDestinationDirectoryActivityResultLauncher.launch(null);
@@ -187,15 +187,15 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         });
         mDestinationDirectoryPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             if (TextUtils.isEmpty((String) newValue)) {
-                mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
+                mDestinationDirectoryPrefs.setSummary(getString(org.exthmui.share.shared.R.string.prefs_summary_global_destination_directory_default));
             } else mDestinationDirectoryPrefs.setSummary((String) newValue);
             return true;
         });
         if (TextUtils.isEmpty(mDestinationDirectoryPrefs.getValue())) {
-            mDestinationDirectoryPrefs.setSummary(getString(R.string.prefs_summary_global_destination_directory_default));
+            mDestinationDirectoryPrefs.setSummary(getString(org.exthmui.share.shared.R.string.prefs_summary_global_destination_directory_default));
         } else mDestinationDirectoryPrefs.setSummary(mDestinationDirectoryPrefs.getValue());
 
-        EditTextPreference defaultFileNamePrefs = findPreference(getString(R.string.prefs_key_global_default_file_name));
+        EditTextPreference defaultFileNamePrefs = findPreference(getString(org.exthmui.share.shared.R.string.prefs_key_global_default_file_name));
         assert defaultFileNamePrefs != null;
         defaultFileNamePrefs.setOnBindEditTextListener(editText -> editText.setInputType(InputType.TYPE_CLASS_TEXT));
         defaultFileNamePrefs.setOnPreferenceChangeListener((preference, newValue) -> {
@@ -204,7 +204,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         });
         defaultFileNamePrefs.setSummary(defaultFileNamePrefs.getText());
 
-        EditTextPreference deviceNamePrefs = findPreference(getString(R.string.prefs_key_global_device_name));
+        EditTextPreference deviceNamePrefs = findPreference(getString(org.exthmui.share.shared.R.string.prefs_key_global_device_name));
         assert deviceNamePrefs != null;
         deviceNamePrefs.setOnBindEditTextListener(editText -> {
             editText.setInputType(InputType.TYPE_CLASS_TEXT);
@@ -235,26 +235,26 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         });
         deviceNamePrefs.setSummary(Utils.getSelfName(requireContext()));
 
-        ClickableStringPreference peerIdPrefs = findPreference(getString(R.string.prefs_key_global_peer_id));
+        ClickableStringPreference peerIdPrefs = findPreference(getString(org.exthmui.share.shared.R.string.prefs_key_global_peer_id));
         assert peerIdPrefs != null;
         peerIdPrefs.setOnPreferenceClickListener(preference -> {
             peerIdPrefs.setValue(Utils.genPeerId());
             int duration = Toast.LENGTH_SHORT;
 
             Toast toast = Toast.makeText(requireContext(),
-                    getString(R.string.toast_global_peer_id_regenerated), duration);
+                    getString(org.exthmui.share.shared.R.string.toast_global_peer_id_regenerated), duration);
             toast.show();
             return true;
         });
         peerIdPrefs.setOnPreferenceChangeListener((preference, newValue) -> {
             if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
-                peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, newValue));
+                peerIdPrefs.setSummary(getString(org.exthmui.share.shared.R.string.prefs_summary_global_peer_id_show, newValue));
             return true;
         });
         if (peerIdPrefs.getValue() == null)
             peerIdPrefs.setValue(Utils.genPeerId());
         if (Utils.isDevelopmentModeEnabled(requireContext().getContentResolver()))
-            peerIdPrefs.setSummary(getString(R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
+            peerIdPrefs.setSummary(getString(org.exthmui.share.shared.R.string.prefs_summary_global_peer_id_show, peerIdPrefs.getValue()));
 
         checkNotificationPermission();
     }
@@ -270,8 +270,8 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (!NotificationUtils.isPermissionGranted(requireContext())) {
                 mGrantNotificationPermissionPrefs = new Preference(requireContext());
-                mGrantNotificationPermissionPrefs.setTitle(R.string.prefs_title_global_permissions_not_granted_notification);
-                mGrantNotificationPermissionPrefs.setSummary(R.string.prefs_summary_global_permissions_not_granted_notification);
+                mGrantNotificationPermissionPrefs.setTitle(org.exthmui.share.shared.R.string.prefs_title_global_permissions_not_granted_notification);
+                mGrantNotificationPermissionPrefs.setSummary(org.exthmui.share.shared.R.string.prefs_summary_global_permissions_not_granted_notification);
                 mGrantNotificationPermissionPrefs.setOnPreferenceClickListener(preference -> {
                     mNotificationPermGrantingActivityResultLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
                     return true;
@@ -293,7 +293,7 @@ public class GlobalSettingsFragment extends PreferenceFragmentCompat {
                 removeNotificationGrantingPrefs();
                 NotificationUtils.notifyPermissionGranted(requireContext());
             } else
-                Toast.makeText(requireContext(), getString(R.string.toast_notification_perm_not_granted), Toast.LENGTH_SHORT).show();
+                Toast.makeText(requireContext(), getString(org.exthmui.share.shared.R.string.toast_notification_perm_not_granted), Toast.LENGTH_SHORT).show();
         });
     }
 }
